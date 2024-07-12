@@ -1,0 +1,260 @@
+#include "/Engine/Public/Platform.ush"
+
+RWBuffer<float4> positions;
+RWBuffer<float4> pathLine;
+
+Buffer<int> index_tex;
+Buffer<int> status_tex;
+Buffer<float3> vel_tex;
+Buffer<float> pre_tex;
+
+float collideForce;
+
+float dt;
+int maxLength;
+float stepDivider;
+
+int index_length;
+int chunklist_length;
+
+float3 chunkSize;
+
+float3 minPos;
+float3 maxPos;
+float3 spacing;
+int totalLevel;
+
+int animateTime;
+int visibleLength;
+int invisibleLength;
+
+int hack;
+float3 hackPos;
+float radius;
+
+static float3 finalMinPos;
+static float3 finalMaxPos;
+static int chunkPointCount;
+static int level;
+static int chunkIndex;
+static int valid;
+
+static int firstSample;
+
+int Get_Index(int location, float3 position, float3 _minPos, float3 _maxPos)
+{
+    level = 0;
+    int returnValue;
+    while (true)
+    {
+        if (location >= index_length)
+            return -1;
+
+        //int status = int(texelFetch(status_tex, location).r);
+        //int index = int(texelFetch(index_tex, location).r);
+        int status = int(status_tex.Load(location));
+        int index = int(index_tex.Load(location));
+        if (status == 0)
+        {
+            returnValue = -1;
+            break;
+        }
+        else if (status == 1)
+        {
+            level += 1;
+            float3 _center = (_minPos + _maxPos) / 2;
+            int bias = 0;
+            if (position.x >= _center.x)
+            {
+                bias += 1;
+                _minPos.x = _center.x;
+            }
+            else
+                _maxPos.x = _center.x;
+            if (position.y >= _center.y)
+            {
+                bias += 2;
+                _minPos.y = _center.y;
+            }
+            else
+                _maxPos.y = _center.y;
+            if (position.z >= _center.z)
+            {
+                bias += 4;
+                _minPos.z = _center.z;
+            }
+            else
+                _maxPos.z = _center.z;
+            location = index + bias;
+        }
+        else if (status == 2)
+        {
+            finalMinPos = _minPos;
+            finalMaxPos = _maxPos;
+            returnValue = index;
+            break;
+        }
+    }
+    return returnValue;
+}
+float3 SampleFromTexture(float3 position)
+{
+    int startIndex = chunkPointCount * chunkIndex;
+    int multiply = int(pow(2, totalLevel - level));
+    float3 spacingPerLevel = spacing * multiply;
+
+    float xPercent = position.x - finalMinPos.x;
+    float yPercent = position.y - finalMinPos.y;
+    float zPercent = position.z - finalMinPos.z;
+    int xIndex = int(xPercent / spacingPerLevel.x);
+    int yIndex = int(yPercent / spacingPerLevel.y);
+    int zIndex = int(zPercent / spacingPerLevel.z);
+
+    float3 A = float3(0, 0, 0);
+    float B = 0;
+
+    int xBias, yBias, zBias;
+    float3 center = float3(0, 0, 0);
+    int cornerCount = 0;
+    for (int p = 0; p < 8; p++)
+    {
+        xBias = yBias = zBias = 0;
+        if (p == 1 || p == 3 || p == 5 || p == 7)
+            xBias = 1;
+        if (p == 2 || p == 3 || p == 6 || p == 7)
+            yBias = 1;
+        if (p == 4 || p == 5 || p == 6 || p == 7)
+            zBias = 1;
+        if (finalMinPos.z == minPos.z && zIndex == 0 && zBias == 0)
+            continue;
+        float3 cornerPos = float3((xIndex + xBias) * spacingPerLevel.x, (yIndex + yBias) * spacingPerLevel.y, (zIndex + zBias) * spacingPerLevel.z);
+        center += cornerPos;
+        cornerCount++;
+    }
+
+    center /= cornerCount;
+
+    for (int p = 0; p < 8; p++)
+    {
+        xBias = yBias = zBias = 0;
+        if (p == 1 || p == 3 || p == 5 || p == 7)
+            xBias = 1;
+        if (p == 2 || p == 3 || p == 6 || p == 7)
+            yBias = 1;
+        if (p == 4 || p == 5 || p == 6 || p == 7)
+            zBias = 1;
+        if (finalMinPos.z == minPos.z && zIndex == 0 && zBias == 0)
+            continue;
+        int dataIndex = int(startIndex + (xIndex + xBias) + (chunkSize.x + 1) * ((yIndex + yBias) + (chunkSize.y + 1) * (zIndex + zBias)));
+        float3 cornerPos = float3((xIndex + xBias) * spacingPerLevel.x, (yIndex + yBias) * spacingPerLevel.y, (zIndex + zBias) * spacingPerLevel.z);
+
+
+        //float3 vel = texelFetch(vel_tex, dataIndex).rgb;
+        float3 vel = vel_tex.Load(dataIndex).rgb;
+        float dist;
+
+        if (pre_tex.Load(dataIndex).r == 0)
+        {
+            vel = ((finalMinPos + cornerPos) - center) * collideForce;
+            dist = pow(distance(center, finalMinPos + cornerPos), 2);
+        }
+        else
+        {
+            dist = pow(distance(position, finalMinPos + cornerPos), 2);
+        }
+
+        if (dist == 0)
+        {
+            A = vel;
+            B = 1;
+            break;
+        }
+        A = A + vel / dist;
+        B = B + 1.f / dist;
+    }
+    if (B != 0)
+        A = A / B;
+    return A;
+}
+
+float4 GetVelocity(float3 pos)
+{
+    chunkIndex = Get_Index(0, pos, minPos, maxPos);
+    if (chunkIndex == -1 || chunkIndex > chunklist_length ||
+	pos.x < minPos.x || pos.x > maxPos.x || pos.y < minPos.y || pos.y > maxPos.y || pos.z < minPos.z || pos.z > maxPos.z)
+    {
+        valid = 0;
+        return float4(1, 1, 1, 1);
+    }
+    return float4(SampleFromTexture(pos.xyz), 1);
+}
+
+[numthreads(THREADGROUPSIZE_X, THREADGROUPSIZE_Y, THREADGROUPSIZE_Z)]
+void MainCS(uint3 gid : SV_DispatchThreadID)
+{
+    //uint gid = gl_GlobalInvocationID.x;
+    chunkPointCount = int(chunkSize.x + 1) * int(chunkSize.y + 1) * int(chunkSize.z + 1);
+    finalMinPos = minPos;
+    finalMaxPos = maxPos;
+    float4 pos = positions[gid.x];
+
+    valid = 1;
+    int visibilityCounter = animateTime;
+    for (int i = 0; i < maxLength; i++)
+    {
+        float4 new_p = float4(0, 0, 0, 0);
+        if (valid == 1)
+        {
+            float dtControl = dt / stepDivider;
+            float dtHalf = dtControl * 0.5f;
+            
+            float4 k1, k2, k3, k4;
+            if (hack == 1 && distance(pos.xyz, hackPos) <= radius)
+            {
+                float3 temp = float3(0.555f, 0.4f, 0.29f);
+                k1 = GetVelocity(temp.xyz);
+                k2 = GetVelocity(float3(float(temp.x + dtHalf * k1.x), float(temp.y + dtHalf * k1.y), float(temp.z + dtHalf * k1.z)));
+                k3 = GetVelocity(float3(float(temp.x + dtHalf * k2.x), float(temp.y + dtHalf * k2.y), float(temp.z + dtHalf * k2.z)));
+                k4 = GetVelocity(float3(float(temp.x + dtHalf * 2 * k3.x), float(temp.y + dtHalf * 2 * k3.y), float(temp.z + dtHalf * 2 * k3.z)));
+            }
+            else
+            {
+                k1 = GetVelocity(pos.xyz);
+                k2 = GetVelocity(float3(float(pos.x + dtHalf * k1.x), float(pos.y + dtHalf * k1.y), float(pos.z + dtHalf * k1.z)));
+                k3 = GetVelocity(float3(float(pos.x + dtHalf * k2.x), float(pos.y + dtHalf * k2.y), float(pos.z + dtHalf * k2.z)));
+                k4 = GetVelocity(float3(float(pos.x + dtHalf * 2 * k3.x), float(pos.y + dtHalf * 2 * k3.y), float(pos.z + dtHalf * 2 * k3.z)));
+            }
+            
+            float dtSixth = dtControl / 6.0f;
+            float4 new_v = float4(
+				dtSixth * (k1.x + 2.0 * (k2.x + k3.x) + k4.x),
+				dtSixth * (k1.y + 2.0 * (k2.y + k3.y) + k4.y),
+				dtSixth * (k1.z + 2.0 * (k2.z + k3.z) + k4.z), 0);
+            
+            //if (hack == 1 && distance(pos.xyz, hackPos) <= radius)
+            //{
+            //    //float percentage = length(new_v);
+            //    new_p = pos + float4(length(new_v), 0, 0, 0);
+            //}
+            //else
+            //{
+            //    new_p = pos + new_v;
+            //}
+            new_p = pos + new_v;
+            
+            if (valid == 1)
+            {
+                if (visibilityCounter < visibleLength)
+                    new_p.w = length(new_v);
+                else
+                    new_p.w = length(0);
+            }
+            
+            pos = new_p;
+        }
+        pathLine[i + gid.x * maxLength] = new_p;
+        visibilityCounter++;
+        if (visibilityCounter > visibleLength + invisibleLength)
+            visibilityCounter = 0;
+    }
+}

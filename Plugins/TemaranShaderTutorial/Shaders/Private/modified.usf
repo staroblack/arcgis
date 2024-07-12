@@ -1,0 +1,478 @@
+// @Author	Fredrik Lindh [Temaran] (temaran@gmail.com) {https://github.com/Temaran}
+///////////////////////////////////////////////////////////////////////////////////////
+
+#include "/Engine/Public/Platform.ush"
+
+// VERTEX SHADER
+////////////////
+
+void MainVertexShader(float4 InPosition : ATTRIBUTE0, float2 InUV : ATTRIBUTE1, out float2 OutUV : TEXCOORD0, out float4 OutPosition : SV_Position)
+{
+    OutPosition = InPosition;
+    OutUV = InUV;
+}
+
+// PIXEL SHADER
+///////////////
+
+Texture2D<uint> ComputeShaderOutput;
+float4 StartColor;
+float4 EndColor;
+float2 TextureSize;
+float BlendFactor;
+
+// plane shader parameter
+Buffer<int> index_tex;
+Buffer<int> status_tex;
+Buffer<float3> vel_tex;
+Buffer<float> pre_tex;
+Texture2D tex;
+
+//octree
+int index_length;
+int chunklist_length;
+
+float3 chunkSize;
+float3 minPos;
+float3 maxPos;
+float3 spacing;
+int totalLevel;
+float minValue;
+float maxValue;
+    
+int renderingMode;
+
+static float3 finalMinPos = (float3) 0;
+static float3 finalMaxPos = (float3) 0;
+static int chunkPointCount = (int) 0;
+static int level = (int) 0;
+
+float colormap_red(float x)
+{
+    if (x < 0.7)
+    {
+        return 4.0 * x - 1.5;
+    }
+    else
+    {
+        return -4.0 * x + 4.5;
+    }
+}
+
+float colormap_green(float x)
+{
+    if (x < 0.5)
+    {
+        return 4.0 * x - 0.5;
+    }
+    else
+    {
+        return -4.0 * x + 3.5;
+    }
+}
+
+float colormap_blue(float x)
+{
+    if (x < 0.3)
+    {
+        return 4.0 * x + 0.5;
+    }
+    else
+    {
+        return -4.0 * x + 2.5;
+    }
+}
+
+float4 colormap(float x)
+{
+    float r = clamp(colormap_red(x), 0.0, 1.0);
+    float g = clamp(colormap_green(x), 0.0, 1.0);
+    float b = clamp(colormap_blue(x), 0.0, 1.0);
+    return float4(r, g, b, 1);
+}
+
+int Get_Index(int location, float3 position, float3 _minPos, float3 _maxPos)
+{
+    level = 0;
+    int returnValue;
+    while (true)
+    {
+        if (location >= index_length)
+            return -1;
+        
+        int status = status_tex[location];
+        int index = index_tex[location];
+        if (status == 0)
+        {
+            returnValue = -1;
+            break;
+        }
+        else if (status == 1)
+        {
+            level += 1;
+            float3 _center = (_minPos + _maxPos) / 2;
+            int bias = 0;
+            if (position.x >= _center.x)
+            {
+                bias += 1;
+                _minPos.x = _center.x;
+            }
+            else
+                _maxPos.x = _center.x;
+            if (position.y >= _center.y)
+            {
+                bias += 2;
+                _minPos.y = _center.y;
+            }
+            else
+                _maxPos.y = _center.y;
+            if (position.z >= _center.z)
+            {
+                bias += 4;
+                _minPos.z = _center.z;
+            }
+            else
+                _maxPos.z = _center.z;
+            location = index + bias;
+        }
+        else if (status == 2)
+        {
+            finalMinPos = _minPos;
+            finalMaxPos = _maxPos;
+            returnValue = index;
+            break;
+        }
+    }
+    return returnValue;
+}
+
+float SampleFromTexture(float3 position)
+{
+    int chunkIndex = Get_Index(0, position, minPos, maxPos);
+
+    if (chunkIndex == -1)
+        return -10000;
+    else if (chunkIndex > chunklist_length)
+        return -10000;
+
+    int startIndex = chunkPointCount * chunkIndex;
+    int multiply = int(pow(2, totalLevel - level));
+    float3 spacingPerLevel = spacing * multiply;
+
+    float xPercent = position.x - finalMinPos.x;
+    float yPercent = position.y - finalMinPos.y;
+    float zPercent = position.z - finalMinPos.z;
+    int xIndex = int(xPercent / spacingPerLevel.x);
+    int yIndex = int(yPercent / spacingPerLevel.y);
+    int zIndex = int(zPercent / spacingPerLevel.z);
+    xPercent -= float(xIndex) * spacingPerLevel.x;
+    yPercent -= float(yIndex) * spacingPerLevel.y;
+    zPercent -= float(zIndex) * spacingPerLevel.z;
+    float3 A[8];
+
+    int xBias, yBias, zBias, dataIndex;
+
+    for (int p = 0; p < 8; p++)
+    {
+        xBias = yBias = zBias = 0;
+        if (p == 1 || p == 3 || p == 5 || p == 7)
+            xBias = 1;
+        if (p == 2 || p == 3 || p == 6 || p == 7)
+            yBias = 1;
+        if (p == 4 || p == 5 || p == 6 || p == 7)
+            zBias = 1;
+        dataIndex = int(startIndex + (xIndex + xBias) + (chunkSize.x + 1) * ((yIndex + yBias) + (chunkSize.y + 1) * (zIndex + zBias)));
+        
+        if (renderingMode == 0)
+            A[p][0] = abs(vel_tex[dataIndex][0]);
+        else if (renderingMode == 1)
+            A[p][0] = abs(vel_tex[dataIndex][1]);
+        else if (renderingMode == 2)
+            A[p][0] = abs(vel_tex[dataIndex][2]);
+        else if (renderingMode == 3)
+            A[p][0] = pre_tex[dataIndex];
+        else if (renderingMode == 4)
+            A[p] = vel_tex[dataIndex];
+    }
+
+    float3 B[4];
+    for (int q = 0; q < 4; q++)
+    {
+        B[q] = A[q * 2] + xPercent * (A[q * 2 + 1] - A[q * 2]) / spacingPerLevel.x;
+    }
+
+    float3 C[2];
+    for (int r = 0; r < 2; r++)
+    {
+        C[r] = B[r * 2] + yPercent * (B[r * 2 + 1] - B[r * 2]) / spacingPerLevel.y;
+    }
+
+    float3 D;
+    D = C[0] + zPercent * (C[1] - C[0]) / spacingPerLevel.z;
+
+    if (renderingMode != 4)
+        return D.r;
+    else
+        return length(D);
+}
+
+void MainPixelShader(in float2 uv : TEXCOORD0, out float4 OutColor : SV_Target0)
+{
+	// First we need to unpack the uint material and retrieve the underlying R8G8B8A8_UINT values.
+    uint packedValue = ComputeShaderOutput.Load(int3(TextureSize.y * uv.y, TextureSize.x * uv.x, 0));
+    uint r = (packedValue & 0x000000FF);
+    uint g = (packedValue & 0x0000FF00) >> 8;
+    uint b = (packedValue & 0x00FF0000) >> 16;
+    uint a = (packedValue & 0xFF000000) >> 24;
+    
+    OutColor = float4(r, g, b, a);
+	
+	// Here we will just blend using the TextureParameterBlendFactor between our simple color change shader and the input from the compute shader
+    float alpha = length(uv) / length(float2(1, 1));
+    float4 solidColorComponent = lerp(StartColor, EndColor, alpha) * (1.0 - BlendFactor);
+    float4 computeShaderComponent = float4(r, g, b, a) / 255.0 * BlendFactor;
+    OutColor = solidColorComponent + computeShaderComponent;
+}
+
+void m3(float4 InPosition,float4 OutColor)
+{
+    chunkPointCount = int(chunkSize.x + 1) * int(chunkSize.y + 1) * int(chunkSize.z + 1);
+    level = 0;
+    
+    float value = 0;
+    float biasValue = 0.015;
+    float biasValueHalf = 0.0075;
+    int xBias, yBias, zBias;
+    float sampledValue = 0;
+    float3 basePos = InPosition.xyz - float3(biasValueHalf, biasValueHalf, biasValueHalf);
+    for (int p = 0; p < 8; p++)
+    {
+        xBias = yBias = zBias = 0;
+        if (p == 1 || p == 3 || p == 5 || p == 7)
+            xBias = 1;
+        if (p == 2 || p == 3 || p == 6 || p == 7)
+            yBias = 1;
+        if (p == 4 || p == 5 || p == 6 || p == 7)
+            zBias = 1;
+        float3 movedPos = float3(basePos.x + xBias * biasValue, basePos.y + yBias * biasValue, basePos.z + zBias * biasValue);
+        sampledValue += SampleFromTexture(movedPos);
+    }
+    sampledValue /= 8;
+
+    float oriValue = SampleFromTexture(InPosition.xyz);
+    value = sampledValue;
+    if (abs(finalMinPos.x - InPosition.x) < biasValue)
+        value = oriValue * (abs(finalMinPos.x - InPosition.x) / biasValue) + sampledValue * (1 - (abs(finalMinPos.x - InPosition.x) / biasValue));
+    else if (abs(finalMaxPos.x - InPosition.x) < 0.0075)
+        value = oriValue * (abs(finalMaxPos.x - InPosition.x) / biasValue) + sampledValue * (1 - (abs(finalMaxPos.x - InPosition.x) / biasValue));
+    OutColor = colormap((value - minValue) / (maxValue - minValue));
+}
+
+struct functions
+{
+    float3 finalMinPos;
+    float3 finalMaxPos;
+    int chunkPointCount;
+    int level;
+    
+    Texture2D index_tex;
+    int index_tex_size;
+    Texture2D status_tex;
+    Texture2D vel_tex;
+    Texture2D pre_tex;
+    int index_length;
+    int chunklist_length;
+    float3 chunkSize;
+    float3 minPos;
+    float3 maxPos;
+    float3 spacing;
+    int totalLevel;
+    float minValue;
+    float maxValue;
+    
+    int renderingMode;
+    
+    int Get_Index(int location, float3 position, float3 _minPos, float3 _maxPos)
+    {
+        level = 0;
+        int returnValue;
+        while (true)
+        {
+            if (location >= index_length)
+                return -1;
+            int rowI = location / index_tex_size;
+            int colI = location - rowI * index_tex_size;
+            int3 coord = int3(colI, rowI, 0);
+            int status = int(status_tex.Load(coord).r);
+            int index = int(index_tex.Load(coord).r);
+            if (status == 0)
+            {
+                returnValue = -1;
+                break;
+            }
+            else if (status == 1)
+            {
+                level += 1;
+                float3 _center = (_minPos + _maxPos) / 2;
+                int bias = 0;
+                if (position.x >= _center.x)
+                {
+                    bias += 1;
+                    _minPos.x = _center.x;
+                }
+                else
+                    _maxPos.x = _center.x;
+                if (position.y >= _center.y)
+                {
+                    bias += 2;
+                    _minPos.y = _center.y;
+                }
+                else
+                    _maxPos.y = _center.y;
+                if (position.z >= _center.z)
+                {
+                    bias += 4;
+                    _minPos.z = _center.z;
+                }
+                else
+                    _maxPos.z = _center.z;
+                location = index + bias;
+            }
+            else if (status == 2)
+            {
+                finalMinPos = _minPos;
+                finalMaxPos = _maxPos;
+                returnValue = index;
+                break;
+            }
+        }
+        return returnValue;
+    }
+
+    float SampleFromTexture(float3 position)
+    {
+        int chunkIndex = Get_Index(0, position, minPos, maxPos);
+
+        if (chunkIndex == -1)
+            return -10000;
+        else if (chunkIndex > chunklist_length)
+            return -10000;
+
+        int startIndex = chunkPointCount * chunkIndex;
+        int multiply = int(pow(2, totalLevel - level));
+        float3 spacingPerLevel = spacing * multiply;
+
+        float xPercent = position.x - finalMinPos.x;
+        float yPercent = position.y - finalMinPos.y;
+        float zPercent = position.z - finalMinPos.z;
+        int xIndex = int(xPercent / spacingPerLevel.x);
+        int yIndex = int(yPercent / spacingPerLevel.y);
+        int zIndex = int(zPercent / spacingPerLevel.z);
+        xPercent -= float(xIndex) * spacingPerLevel.x;
+        yPercent -= float(yIndex) * spacingPerLevel.y;
+        zPercent -= float(zIndex) * spacingPerLevel.z;
+        float3 A[8];
+
+        int xBias, yBias, zBias, dataIndex;
+
+        for (int p = 0; p < 8; p++)
+        {
+            xBias = yBias = zBias = 0;
+            if (p == 1 || p == 3 || p == 5 || p == 7)
+                xBias = 1;
+            if (p == 2 || p == 3 || p == 6 || p == 7)
+                yBias = 1;
+            if (p == 4 || p == 5 || p == 6 || p == 7)
+                zBias = 1;
+            dataIndex = int(startIndex + (xIndex + xBias) + (chunkSize.x + 1) * ((yIndex + yBias) + (chunkSize.y + 1) * (zIndex + zBias)));
+            
+            
+            int rowI = dataIndex / index_tex_size;
+            int colI = dataIndex - rowI * index_tex_size;
+            int3 coord = int3(colI, rowI, 0);
+            //int texSize = floor(sqrt(vel_length)) + 1;
+            //int3 coord = int3(dataIndex % texSize, dataIndex / texSize, 0);
+            if (renderingMode == 0)
+                A[p][0] = abs(vel_tex.Load(coord).r);
+            else if (renderingMode == 1)
+                A[p][0] = abs(vel_tex.Load(coord).g);
+            else if (renderingMode == 2)
+                A[p][0] = abs(vel_tex.Load(coord).b);
+            else if (renderingMode == 3)
+                A[p][0] = pre_tex.Load(coord).r;
+            else if (renderingMode == 4)
+                A[p] = vel_tex.Load(coord).rgb;
+        }
+
+        float3 B[4];
+        for (int q = 0; q < 4; q++)
+        {
+            B[q] = A[q * 2] + xPercent * (A[q * 2 + 1] - A[q * 2]) / spacingPerLevel.x;
+        }
+
+        float3 C[2];
+        for (int r = 0; r < 2; r++)
+        {
+            C[r] = B[r * 2] + yPercent * (B[r * 2 + 1] - B[r * 2]) / spacingPerLevel.y;
+        }
+        float3 D;
+        D = C[0] + zPercent * (C[1] - C[0]) / spacingPerLevel.z;
+
+        if (renderingMode != 4)
+            return D.r;
+        else
+            return length(D);
+    }
+};
+
+float m4(float3 pos)
+{
+    functions f;
+    f.chunkPointCount = int(chunkSize.x + 1) * int(chunkSize.y + 1) * int(chunkSize.z + 1);
+    f.level = 0;
+    f.finalMinPos = (float3) 0;
+    f.finalMaxPos = (float3) 0;
+    
+    f.index_tex = index_tex;
+    f.status_tex = status_tex;
+    f.vel_tex = vel_tex;
+    f.pre_tex = pre_tex;
+    f.index_length = index_length;
+    f.chunklist_length = chunklist_length;
+    f.chunkSize = chunkSize;
+    f.minPos = minPos;
+    f.maxPos = maxPos;
+    f.spacing = spacing;
+    f.totalLevel = totalLevel;
+    f.minValue = minValue;
+    f.maxValue = maxValue;
+    f.renderingMode = renderingMode;
+
+    float value = 0;
+    float biasValue = 0.015; // original 0.015
+    float biasValueHalf = 0.0075; // original 0.0075
+    int xBias, yBias, zBias;
+    float sampledValue = 0;
+    float3 basePos = pos.xyz - float3(biasValueHalf, biasValueHalf, biasValueHalf);
+    for (int p = 0; p < 8; p++)
+    {
+        xBias = yBias = zBias = 0;
+        if (p == 1 || p == 3 || p == 5 || p == 7)
+            xBias = 1;
+        if (p == 2 || p == 3 || p == 6 || p == 7)
+            yBias = 1;
+        if (p == 4 || p == 5 || p == 6 || p == 7)
+            zBias = 1;
+        float3 movedPos = float3(basePos.x + xBias * biasValue, basePos.y + yBias * biasValue, basePos.z + zBias * biasValue);
+        sampledValue += f.SampleFromTexture(movedPos);
+    }
+    sampledValue /= 8;
+
+    float oriValue = f.SampleFromTexture(pos.xyz);
+    value = sampledValue;
+    if (abs(f.finalMinPos.x - pos.x) < biasValue)
+        value = oriValue * (abs(f.finalMinPos.x - pos.x) / biasValue) + sampledValue * (1 - (abs(f.finalMinPos.x - pos.x) / biasValue));
+    else if (abs(f.finalMaxPos.x - pos.x) < 0.0075) // 0.0075
+        value = oriValue * (abs(f.finalMaxPos.x - pos.x) / biasValue) + sampledValue * (1 - (abs(f.finalMaxPos.x - pos.x) / biasValue));
+    return (value - f.minValue) / (f.maxValue - f.minValue);
+}

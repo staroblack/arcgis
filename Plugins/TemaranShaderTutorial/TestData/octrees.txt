@@ -1,0 +1,14 @@
+maxValue: 15.5429
+index_length: 4225
+chunklist_length: 3002
+chunkSize: 13 5 4
+minPos: -1.2425 -0.675 0
+maxPos: 2.4325 0.675 1.19
+spacing: 0.00883413 0.0084375 0.00929688
+totalLevel: 5
+
+plane coordinate
+-1.2425, -0.675, 0.0595
+2.4325, -0.675, 0.0595
+2.4325, 0.675, 0.0595
+-1.2425, 0.675, 0.0595

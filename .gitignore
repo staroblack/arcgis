@@ -1,5 +1,12 @@
 .vs/*
+.vsconfig
 
-Save/*
+Saved/*
 Intermediate/*
 Binaries/*
+
+Plugins/ArcGISMapsSDK/*
+Plugins/CustomOctreePlugin/Binaries/*
+Plugins/CustomOctreePlugin/Intermediate/*
+Plugins/TemaranShaderTutorial/Binaries/*
+Plugins/TemaranShaderTutorial/Intermediate/*
