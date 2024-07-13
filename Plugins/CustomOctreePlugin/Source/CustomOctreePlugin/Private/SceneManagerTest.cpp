@@ -253,9 +253,10 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	}
 	
 
-	//UE_LOG(LogTemp, Log, TEXT("Loaded %d chunks."), loadChunkCount);
+	UE_LOG(LogTemp, Log, TEXT("Loaded %d chunks."), loadChunkCount);
 	FVector playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-	//UE_LOG(LogTemp, Log, TEXT("Player %f, %f %f"), playerPos.X, playerPos.Y, playerPos.Z);
+	FVector PlayerControllerLoc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+	UE_LOG(LogTemp, Log, TEXT("PlayerControllerLoc %f, %f %f"), PlayerControllerLoc.X, PlayerControllerLoc.Y, PlayerControllerLoc.Z);
 
 	//DrawCube(glm2FVec(_octree.GetMin()), glm2FVec(_octree.GetMax()));
 
@@ -278,8 +279,8 @@ void ASceneManagerTest::Tick(float DeltaTime)
 //Editing LoadChunkDataFromFile Function
 void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkListIndex) {
 	if (DrawRedDot)
-		DrawDebugPoint(GetWorld(), glm2FVec(_Chunk->center), 5, FColor::Red, false, 0.1f);
-
+		DrawDebugPoint(GetWorld(), glm2FVec(_Chunk->center), 50, FColor::Red, false, 0.1f);
+	
 	try {
 		++loadChunkCount;
 		Frame& fc = _octree.GetFrameCollection()[nowFrame - 1];
@@ -396,7 +397,11 @@ void ASceneManagerTest::GetChunkInFrustum(CustomChunk* _Chunk, vector<CustomChun
 	else {
 		for (int i = 0; i < 8; i++) {
 			if (ClipFrustum(_Chunk->child[i], frustumEquation)) {
+
 				FVector distVec = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation() - glm2FVec(_Chunk->child[i]->center);
+
+				FVector distVec = FVector(-540.0f, -70.0f, 134.0f) - glm2FVec(_Chunk->child[i]->center);
+
 				if (distVec.Length() < octreeLODList[_octree.GetTotalLevel() - _Chunk->level] * baseViewDistance) {
 					GetChunkInFrustum(_Chunk->child[i], _chunkList, frustumEquation);
 				}
@@ -452,16 +457,16 @@ void ASceneManagerTest::DrawCube(FVector min, FVector max) {
 		FVector target(base.X, base.Y, max.Z );
 		float scaleSize = 100.0f * MyScale;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5* MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
 
 		int index2 = rotateArr[(i + 1) & 3];
 		target = FVector((index2 & 1) ? min.X : max.X, (index2 & 2) ? min.Y : max.Y, min.Z);
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5* MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
 
 		base.Z = target.Z = max.Z;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5* MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
 	}
 }
 
@@ -758,6 +763,7 @@ void ASceneManagerTest::UpdateDynamicStreamLine() {
 	dynamicStreamParams.center = Center;
 	dynamicStreamParams.myScale = MyScale;
 	dynamicStreamParams.transform = glm2FVec(lineGenerator.transform);
+
 	FMyShaders::GetDynamicStreamLine(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, dynamicStreamParams);
 }
 

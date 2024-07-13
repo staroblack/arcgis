@@ -194,7 +194,7 @@ public:
 							end * scaleSize + params.center,
 							colormap(pathLine[offset].W / params.maxMag), //pathLine[offset].W = 0.0035 -> red
 							0.1, // for long period draw
-							0.5* params.myScale,
+							0.5 * params.myScale,
 							0
 						);
 						lines.Add(line);
