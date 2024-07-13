@@ -172,7 +172,7 @@ public:
 				}
 
 				params.pathLine = pathLine;
-				FVector3f center = (params.minPos + params.maxPos) / 2;
+				//FVector3f center = (params.minPos + params.maxPos) / 2;
 
 				float scaleSize = 100.0 * params.myScale;
 				TArray<FBatchedLine> lines;
@@ -187,8 +187,8 @@ public:
 						if (pathLine[offset].W <= 0 || pathLine[offset + 1].W <= 0)
 							continue;
 
-						FVector start = FVector(pathLine[offset].X , center.Y * 2 - pathLine[offset].Y , pathLine[offset].Z);
-						FVector end = FVector(pathLine[offset + 1].X, center.Y * 2 - pathLine[offset + 1].Y, pathLine[offset + 1].Z );
+						FVector start = FVector(pathLine[offset].X , pathLine[offset].Y , pathLine[offset].Z);
+						FVector end = FVector(pathLine[offset + 1].X, pathLine[offset + 1].Y, pathLine[offset + 1].Z );
 
 						FBatchedLine line = FBatchedLine(start * scaleSize + params.center,
 							end * scaleSize + params.center,

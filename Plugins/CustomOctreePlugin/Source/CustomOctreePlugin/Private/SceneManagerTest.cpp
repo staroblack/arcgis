@@ -253,11 +253,11 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	}
 	
 
-	UE_LOG(LogTemp, Log, TEXT("Loaded %d chunks."), loadChunkCount);
+	//UE_LOG(LogTemp, Log, TEXT("Loaded %d chunks."), loadChunkCount);
 	FVector playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-	UE_LOG(LogTemp, Log, TEXT("Player %f, %f %f"), playerPos.X, playerPos.Y, playerPos.Z);
+	//UE_LOG(LogTemp, Log, TEXT("Player %f, %f %f"), playerPos.X, playerPos.Y, playerPos.Z);
 
-	DrawCube(glm2FVec(_octree.GetMin()), glm2FVec(_octree.GetMax()));
+	//DrawCube(glm2FVec(_octree.GetMin()), glm2FVec(_octree.GetMax()));
 
 	UpdateTexBuffer();
 
