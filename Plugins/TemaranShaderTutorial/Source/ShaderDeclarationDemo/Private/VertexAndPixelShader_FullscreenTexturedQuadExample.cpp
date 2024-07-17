@@ -22,27 +22,27 @@ class FSimpleScreenVertexBuffer : public FVertexBuffer
 {
 public:
 	/** Initialize the RHI for this rendering resource */
-	virtual void InitRHI(FRHICommandListBase& RHICmdList) override
-	{
-		TResourceArray<FFilterVertex, VERTEXBUFFER_ALIGNMENT> Vertices;
-		Vertices.SetNumUninitialized(6);
+	//virtual void InitRHI(FRHICommandListBase& RHICmdList) override
+	//{
+	//	TResourceArray<FFilterVertex, VERTEXBUFFER_ALIGNMENT> Vertices;
+	//	Vertices.SetNumUninitialized(6);
 
-		Vertices[0].Position = FVector4f(-1, 1, 0, 1);
-		Vertices[0].UV = FVector2f(0, 0);
+	//	Vertices[0].Position = FVector4f(-1, 1, 0, 1);
+	//	Vertices[0].UV = FVector2f(0, 0);
 
-		Vertices[1].Position = FVector4f(1, 1, 0, 1);
-		Vertices[1].UV = FVector2f(1, 0);
+	//	Vertices[1].Position = FVector4f(1, 1, 0, 1);
+	//	Vertices[1].UV = FVector2f(1, 0);
 
-		Vertices[2].Position = FVector4f(-1, -1, 0, 1);
-		Vertices[2].UV = FVector2f(0, 1);
+	//	Vertices[2].Position = FVector4f(-1, -1, 0, 1);
+	//	Vertices[2].UV = FVector2f(0, 1);
 
-		Vertices[3].Position = FVector4f(1, -1, 0, 1);
-		Vertices[3].UV = FVector2f(1, 1);
+	//	Vertices[3].Position = FVector4f(1, -1, 0, 1);
+	//	Vertices[3].UV = FVector2f(1, 1);
 
-		// Create vertex buffer. Fill buffer with initial data upon creation
-		FRHIResourceCreateInfo CreateInfo(TEXT("ShaderDemoSquare"), &Vertices);
-		VertexBufferRHI = RHICmdList.CreateVertexBuffer(Vertices.GetResourceDataSize(), BUF_Static, CreateInfo);
-	}
+	//	// Create vertex buffer. Fill buffer with initial data upon creation
+	//	FRHIResourceCreateInfo CreateInfo(TEXT("ShaderDemoSquare"), &Vertices);
+	//	VertexBufferRHI = RHICmdList.CreateVertexBuffer(Vertices.GetResourceDataSize(), BUF_Static, CreateInfo);
+	//}
 };
 TGlobalResource<FSimpleScreenVertexBuffer> GSimpleScreenVertexBuffer;
 

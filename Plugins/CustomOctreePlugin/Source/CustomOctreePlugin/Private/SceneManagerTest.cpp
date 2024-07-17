@@ -398,7 +398,7 @@ void ASceneManagerTest::GetChunkInFrustum(CustomChunk* _Chunk, vector<CustomChun
 		for (int i = 0; i < 8; i++) {
 			if (ClipFrustum(_Chunk->child[i], frustumEquation)) {
 
-				FVector distVec = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation() - glm2FVec(_Chunk->child[i]->center);
+				//FVector distVec = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation() - glm2FVec(_Chunk->child[i]->center);
 
 				FVector distVec = FVector(-540.0f, -70.0f, 134.0f) - glm2FVec(_Chunk->child[i]->center);
 
