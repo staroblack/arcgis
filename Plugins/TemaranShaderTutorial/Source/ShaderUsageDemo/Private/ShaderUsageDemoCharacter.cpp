@@ -257,76 +257,76 @@ void AShaderUsageDemoCharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(-Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-void AShaderUsageDemoCharacter::ReadData(std::vector<int>& index_tbo_data, std::vector<int>& status_tbo_data, std::vector<FVector3f>& vel_tbo_data, std::vector<float>& pre_tbo_data) {
-	std::ifstream in;
-
-	// init dir
-	FString pluginDir = FPaths::Combine(FPaths::ProjectPluginsDir(), "TemaranShaderTutorial");
-	FString testDataDir = FPaths::Combine(pluginDir, "TestData");
-
-	// c++ 11 lambdas function was not supported template
-	auto OpenIntFile = [&in, &testDataDir](const FString& dataPath, std::vector<int>& buf) {
-		buf.clear();
-		in.open(std::string(TCHAR_TO_UTF8(*dataPath)), std::fstream::in);
-		std::string temp;
-		std::stringstream ss;
-		int t;
-		while (in >> temp) {
-			ss << temp;
-			ss >> t;
-			buf.push_back(t);
-			temp.clear();
-			ss.clear();
-		}
-		in.close();
-		return;
-		};
-
-	auto OpenFloatFile = [&testDataDir, &in](const FString& dataPath, std::vector<float>& buf) {
-		buf.clear();
-		in.open(std::string(TCHAR_TO_UTF8(*dataPath)), std::fstream::in);
-		std::string temp;
-		std::stringstream ss;
-		float t;
-		while (in >> temp) {
-			ss << temp;
-			ss >> t;
-			buf.push_back(t);
-			temp.clear();
-			ss.clear();
-		}
-		in.close();
-		};
-
-	auto OpenVec3File = [&testDataDir, &in](const FString& dataPath, std::vector<FVector3f>& buf) {
-		buf.clear();
-		in.open(std::string(TCHAR_TO_UTF8(*dataPath)), std::fstream::in);
-		std::string temp;
-		std::stringstream ss;
-		FVector3f t;
-		while (in >> temp) {
-			ss << temp;
-			ss >> t[0];
-
-			in >> temp;
-			ss << temp;
-			ss >> t[1];
-
-			in >> temp;
-			ss << temp;
-			ss >> t[2];
-			buf.push_back(t);
-			temp.clear();
-			ss.clear();
-		}
-		in.close();
-		};
-
-	OpenIntFile(FPaths::Combine(testDataDir, "index_tbo.txt"), index_tbo_data);
-	OpenIntFile(FPaths::Combine(testDataDir, "status_tbo.txt"), status_tbo_data);
-	OpenVec3File(FPaths::Combine(testDataDir, "vel_tbo.txt"), vel_tbo_data);
-	OpenFloatFile(FPaths::Combine(testDataDir, "pre_tbo.txt"), pre_tbo_data);
-}
+//void AShaderUsageDemoCharacter::ReadData(std::vector<int>& index_tbo_data, std::vector<int>& status_tbo_data, std::vector<FVector3f>& vel_tbo_data, std::vector<float>& pre_tbo_data) {
+//	std::ifstream in;
+//
+//	// init dir
+//	FString pluginDir = FPaths::Combine(FPaths::ProjectPluginsDir(), "TemaranShaderTutorial");
+//	FString testDataDir = FPaths::Combine(pluginDir, "TestData");
+//
+//	// c++ 11 lambdas function was not supported template
+//	auto OpenIntFile = [&in, &testDataDir](const FString& dataPath, std::vector<int>& buf) {
+//		buf.clear();
+//		in.open(std::string(TCHAR_TO_UTF8(*dataPath)), std::fstream::in);
+//		std::string temp;
+//		std::stringstream ss;
+//		int t;
+//		while (in >> temp) {
+//			ss << temp;
+//			ss >> t;
+//			buf.push_back(t);
+//			temp.clear();
+//			ss.clear();
+//		}
+//		in.close();
+//		return;
+//		};
+//
+//	auto OpenFloatFile = [&testDataDir, &in](const FString& dataPath, std::vector<float>& buf) {
+//		buf.clear();
+//		in.open(std::string(TCHAR_TO_UTF8(*dataPath)), std::fstream::in);
+//		std::string temp;
+//		std::stringstream ss;
+//		float t;
+//		while (in >> temp) {
+//			ss << temp;
+//			ss >> t;
+//			buf.push_back(t);
+//			temp.clear();
+//			ss.clear();
+//		}
+//		in.close();
+//		};
+//
+//	auto OpenVec3File = [&testDataDir, &in](const FString& dataPath, std::vector<FVector3f>& buf) {
+//		buf.clear();
+//		in.open(std::string(TCHAR_TO_UTF8(*dataPath)), std::fstream::in);
+//		std::string temp;
+//		std::stringstream ss;
+//		FVector3f t;
+//		while (in >> temp) {
+//			ss << temp;
+//			ss >> t[0];
+//
+//			in >> temp;
+//			ss << temp;
+//			ss >> t[1];
+//
+//			in >> temp;
+//			ss << temp;
+//			ss >> t[2];
+//			buf.push_back(t);
+//			temp.clear();
+//			ss.clear();
+//		}
+//		in.close();
+//		};
+//
+//	OpenIntFile(FPaths::Combine(testDataDir, "index_tbo.txt"), index_tbo_data);
+//	OpenIntFile(FPaths::Combine(testDataDir, "status_tbo.txt"), status_tbo_data);
+//	OpenVec3File(FPaths::Combine(testDataDir, "vel_tbo.txt"), vel_tbo_data);
+//	OpenFloatFile(FPaths::Combine(testDataDir, "pre_tbo.txt"), pre_tbo_data);
+//}
 
 void AShaderUsageDemoCharacter::CreateTextures(const std::vector<int>& index_tbo_data, const std::vector<int>& status_tbo_data, const std::vector<FVector3f>& vel_tbo_data, const std::vector<float>& pre_tbo_data) {
 	float IndexSizeSqrt = powf(index_tbo_data.size(), 0.5);
