@@ -10,3 +10,5 @@ Plugins/CustomOctreePlugin/Binaries/*
 Plugins/CustomOctreePlugin/Intermediate/*
 Plugins/TemaranShaderTutorial/Binaries/*
 Plugins/TemaranShaderTutorial/Intermediate/*
+Plugins/PakLoader/Binaries/*
+Plugins/PakLoader/Intermediate/*
