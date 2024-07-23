@@ -1,0 +1,415 @@
+#include "/Engine/Public/Platform.ush"
+
+RWBuffer<float4> inPos;
+
+RWBuffer<float4> outPos;
+//RWBuffer<float3> outNormal;
+//RWBuffer<int> outTris;
+
+float3 esNormal, esVertex;
+
+Buffer<int> index_tex;
+Buffer<int> status_tex;
+Buffer<float3> vel_tex;
+Buffer<int> MC_Edge_Trigger_tex;
+Buffer<int> MC_Edge_Connect_tex;
+
+int index_length;
+int chunklist_length;
+
+float4x4 proj;
+//float4x4 view;
+float4x4 model;
+
+float3 chunkSize;
+
+float3 minPos;
+float3 maxPos;
+float3 spacing;
+
+int totalLevel;
+
+int isQCritirea;
+
+float isovalue;
+
+static int level;
+static float3 finalMinPos;
+static int chunkPointCount;
+
+static int OutOfBound;
+
+static float3 midPos;
+
+bool LessThan(float4 left, float4 right)
+{
+    if (left.x < right.x)
+        return false;
+    else if (left.x > right.x)
+        return true;
+
+    if (left.y < right.y)
+        return false;
+    else if (left.y > right.y)
+        return true;
+
+    if (left.z < right.z)
+        return false;
+    else if (left.z > right.z)
+        return true;
+
+    return false;
+}
+
+//Calculate the point between two vertex
+float4 VertexInterp(float4 v0, float4 v1)
+{
+    if (LessThan(v0, v1))
+    {
+        float4 temp = v0;
+        v0 = v1;
+        v1 = temp;
+    }
+
+	///Keep the voxel value and their difference not too small
+    const float epsilon = 1e-10f;
+    if (abs(isovalue - v0.w) < epsilon)
+        return (v0);
+    if (abs(isovalue - v1.w) < epsilon)
+        return (v1);
+    if (abs(v0.w - v1.w) < epsilon)
+        return (v0);
+
+	//Linear interpolation
+    float mu = (isovalue - v0.w) / (v1.w - v0.w);
+    return v0 + (v1 - v0) * mu;
+}
+
+int Get_Index(int location, float3 position, float3 _minPos, float3 _maxPos)
+{
+    level = 0;
+    int returnValue;
+    while (true)
+    {
+        if (location >= index_length)
+            return -1;
+        //int status = int(texelFetch(status_tex, location).r);
+        //int index = int(texelFetch(index_tex, location).r);
+        int status = int(status_tex.Load(location));
+        int index = int(index_tex.Load(location));
+        if (status == 0)
+        {
+            returnValue = -1;
+            break;
+        }
+        else if (status == 1)
+        {
+            level += 1;
+            float3 _center = (_minPos + _maxPos) / 2;
+            int bias = 0;
+            if (position.x >= _center.x)
+            {
+                bias += 1;
+                _minPos.x = _center.x;
+            }
+            else
+                _maxPos.x = _center.x;
+            if (position.y >= _center.y)
+            {
+                bias += 2;
+                _minPos.y = _center.y;
+            }
+            else
+                _maxPos.y = _center.y;
+            if (position.z >= _center.z)
+            {
+                bias += 4;
+                _minPos.z = _center.z;
+            }
+            else
+                _maxPos.z = _center.z;
+            location = index + bias;
+        }
+        else if (status == 2)
+        {
+            finalMinPos = _minPos;
+            returnValue = index;
+            break;
+        }
+    }
+    return returnValue;
+}
+float4 GetVelocity(float3 position, float3 _minPos, float3 _maxPos)
+{
+    int chunkIndex = Get_Index(0, position, _minPos, _maxPos);
+    if (chunkIndex == -1 || chunkIndex > chunklist_length)
+    {
+        OutOfBound = 1;
+        return float4(0, 0, 0, 0);
+    }
+    else
+    {
+        int startIndex = chunkPointCount * chunkIndex;
+        int multiply = int(pow(2, totalLevel - level));
+        float3 spacingPerLevel = spacing * multiply;
+
+        float xPercent = position.x - finalMinPos.x;
+        float yPercent = position.y - finalMinPos.y;
+        float zPercent = position.z - finalMinPos.z;
+        int xIndex = int(xPercent / spacingPerLevel.x);
+        int yIndex = int(yPercent / spacingPerLevel.y);
+        int zIndex = int(zPercent / spacingPerLevel.z);
+        float3 A = float3(0, 0, 0);
+        float B = 0;
+
+
+        int xBias, yBias, zBias;
+        for (int p = 0; p < 8; p++)
+        {
+            xBias = yBias = zBias = 0;
+            if (p == 1 || p == 3 || p == 5 || p == 7)
+                xBias = 1;
+            if (p == 2 || p == 3 || p == 6 || p == 7)
+                yBias = 1;
+            if (p == 4 || p == 5 || p == 6 || p == 7)
+                zBias = 1;
+            int dataIndex = int(startIndex + (xIndex + xBias) + (chunkSize.x + 1) * ((yIndex + yBias) + (chunkSize.y + 1) * (zIndex + zBias)));
+            float3 cornerPos = float3((xIndex + xBias) * spacingPerLevel.x, (yIndex + yBias) * spacingPerLevel.y, (zIndex + zBias) * spacingPerLevel.z);
+
+            //float3 vel = texelFetch(vel_tex, dataIndex).rgb;
+            float3 vel = vel_tex.Load(dataIndex).rgb;
+
+            float dist = pow(distance(position, finalMinPos + cornerPos), 2);
+            if (dist == 0)
+            {
+                A = vel;
+                B = 1;
+                break;
+            }
+            A = A + vel / dist;
+            B = B + 1.f / dist;
+        }
+        if (B != 0)
+            A = A / B;
+        return float4(A, 1);
+    }
+
+}
+
+float GetCornerVorticity(float3 position, float3 _minPos, float3 _maxPos)
+{
+    float3 spacingPerLevel = spacing * pow(2, totalLevel - level);
+    float4 origin = GetVelocity(position, _minPos, _maxPos);
+    float4 xDirVel = GetVelocity(position + float3(spacing.x, 0, 0), _minPos, _maxPos);
+    float4 yDirVel = GetVelocity(position + float3(0, spacing.y, 0), _minPos, _maxPos);
+    float4 zDirVel = GetVelocity(position + float3(0, 0, spacing.z), _minPos, _maxPos);
+
+    float4 xDirVel_m = GetVelocity(position - float3(spacing.x, 0, 0), _minPos, _maxPos);
+    float4 yDirVel_m = GetVelocity(position - float3(0, spacing.y, 0), _minPos, _maxPos);
+    float4 zDirVel_m = GetVelocity(position - float3(0, 0, spacing.z), _minPos, _maxPos);
+
+    if (origin.w == 0 || xDirVel.w == 0 || yDirVel.w == 0 || zDirVel.w == 0 || xDirVel_m.w == 0 || yDirVel_m.w == 0 || zDirVel_m.w == 0)
+        return -10000;
+
+    float iVorticity = (yDirVel.z - origin.z) / spacing.y - (zDirVel.y - origin.y) / spacing.z;
+    float jVorticity = (zDirVel.x - origin.x) / spacing.z - (xDirVel.z - origin.z) / spacing.x;
+    float kVorticity = (xDirVel.y - origin.y) / spacing.x - (yDirVel.x - origin.x) / spacing.y;
+    float vorticity = sqrt(pow(iVorticity, 2) + pow(jVorticity, 2) + pow(kVorticity, 2)); //Right
+
+    float iVorticity_m = (yDirVel_m.z - origin.z) / spacing.y - (zDirVel_m.y - origin.y) / spacing.z;
+    float jVorticity_m = (zDirVel_m.x - origin.x) / spacing.z - (xDirVel_m.z - origin.z) / spacing.x;
+    float kVorticity_m = (xDirVel_m.y - origin.y) / spacing.x - (yDirVel_m.x - origin.x) / spacing.y;
+    float vorticity_m = sqrt(pow(iVorticity_m, 2) + pow(jVorticity_m, 2) + pow(kVorticity_m, 2)); //Left
+
+    return (vorticity + vorticity_m) / 2;
+}
+
+float GetCornerQCritirea(float3 position, float3 _minPos, float3 _maxPos)
+{
+    float3 spacingPerLevel = spacing * pow(2, totalLevel - level);
+    float4 origin = GetVelocity(position, _minPos, _maxPos);
+    float4 xDirVel = GetVelocity(position + float3(spacing.x, 0, 0), _minPos, _maxPos);
+    float4 yDirVel = GetVelocity(position + float3(0, spacing.y, 0), _minPos, _maxPos);
+    float4 zDirVel = GetVelocity(position + float3(0, 0, spacing.z), _minPos, _maxPos);
+
+    float4 xDirVel_m = GetVelocity(position - float3(spacing.x, 0, 0), _minPos, _maxPos);
+    float4 yDirVel_m = GetVelocity(position - float3(0, spacing.y, 0), _minPos, _maxPos);
+    float4 zDirVel_m = GetVelocity(position - float3(0, 0, spacing.z), _minPos, _maxPos);
+
+    if (origin.w == 0 || xDirVel.w == 0 || yDirVel.w == 0 || zDirVel.w == 0 || xDirVel_m.w == 0 || yDirVel_m.w == 0 || zDirVel_m.w == 0)
+        return -10000;
+
+    float iShear = (xDirVel.x - origin.x) / spacing.x;
+    float jShear = (yDirVel.y - origin.y) / spacing.y;
+    float kShear = (zDirVel.z - origin.z) / spacing.z;
+    float shear = (pow(iShear, 2) + pow(jShear, 2) + pow(kShear, 2)) * -0.5f;
+
+    float iOmega = (yDirVel.z - origin.z) / spacing.y * (zDirVel.y - origin.y) / spacing.z;
+    float jOmega = (zDirVel.x - origin.x) / spacing.z * (xDirVel.z - origin.z) / spacing.x;
+    float kOmega = (xDirVel.y - origin.y) / spacing.x * (yDirVel.x - origin.x) / spacing.y;
+    float omega = -(iOmega + jOmega + kOmega);
+
+    float iShear_m = (xDirVel_m.x - origin.x) / spacing.x;
+    float jShear_m = (yDirVel_m.y - origin.y) / spacing.y;
+    float kShear_m = (zDirVel_m.z - origin.z) / spacing.z;
+    float shear_m = (pow(iShear_m, 2) + pow(jShear_m, 2) + pow(kShear_m, 2)) * -0.5f;
+
+    float iOmega_m = (yDirVel_m.z - origin.z) / spacing.y * (zDirVel_m.y - origin.y) / spacing.z;
+    float jOmega_m = (zDirVel_m.x - origin.x) / spacing.z * (xDirVel_m.z - origin.z) / spacing.x;
+    float kOmega_m = (xDirVel_m.y - origin.y) / spacing.x * (yDirVel_m.x - origin.x) / spacing.y;
+    float omega_m = -(iOmega_m + jOmega_m + kOmega_m);
+
+    float QValue = omega + shear; //Right
+    float QValue_m = omega_m + shear_m; //Left
+
+    return (QValue + QValue_m) / 2;
+}
+
+struct GridCube
+{
+    float4 vertex_val[8];
+};
+
+void render_isosurface(float4 position, uint3 threadID)
+{
+    OutOfBound = 0;
+    GridCube grid;
+	
+    chunkPointCount = int(chunkSize.x + 1) * int(chunkSize.y + 1) * int(chunkSize.z + 1);
+
+    int cubeIndex = 0;
+
+    Get_Index(0, position.xyz, minPos, maxPos);
+    int multiply = int(pow(2, totalLevel - level));
+    float3 spacingPerLevel = spacing * multiply;
+    for (int i = 0; i < 8; ++i)
+    {
+        float xBias = 0, yBias = 0, zBias = 0;
+        if (i == 1 || i == 2 || i == 5 || i == 6)
+            xBias = 1;
+        if (i == 2 || i == 3 || i == 6 || i == 7)
+            yBias = 1;
+        if (i == 4 || i == 5 || i == 6 || i == 7)
+            zBias = 1;
+        float3 cornerPos = position.xyz + float3(xBias, yBias, zBias) * spacingPerLevel;
+        if (isQCritirea == 0)
+            grid.vertex_val[i] = float4(cornerPos, GetCornerVorticity(cornerPos, minPos, maxPos));
+        else if (isQCritirea == 1)
+            grid.vertex_val[i] = float4(cornerPos, GetCornerQCritirea(cornerPos, minPos, maxPos));
+    }
+
+    if (OutOfBound == 1)
+        return;
+    int groundCount = 0;
+    for (int i = 0; i < 8; ++i)
+    {
+        if (grid.vertex_val[i].z == 0)
+        {
+            groundCount++;
+        }
+    }
+	//if(groundCount > 0)
+		//return;
+    for (int i = 0; i < 8; ++i)
+    {
+        if (grid.vertex_val[i].w < isovalue)
+            cubeIndex |= (1 << i);
+    }
+
+    if (0 == MC_Edge_Trigger_tex.Load(cubeIndex).r)
+        return;
+
+    float4 vertlist[12];
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 1))
+        vertlist[0] = VertexInterp(grid.vertex_val[0], grid.vertex_val[1]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 2))
+        vertlist[1] = VertexInterp(grid.vertex_val[1], grid.vertex_val[2]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 4))
+        vertlist[2] = VertexInterp(grid.vertex_val[2], grid.vertex_val[3]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 8))
+        vertlist[3] = VertexInterp(grid.vertex_val[3], grid.vertex_val[0]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 16))
+        vertlist[4] = VertexInterp(grid.vertex_val[4], grid.vertex_val[5]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 32))
+        vertlist[5] = VertexInterp(grid.vertex_val[5], grid.vertex_val[6]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 64))
+        vertlist[6] = VertexInterp(grid.vertex_val[6], grid.vertex_val[7]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 128))
+        vertlist[7] = VertexInterp(grid.vertex_val[7], grid.vertex_val[4]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 256))
+        vertlist[8] = VertexInterp(grid.vertex_val[0], grid.vertex_val[4]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 512))
+        vertlist[9] = VertexInterp(grid.vertex_val[1], grid.vertex_val[5]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 1024))
+        vertlist[10] = VertexInterp(grid.vertex_val[2], grid.vertex_val[6]);
+
+    if (bool(MC_Edge_Trigger_tex.Load(cubeIndex).r & 2048))
+        vertlist[11] = VertexInterp(grid.vertex_val[3], grid.vertex_val[7]);
+
+    int numOfTriangle = 0;
+
+    //float4x4 matrixModelView = view * model;
+    float4x4 matrixModelView = model;
+    float4x4 matrixNormal = matrixModelView;
+    matrixNormal[3] = float4(0, 0, 0, 1);
+    for (int i = 0; MC_Edge_Connect_tex.Load(cubeIndex * 16 + i).r != -1; i += 3)
+    {
+        float3 vertex0, vertex1, vertex2;
+        
+        vertex0 = vertlist[MC_Edge_Connect_tex.Load(cubeIndex * 16 + i).r];
+        vertex1 = vertlist[MC_Edge_Connect_tex.Load(cubeIndex * 16 + i + 1).r];
+        vertex2 = vertlist[MC_Edge_Connect_tex.Load(cubeIndex * 16 + i + 2).r];
+
+        numOfTriangle += 1;
+        if (numOfTriangle >= 1 && numOfTriangle <= 5)
+        {
+            //esVertex = float3(matrixModelView * float4(vertex0, 1.0));
+            //esNormal = float3(matrixNormal * float4(cross(vertex1 - vertex0, vertex2 - vertex0), 1.0));
+            //gl_Position = proj * view * model * float4(vertex0, 1.0);
+            //EmitVertex();
+            //esVertex = float3(matrixModelView * float4(vertex1, 1.0));
+            //esNormal = float3(matrixNormal * float4(cross(vertex0 - vertex1, vertex1 - vertex2), 1.0));
+            //gl_Position = proj * view * model * float4(vertex1, 1.0);
+            //EmitVertex();
+            //esVertex = float3(matrixModelView * float4(vertex2, 1.0));
+            //esNormal = float3(matrixNormal * float4(cross(vertex1 - vertex2, vertex2 - vertex0), 1.0));
+            //gl_Position = proj * view * model * float4(vertex2, 1.0);
+            
+            float4 temp = mul(matrixModelView, float4(vertex0, 1.0));
+            outPos[threadID.x * 15 + (numOfTriangle - 1) * 3] = float4(temp.x, 2 * midPos.y - temp.y, temp.z, temp.w) * 100;
+            
+            temp = mul(matrixModelView, float4(vertex1, 1.0));
+            outPos[threadID.x * 15 + (numOfTriangle - 1) * 3 + 1] = float4(temp.x, 2 * midPos.y - temp.y, temp.z, temp.w) * 100;
+            
+            temp = mul(matrixModelView, float4(vertex2, 1.0));
+            outPos[threadID.x * 15 + (numOfTriangle - 1) * 3 + 2] = float4(temp.x, 2 * midPos.y - temp.y, temp.z, temp.w) * 100;
+            
+            //EmitVertex();
+            //EndPrimitive();
+        }
+    }
+}
+
+[numthreads(THREADGROUPSIZE_X, THREADGROUPSIZE_Y, THREADGROUPSIZE_Z)]
+void MainCS(uint3 gid : SV_DispatchThreadID)
+{
+    finalMinPos = minPos;   
+    //float4 position = gl_in[0].gl_Position;
+    int3 threadCount = chunkSize * pow(chunklist_length, 1 / 3);
+    midPos = (minPos + maxPos) / 2.0;
+    
+    //outPos[gid.x] = inPos[gid.x];
+    
+    render_isosurface(inPos[gid.x], gid);
+}

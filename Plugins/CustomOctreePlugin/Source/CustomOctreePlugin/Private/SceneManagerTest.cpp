@@ -5,6 +5,9 @@
 #include "Interfaces/IPluginManager.h"
 #include "MyShaders/Public/MyShaders.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 inline FVector glm2FVec(const glm::vec3& p) {
 	return FVector(p.x, p.y, p.z);
 }
@@ -14,48 +17,29 @@ inline FVector3f glm2FVec3f(const glm::vec3& p) {
 }
 
 LineGenerator::LineGenerator() {
-	//transform = glm::vec3(0.3f, 0.5f, 0.05f);
-	//transform = glm::vec3(20.f, 50.f, 9.f);
+	stepDivider = 53;
 	transform = glm::vec3(0.2f, 0.5f, 0.09f);
 	rotation = glm::vec3(0, 0, 0);
 	scale = 0.3f;
-	//scale = 4000.0f;
 	spawnCount = 10;
-}
-
-FSteadyStreamParameters::FSteadyStreamParameters() {
-	lines.Empty();
-}
-
-FSteadyStreamParameters::FSteadyStreamParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree) {
-	points.SetNum(point.size());
-	
-	for (int32 i = 0; i < point.size(); ++i)
-	{
-		points[i] = FVector4f(point[i].x, point[i].y, point[i].z, point[i].w);
-	}
-	pathLine.Empty();
-	lines.Empty();
-
 	collideForce = 1;
-	dt = 0.033f;
-	maxLength = 1000;
-	stepDivider = 2;
-	indexLength = index_length;
-	chunkListLength = chunklist_length;
-	chunkSize = glm2FVec3f(glm::vec3(octree.GetChunkSize()));
-	minPos = glm2FVec3f(octree.GetMin());
-	maxPos = glm2FVec3f(octree.GetMax());
-	spacing = glm2FVec3f(octree.GetSampledSpacing());
-	totalLevel = octree.GetTotalLevel();
-	maxMag = 0.033f / stepDivider * octree.GetMaxMagnitude();
+
+	spawnType = SpawnType::LINE;
+
+	for (int i = 0; i < 100; i++)
+	{
+		double r1 = ((double)rand() / (RAND_MAX + 1.0) * 2) - 1;
+		double r2 = ((double)rand() / (RAND_MAX + 1.0) * 2) - 1;
+		double r3 = ((double)rand() / (RAND_MAX + 1.0) * 2) - 1;
+		randomValue.push_back(glm::vec3(r1, r2, r3));
+	}
 }
 
-FDynamicStreamParameters::FDynamicStreamParameters() {
+FStreamLineParameters::FStreamLineParameters() {
 	lines.Empty();
 }
 
-FDynamicStreamParameters::FDynamicStreamParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree) {
+FStreamLineParameters::FStreamLineParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree) {
 	points.SetNum(point.size());
 
 	for (int32 i = 0; i < point.size(); ++i)
@@ -85,6 +69,29 @@ FDynamicStreamParameters::FDynamicStreamParameters(std::vector<glm::vec4>& point
 
 	maxMag = 0.033f / stepDivider * octree.GetMaxMagnitude();
 }
+
+FIsosurfaceParameters::FIsosurfaceParameters() {}
+
+FIsosurfaceParameters::FIsosurfaceParameters(int index_length, int chunklist_length, float threshold, FMatrix camViewProj, CustomOctree& octree) {
+	isosurfacePoint.Empty();
+	outputPos.Empty();
+
+	indexLength = index_length;
+	chunkListLength = chunklist_length;
+
+	viewProj = FMatrix44f(camViewProj);
+	model = FMatrix44f();
+	model.SetIdentity();
+
+	chunkSize = glm2FVec3f(glm::vec3(octree.GetChunkSize()));
+	minPos = glm2FVec3f(octree.GetMin());
+	maxPos = glm2FVec3f(octree.GetMax());
+	spacing = glm2FVec3f(octree.GetSampledSpacing());
+	totalLevel = octree.GetTotalLevel();
+
+	isovalue = threshold;
+}
+
 // Sets default values
 ASceneManagerTest::ASceneManagerTest()
 {
@@ -94,10 +101,14 @@ ASceneManagerTest::ASceneManagerTest()
 	randomComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Random Component"));
 	randomComponent->SetupAttachment(RootComponent);
 
-	lineComponent = CreateDefaultSubobject<ULineBatchComponent>(TEXT("LineBatcher"));;
+	lineComponent = CreateDefaultSubobject<ULineBatchComponent>(TEXT("LineBatcher"));
 
-	steadyStreamParams = FSteadyStreamParameters();
-	dynamicStreamParams = FDynamicStreamParameters();
+	planePMC = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("planePMC"), false);
+	isosurfacePMC = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("isosurfacePMC"), false);
+	isosurfacePMC2 = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("isosurfacePMC2"), false);
+
+	isosurfaceParams = FIsosurfaceParameters();
+	streamLineParams = FStreamLineParameters();
 }
 
 // Called when the game starts or when spawned
@@ -126,6 +137,8 @@ void ASceneManagerTest::BeginPlay()
 	octreeLODList.push_back(16);
 	octreeLODList.push_back(32);
 	octreeLODList.push_back(64);
+
+	//for (auto& ol : octreeLODList) ol = pow(ol, 2);
 }
 
 void ASceneManagerTest::BeginDestroy()
@@ -139,15 +152,17 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	float frustumEquation[24];
-	//glm::mat4 cameraViewProj = cameraProj * cameraView; // original was commented
+	//glm::mat4 cameraViewProj = cameraProj * cameraView;
+
+	// test camera for voricity isosurface
 	glm::mat4 cameraViewProj = glm::mat4(
-		glm::vec4(-0.806148f, 1.50818f, 0.726391f, 0.690957f),
-		glm::vec4(-1.39081f, -0.54731f, -0.498509f, -0.474192f),
-		glm::vec4(0.190708f, 2.38381f, -0.573619f, -0.545638f),
-		glm::vec4(0.0669274f, -0.2095f, 0.481997f, 0.653607f)
+		glm::vec4(-1.2182, 1.21388, 0.532041, 0.506088),
+		glm::vec4(-1.06213, -1.57212, -0.545959, -0.519327),
+		glm::vec4(-0.0920113, 2.07645, -0.723917, -0.688604),
+		glm::vec4(2.24047, 0.186117, 1.99532, 2.09311)
 	);
 
-	FMatrix camViewProjMat;
+	//FMatrix camViewProjMat;
 	FMatrix Matrix = GetCameraViewProj();
 	FString MatrixString = FString::Printf(TEXT("Matrix: [%f, %f, %f, %f], [%f, %f, %f, %f], [%f, %f, %f, %f], [%f, %f, %f, %f]"),
 		Matrix.M[0][0], Matrix.M[0][1], Matrix.M[0][2], Matrix.M[0][3],
@@ -156,32 +171,6 @@ void ASceneManagerTest::Tick(float DeltaTime)
 		Matrix.M[3][0], Matrix.M[3][1], Matrix.M[3][2], Matrix.M[3][3]);
 
 	//UE_LOG(LogTemp, Log, TEXT("%s"), *MatrixString);
-	//[0.307379, 1.286949, 0.000000, 0.603157], 
-	// [0.864823, -0.457413, 0.000000, -0.214377],
-	//  [-0.000000, 1.137994, 0.000000, -0.768274], 
-	// [-17.340699, 254.286230, 10.000000, 377.376608]
-
-	FMatrix TestMatrix;
-	TestMatrix.M[0][0] = 0.307379;
-	TestMatrix.M[0][1] = 1.286949;
-	TestMatrix.M[0][2] = 0.000000;
-	TestMatrix.M[0][3] = 0.603157;
-
-	TestMatrix.M[0][0] = 0.864823;
-	TestMatrix.M[0][1] = -0.457413;
-	TestMatrix.M[0][2] = 0.000000;
-	TestMatrix.M[0][3] = -0.214377;
-
-	TestMatrix.M[0][0] = 0.0;
-	TestMatrix.M[0][1] = 1.137994;
-	TestMatrix.M[0][2] = 0.000000;
-	TestMatrix.M[0][3] = -0.768274;
-
-	TestMatrix.M[0][0] = -17.340699;
-	TestMatrix.M[0][1] = 254.286230;
-	TestMatrix.M[0][2] = 10.000000;
-	TestMatrix.M[0][3] = 377.376608;
-
 
 	for (int32 Row = 0; Row < 4; ++Row)
 	{
@@ -189,7 +178,7 @@ void ASceneManagerTest::Tick(float DeltaTime)
 		{
 			// Note: FMatrix is column based, glm::mat4 is row based, need to switch // orignal was commented
 			//cameraViewProj[Col][Row] = Matrix.M[Row][Col]; // orignal was commented
-			cameraViewProj[Col][Row] = TestMatrix.M[Col][Row];
+			cameraViewProj[Col][Row] = Matrix.M[Col][Row];
 		}
 	}
 
@@ -253,40 +242,54 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	}
 	
 
-	UE_LOG(LogTemp, Log, TEXT("Loaded %d chunks."), loadChunkCount);
-	FVector playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-	FVector PlayerControllerLoc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-	UE_LOG(LogTemp, Log, TEXT("PlayerControllerLoc %f, %f %f"), PlayerControllerLoc.X, PlayerControllerLoc.Y, PlayerControllerLoc.Z);
+	//UE_LOG(LogTemp, Log, TEXT("Loaded %d chunks."), loadChunkCount);
+	//FVector playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+	//UE_LOG(LogTemp, Log, TEXT("playerPos %f, %f %f"), playerPos.X, playerPos.Y, playerPos.Z);
 
-	//DrawCube(glm2FVec(_octree.GetMin()), glm2FVec(_octree.GetMax()));
+	DrawCube(glm2FVec(_octree.GetMin()), glm2FVec(_octree.GetMax()));
 
 	UpdateTexBuffer();
+	
+	//DrawIsosuface();
 
-	lineComponent->Flush();
-	//lineComponent->DrawLines(steadyStreamParams.lines);
-	lineComponent->DrawLines(dynamicStreamParams.lines);
-	if (clock() - lastAnimate > (double)CLOCKS_PER_SEC / 33.3333) {
-		if (first) { animateTime = visibleLength + invisibleLength - 1; first = 0; }
-		lastAnimate = clock();
-		animateTime -= animateSpeed;
-		if (animateTime < 0)
-			animateTime = visibleLength + invisibleLength - 1;
+	switch (drawType) {
+	case 1:
+		UpdateStreamLine(true);
+		DrawStreamLines();
+		break;
+	case 2:
+		UpdateStreamLine(false);
+		DrawStreamLines();
+		break;
+	case 3:
+		UpdatePlane();
+		DrawPlane();
+		break;
+	case 4:
+		UpdateIsosurface();
+		DrawVorticity();
+		break;
+	case 5:
+		UpdateIsosurface();
+		DrawQCritirea();
+		break;
+	default:
+			break;
 	}
-	UpdateDynamicStreamLine();
-	//UpdateSteadyStreamLine();
+
 }
 
 //Editing LoadChunkDataFromFile Function
 void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkListIndex) {
 	if (DrawRedDot)
-		DrawDebugPoint(GetWorld(), glm2FVec(_Chunk->center), 50, FColor::Red, false, 0.1f);
-	
+		DrawDebugPoint(GetWorld(), glm2FVec(_Chunk->center), 5, FColor::Red, false, 0.1f);
+
 	try {
 		++loadChunkCount;
 		Frame& fc = _octree.GetFrameCollection()[nowFrame - 1];
-		//ï¿½]ï¿½wTreeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Chunkï¿½ï¿½ï¿½ï¿½ChunkListï¿½ï¿½Index,Chunk.dataIndexï¿½Nï¿½ï¿½ï¿½Chunkï¿½bï¿½ï¿½Levelï¿½ï¿½ï¿½ï¿½Index(DFS)
+		//³]©wTree¤¤ªº·í­ÓChunk¹ïÀ³ChunkListªºIndex,Chunk.dataIndex¥Nªí¸ÓChunk¦b¸ÓLevel¤¤ªºIndex(DFS)
 		fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkListIndex = _chunkListIndex;
-		//ï¿½ï¿½sï¿½ï¿½Chunkï¿½ï¿½ï¿½Ò¦ï¿½parentï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½True
+		//§ó·s¸ÓChunkªº©Ò¦³parentªºª¬ºA¬°True
 		CustomChunk* cc = _Chunk;
 		while (1) {
 			fc.levelFile[cc->level].chunk[cc->dataIndex].hasChildInChunkList = true;
@@ -397,10 +400,9 @@ void ASceneManagerTest::GetChunkInFrustum(CustomChunk* _Chunk, vector<CustomChun
 	else {
 		for (int i = 0; i < 8; i++) {
 			if (ClipFrustum(_Chunk->child[i], frustumEquation)) {
-
-				//FVector distVec = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation() - glm2FVec(_Chunk->child[i]->center);
-
-				FVector distVec = FVector(-540.0f, -70.0f, 134.0f) - glm2FVec(_Chunk->child[i]->center);
+				FVector distVec = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation() - glm2FVec(_Chunk->child[i]->center);
+				//FVector distVec = glm2FVec(_Chunk->child[i]->center) - FVector(0.0064959, 1.98018, 1.4058);
+				//UE_LOG(LogTemp, Log, TEXT("distVec[%i]: %f, %f, %f"), i, distVec.X, distVec.Y, distVec.Z);
 
 				if (distVec.Length() < octreeLODList[_octree.GetTotalLevel() - _Chunk->level] * baseViewDistance) {
 					GetChunkInFrustum(_Chunk->child[i], _chunkList, frustumEquation);
@@ -453,20 +455,20 @@ void ASceneManagerTest::DrawCube(FVector min, FVector max) {
 	const vector<int> rotateArr = { 0b00, 0b01, 0b11, 0b10 };
 	for (int i = 0; i < 4;++i) {
 		int index = rotateArr[i];
-		FVector base((index & 1) ? min.X : max.X, (index & 2) ? min.Y  : max.Y , min.Z);
-		FVector target(base.X, base.Y, max.Z );
-		float scaleSize = 100.0f * MyScale;
+		FVector base((index & 1) ? min.X : max.X, (index & 2) ? min.Y : max.Y, min.Z);
+		FVector target(base.X, base.Y, max.Z);
+		float scaleSize = 100.0f;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize, target * scaleSize, FColor::Cyan, false, 1, 0, 5);
 
 		int index2 = rotateArr[(i + 1) & 3];
 		target = FVector((index2 & 1) ? min.X : max.X, (index2 & 2) ? min.Y : max.Y, min.Z);
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize, target * scaleSize, FColor::Cyan, false, 1, 0, 5);
 
 		base.Z = target.Z = max.Z;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize, target * scaleSize, FColor::Cyan, false, 1, 0, 5);
 	}
 }
 
@@ -481,7 +483,7 @@ void ASceneManagerTest::UpdateTexBuffer()
 		Frame& fc = _octree.GetFrameCollection()[nowFrame - 1];
 		CustomChunk* _Chunk = _octree.GetRoot();
 
-		if (fc.levelFile[0].chunk[0].hasChildInChunkList == false) {//ï¿½ï¿½Rootï¿½ï¿½Gï¿½Aï¿½ï¿½ï¿½`ï¿½I
+		if (fc.levelFile[0].chunk[0].hasChildInChunkList == false) {//¶ñRootªºG¡A¦³¸`ÂI
 			index_tbo_data.push_back(-10);
 			status_tbo_data.push_back(0);
 			return;
@@ -521,7 +523,6 @@ void ASceneManagerTest::UpdateTexBuffer()
 				pre_tbo_data[(i * cpc + j)] = cp[j].GetPressure();
 			}
 		}
-
 	}
 	catch (exception e)
 	{
@@ -531,17 +532,17 @@ void ASceneManagerTest::UpdateTexBuffer()
 }
 
 void ASceneManagerTest::FillIndexTex_Recursive(CustomChunk* _Chunk, Frame& fc, int tbo_index) {
-	//G:0ï¿½ï¿½ï¿½Ü¥Nï¿½ï¿½Û¤vï¿½Mï¿½lï¿½`ï¿½Iï¿½ï¿½ï¿½Sï¿½ï¿½ï¿½Qï¿½ï¿½ï¿½Jï¿½A1ï¿½ï¿½ï¿½Ü¥Nï¿½ï¿½ï¿½ï¿½Yï¿½Ó¤lï¿½`ï¿½Iï¿½Qï¿½ï¿½ï¿½Jï¿½A2ï¿½ï¿½ï¿½Ü¥Nï¿½ï¿½oï¿½Ó¸`ï¿½Iï¿½ï¿½ï¿½Qï¿½ï¿½ï¿½J
-	//Rï¿½bGï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½pï¿½Lï¿½Ä¡Aï¿½bGï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½pï¿½Nï¿½ï¿½Uï¿½Ó»Ý­nTraceï¿½ï¿½Indexï¿½Aï¿½bGï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½ï¿½pï¿½Nï¿½ï¿½ï¿½Chunkï¿½bChunkListï¿½ï¿½ï¿½ï¿½Index
-	//ï¿½Û¤vï¿½Mï¿½lï¿½`ï¿½Iï¿½ï¿½ï¿½Sï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½ARï¿½Lï¿½Ä¡Aï¿½bGï¿½ï¿½0ï¿½AReturn
+	//G:0ªº¸Ü¥Nªí¦Û¤v©M¤l¸`ÂI³£¨S¦³³Q¸ü¤J¡A1ªº¸Ü¥Nªí¦³¬Y­Ó¤l¸`ÂI³Q¸ü¤J¡A2ªº¸Ü¥Nªí³o­Ó¸`ÂI¦³³Q¸ü¤J
+	//R¦bG¬°0ªº±¡ªpµL®Ä¡A¦bG¬°1ªº±¡ªp¥Nªí¤U­Ó»Ý­nTraceªºIndex¡A¦bG¬°2ªº±¡ªp¥Nªí¸ÓChunk¦bChunkList¤¤ªºIndex
+	//¦Û¤v©M¤l¸`ÂI³£¨S¦³¸ü¤J¡ARµL®Ä¡A¦bG¶ñ0¡AReturn
 	Chunk& c = fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex];
 	if (c.hasChildInChunkList == false) {
 		index_tbo_data[tbo_index] = -3;
 		status_tbo_data[tbo_index] = 0;
 	}
-	//ï¿½Û¤vï¿½Î¤lï¿½`ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½J
+	//¦Û¤v©Î¤l¸`ÂI¦³¸ü¤J
 	else {
-		//ï¿½lï¿½`ï¿½Iï¿½ï¿½ï¿½Hï¿½ï¿½ï¿½Jï¿½Aï¿½ï¿½ï¿½ULoadï¿½ARï¿½ï¿½lï¿½`ï¿½IIndexï¿½AGï¿½ï¿½1
+		//¤l¸`ÂI¦³¤H¸ü¤J¡A©¹¤ULoad¡AR¶ñ¤l¸`ÂIIndex¡AG¶ñ1
 		if (c.chunkListIndex == -1 && _Chunk->child.size() != 0) {
 
 			int startIndex = index_tbo_data.size();
@@ -557,7 +558,7 @@ void ASceneManagerTest::FillIndexTex_Recursive(CustomChunk* _Chunk, Frame& fc, i
 				FillIndexTex_Recursive(_Chunk->child[i], fc, startIndex + i);
 			}
 		}
-		//ï¿½Û¤vï¿½ï¿½ï¿½ï¿½ï¿½Jï¿½ARï¿½ï¿½ï¿½ï¿½ï¿½ï¿½chunkListIndexï¿½AGï¿½ï¿½2
+		//¦Û¤v¦³¸ü¤J¡ARª½±µ¶ñchunkListIndex¡AG¶ñ2
 		else {
 			index_tbo_data[tbo_index] = c.chunkListIndex;
 			status_tbo_data[tbo_index] = 2;
@@ -711,63 +712,155 @@ void ASceneManagerTest::CreateTextures() {
 	PreTex->UpdateResource();
 }
 
-void ASceneManagerTest::UpdateProceduralMesh() {
+void ASceneManagerTest::UpdatePlane() {
+	//cout << "Chunk count: " << chunkList.size() << endl;
+
+	glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
+	int offsetAxis;
+	int planeA, planeB;
+	if (this->selectedAxis == 0) {
+		offsetAxis = 0;
+		planeA = 1;
+		planeB = 2;
+	}
+	else if (this->selectedAxis == 1) {
+		offsetAxis = 1;
+		planeA = 0;
+		planeB = 2;
+	}
+	else if (this->selectedAxis == 2) {
+		offsetAxis = 2;
+		planeA = 0;
+		planeB = 1;
+	}
+
+
+	glm::vec3 lb, rb, lt, rt;
+	glm::vec3 startPos = _octree.GetMin();
+	startPos[offsetAxis] = startPos[offsetAxis] + dist[offsetAxis] * this->planeOffset;
+
+	lb = rb = lt = rt = startPos;
+	rb[planeA] = startPos[planeA] + dist[planeA];
+	lt[planeB] = startPos[planeB] + dist[planeB];
+	rt[planeA] = startPos[planeA] + dist[planeA];
+	rt[planeB] = startPos[planeB] + dist[planeB];
+
+	/*float points[] = {
+		lb[0],lb[1],lb[2],
+		rb[0],rb[1],rb[2],
+		rt[0],rt[1],rt[2],
+		lt[0],lt[1],lt[2],
+	};*/
+
+	TArray<FVector> points;
+	points.Add(glm2FVec(lb) * 100);
+	points.Add(glm2FVec(rb) * 100);
+	points.Add(glm2FVec(rt) * 100);
+	points.Add(glm2FVec(lt) * 100);
+
+	TArray<int> indexs{
+		0,2,1,
+		0,3,2,
+	};
+
+	TArray<FVector2D> UV0;
+	TArray<FLinearColor> Colors;
+	TArray<FProcMeshTangent> Tangents;
+	TArray<FVector> Normals;
+
+	UV0.Init(FVector2D(0, 0), points.Num());
+	Colors.Init(FLinearColor(1, 0, 0, 0.3), points.Num());
+	Tangents.Init(FProcMeshTangent(1, 0, 0), points.Num());
+	Normals.Init(FVector(0, 0, 1), points.Num());
+
+	planePMC->ClearAllMeshSections();
+	planePMC->CreateMeshSection_LinearColor(0, points, indexs, Normals, UV0, Colors, Tangents, false);
+}
+
+void ASceneManagerTest::DrawPlane() {
 	CreateTextures();
 
-	for (int32 j = 0; j < ProceduralMeshComponent->GetNumSections(); j++) {
-		ProceduralMeshComponent->SetMaterial(j, MaterialToApplyToClickedObject);
-		UMaterialInstanceDynamic* MID = ProceduralMeshComponent->CreateAndSetMaterialInstanceDynamic(j);
+	for (int32 j = 0; j < planePMC->GetNumSections(); j++) {
+		planePMC->SetMaterial(j, MaterialToApplyToClickedObject);
+		UMaterialInstanceDynamic* MID = planePMC->CreateAndSetMaterialInstanceDynamic(j);
 		MID->SetTextureParameterValue("IndexTex", (UTexture*)IndexTex);
 		MID->SetTextureParameterValue("StatusTex", (UTexture*)StatusTex);
 		MID->SetTextureParameterValue("VelTex", (UTexture*)VelTex);
 		MID->SetTextureParameterValue("PreTex", (UTexture*)PreTex);
+
 		MID->SetScalarParameterValue("index_tex_size", IndexTex->GetSizeX());
 		MID->SetScalarParameterValue("vel_tex_size", VelTex->GetSizeX());
 
-		// not sure whether is wrong
 		MID->SetScalarParameterValue("index_length", index_tbo_data.size());
 		MID->SetScalarParameterValue("chunklist_length", chunkList.size());
+
 		MID->SetVectorParameterValue("chunkSize", glm2FVec(glm::vec3(_octree.GetChunkSize())));
 		MID->SetVectorParameterValue("minPos", glm2FVec(_octree.GetMin()));
 		MID->SetVectorParameterValue("maxPos", glm2FVec(_octree.GetMax()));
 		MID->SetVectorParameterValue("spacing", glm2FVec(_octree.GetSampledSpacing()));
 		MID->SetScalarParameterValue("totalLevel", _octree.GetTotalLevel());
 
-		// only on plane shader
-		MID->SetScalarParameterValue("minValue", 0.0f);
-		MID->SetScalarParameterValue("maxValue", _octree.GetMaxMagnitude());
-		MID->SetScalarParameterValue("renderingMode", 4);
+		MID->SetScalarParameterValue("renderingMode", planeDrawType);
+		if (planeDrawType == 0) {
+			MID->SetScalarParameterValue("minValue", 0.0f);
+			MID->SetScalarParameterValue("maxValue", _octree.GetMaxXVel());
+		}
+		else if (planeDrawType == 1) {
+			MID->SetScalarParameterValue("minValue", 0.0f);
+			MID->SetScalarParameterValue("maxValue", _octree.GetMaxYVel());
+		}
+		else if (planeDrawType == 2) {
+			MID->SetScalarParameterValue("minValue", 0.0f);
+			MID->SetScalarParameterValue("maxValue", _octree.GetMaxZVel());
+		}
+		else if (planeDrawType == 3) {
+			MID->SetScalarParameterValue("minValue", _octree.GetMinPressure());
+			MID->SetScalarParameterValue("maxValue", _octree.GetMaxPressure());
+		}
+		else if (planeDrawType == 4) {
+			MID->SetScalarParameterValue("minValue", 0.0f);
+			MID->SetScalarParameterValue("maxValue", _octree.GetMaxMagnitude());
+		}
 	}
 }
 
-void ASceneManagerTest::UpdateSteadyStreamLine() {
+void ASceneManagerTest::UpdateStreamLine(bool isDynamic) {
 	std::vector<glm::vec4> points;
 	points.resize(lineGenerator.spawnCount);
 	UpdateSpawnPointPositions(points);
 
-	steadyStreamParams = FSteadyStreamParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
+	streamLineParams = FStreamLineParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
+	streamLineParams.visibleLength = visibleLength;
+	streamLineParams.invisibleLength = invisibleLength;
+	streamLineParams.animateTime = animateTime;
+	streamLineParams.hack = hack;
 
-	FMyShaders::GetSteadyStreamLine(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, steadyStreamParams);
+	if (isDynamic)
+		FMyShaders::GetDynamicStreamLine(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, streamLineParams);
+	else
+		FMyShaders::GetSteadyStreamLine(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, streamLineParams);
 }
 
-void ASceneManagerTest::UpdateDynamicStreamLine() {
-	std::vector<glm::vec4> points;
-	points.resize(lineGenerator.spawnCount);
-	UpdateSpawnPointPositions(points);
+void ASceneManagerTest::DrawStreamLines() {
+	FlushRenderingCommands();
 
-	dynamicStreamParams = FDynamicStreamParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
-	dynamicStreamParams.visibleLength = visibleLength;
-	dynamicStreamParams.invisibleLength = invisibleLength;
-	dynamicStreamParams.animateTime = animateTime;
-	dynamicStreamParams.hack = hack;
-	dynamicStreamParams.center = Center;
-	dynamicStreamParams.myScale = MyScale;
-	dynamicStreamParams.transform = glm2FVec(lineGenerator.transform);
+	lineComponent->Flush();
+	lineComponent->DrawLines(streamLineParams.lines);
 
-	FMyShaders::GetDynamicStreamLine(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, dynamicStreamParams);
+	if (clock() - lastAnimate > (double)CLOCKS_PER_SEC / 33.3333) {
+		if (first) { animateTime = visibleLength + invisibleLength - 1; first = 0; }
+		lastAnimate = clock();
+		animateTime -= animateSpeed;
+		if (animateTime < 0)
+			animateTime = visibleLength + invisibleLength - 1;
+	}
 }
 
 void ASceneManagerTest::UpdateSpawnPointPositions(std::vector<glm::vec4>& points) {
+	glm::mat4 rotatemat(1.0f);
+	rotatemat = glm::rotate(rotatemat, glm::radians(lineGenerator.rotation[0]), glm::vec3(1, 0, 0));
+	rotatemat = glm::rotate(rotatemat, glm::radians(lineGenerator.rotation[1]), glm::vec3(0, 1, 0));
+	rotatemat = glm::rotate(rotatemat, glm::radians(lineGenerator.rotation[2]), glm::vec3(0, 0, 1));
 
 	int sideCount = sqrt(lineGenerator.spawnCount);
 	glm::vec3 unitPos(0, -1, -1);
@@ -775,29 +868,126 @@ void ASceneManagerTest::UpdateSpawnPointPositions(std::vector<glm::vec4>& points
 
 	unitPos = glm::vec3(0, -1, 0);
 	bias = 2.f / (float)(lineGenerator.spawnCount - 1);
-	glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
-	glm::vec3 startPos = _octree.GetMin();
 
-	//float scale = (_octree.GetMax().y - _octree.GetMin().y) / lineGenerator.spawnCount;
+	switch (lineGenerator.spawnType)
+	{
+	case SpawnType::SPHERE:
+		for (int i = 0; i < lineGenerator.spawnCount; i++)
+		{
+			glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
+			glm::vec3 startPos = _octree.GetMin();
 
-	//UE_LOG(LogTemp, Log, TEXT("dist is %f, %f, %f"), dist.x, dist.y, dist.z);
-	//UE_LOG(LogTemp, Log, TEXT("Max is %f, %f, %f, startPos is %lf, %lf, %lf, Trans is %f, %f, %f, %f"), _octree.GetMax().x, _octree.GetMax().y, _octree.GetMax().z, startPos.x, startPos.y, startPos.z, lineGenerator.transform.x, lineGenerator.transform.y, lineGenerator.transform.z, lineGenerator.scale);
-	for (int i = 0; i < lineGenerator.spawnCount; i++) {
-		//dist = _octree.GetMax() - _octree.GetMin();
-		//startPos = _octree.GetMin();
+			glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform +
+				glm::vec3(glm::vec4(lineGenerator.randomValue[i] * lineGenerator.scale, 1) * rotatemat), 0);
+			points[i] = pos;
+		}
+		break;
+	case SpawnType::SQUARE:
 
-		/*glm::vec4 pos = glm::vec4(startPos +
-			unitPos, 0);*/
-		glm::vec3 apply = glm::vec3(glm::vec4(unitPos * lineGenerator.scale, 1));
-		glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform +
-			apply, 0);
-		points[i] = pos;
-		//unitPos[1] += scale;
-		unitPos[1] += bias;
-		//UE_LOG(LogTemp, Log, TEXT("unitPos[%d] is %f, %f, %f"), i, unitPos.x, unitPos.y, unitPos.z);
-		//UE_LOG(LogTemp, Log, TEXT("apply[%d] is %f, %f, %f"), i, apply.x, apply.y, apply.z);
-		//UE_LOG(LogTemp, Log, TEXT("pos[%d] is %f, %f, %f"), i, pos.x, pos.y, pos.z);
+		for (int i = 0; i < sideCount; i++)
+		{
+			for (int j = 0; j < sideCount; j++) {
+				glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
+				glm::vec3 startPos = _octree.GetMin();
+
+				glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform +
+					glm::vec3(glm::vec4(unitPos * lineGenerator.scale, 1) * rotatemat), 0);
+				points[i * sideCount + j] = pos;
+				unitPos[1] += bias;
+			}
+			unitPos[2] += bias;
+			unitPos[1] = -1;
+		}
+		break;
+	case SpawnType::LINE:
+		unitPos = glm::vec3(0, -1, 0);
+		bias = 2.f / (float)(lineGenerator.spawnCount - 1);
+		for (int i = 0; i < lineGenerator.spawnCount; i++) {
+			glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
+			glm::vec3 startPos = _octree.GetMin();
+
+			glm::vec3 apply = glm::vec3(glm::vec4(unitPos * lineGenerator.scale, 1) * rotatemat);
+			glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform +
+				apply, 0);
+			/*glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform +
+				glm::vec3(glm::vec4(unitPos * lineGenerator.scale, 1) * rotatemat), 0);*/
+			points[i] = pos;
+			unitPos[1] += bias;
+		}
+		break;
 	}
+}
+
+void ASceneManagerTest::DrawVorticity() {
+	UpdateIsosurface();
+
+	/*for (int i = 0; i < isosurfacePointList.size(); i += 3)
+		DrawDebugPoint(GetWorld(), FVector(isosurfacePointList[i], isosurfacePointList[i + 1], isosurfacePointList[i + 2]) * 100, 1, FColor::Red, false, 100);*/
+
+	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), vorticityThreshold, GetCameraViewProj(), _octree);
+	isosurfaceParams.minIsovalue = 0;
+	isosurfaceParams.maxIsovalue = 0;
+	isosurfaceParams.isQCritirea = 0;
+
+	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, isosurfaceParams);
+
+	FlushRenderingCommands();
+
+	TArray<FVector2D> UV0;
+	TArray<FLinearColor> Colors;
+	TArray<FProcMeshTangent> Tangents;
+	TArray<FVector> Normals;
+
+	UV0.Init(FVector2D(0, 0), isosurfaceParams.outputPos.Num());
+	Colors.Init(FLinearColor(1, 0, 0, 1), isosurfaceParams.outputPos.Num());
+	Tangents.Init(FProcMeshTangent(1, 0, 0), isosurfaceParams.outputPos.Num());
+	Normals.Init(FVector(0, 0, 1), isosurfaceParams.outputPos.Num());
+
+	isosurfacePMC->ClearAllMeshSections();
+	isosurfacePMC->CreateMeshSection_LinearColor(0, isosurfaceParams.outputPos, isosurfaceParams.OutTris, Normals, UV0, Colors, Tangents, false);
+}
+
+void ASceneManagerTest::DrawQCritirea() {
+	UpdateIsosurface();
+
+	/*for (int i = 0; i < isosurfacePointList.size(); i += 3)
+		DrawDebugPoint(GetWorld(), FVector(isosurfacePointList[i], isosurfacePointList[i + 1], isosurfacePointList[i + 2]) * 100, 1, FColor::Red, false, 100);*/
+
+	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), QCritireaThreshold1, GetCameraViewProj(), _octree);
+	isosurfaceParams.minIsovalue = _octree.GetMinQCritirea();
+	isosurfaceParams.maxIsovalue = _octree.GetMaxQCritirea();
+	isosurfaceParams.isQCritirea = 1;
+
+	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, isosurfaceParams);
+
+	FlushRenderingCommands();
+
+	TArray<FVector2D> UV0;
+	TArray<FLinearColor> Colors;
+	TArray<FProcMeshTangent> Tangents;
+	TArray<FVector> Normals;
+
+	UV0.Init(FVector2D(0, 0), isosurfaceParams.outputPos.Num());
+	Colors.Init(FLinearColor(1, 0, 0, 1), isosurfaceParams.outputPos.Num());
+	Tangents.Init(FProcMeshTangent(1, 0, 0), isosurfaceParams.outputPos.Num());
+	Normals.Init(FVector(0, 0, 1), isosurfaceParams.outputPos.Num());
+
+	isosurfacePMC->ClearAllMeshSections();
+	isosurfacePMC->CreateMeshSection_LinearColor(0, isosurfaceParams.outputPos, isosurfaceParams.OutTris, Normals, UV0, Colors, Tangents, false);
+
+	isosurfaceParams.isovalue = QCritireaThreshold2;
+
+	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, isosurfaceParams);
+
+	FlushRenderingCommands();
+
+	UV0.Init(FVector2D(0, 0), isosurfaceParams.outputPos.Num());
+	Colors.Init(FLinearColor(1, 0, 0, 1), isosurfaceParams.outputPos.Num());
+	Tangents.Init(FProcMeshTangent(1, 0, 0), isosurfaceParams.outputPos.Num());
+	Normals.Init(FVector(0, 0, 1), isosurfaceParams.outputPos.Num());
+
+	isosurfacePMC2->ClearAllMeshSections();
+	isosurfacePMC2->CreateMeshSection_LinearColor(0, isosurfaceParams.outputPos, isosurfaceParams.OutTris, Normals, UV0, Colors, Tangents, false);
 }
 
 void ASceneManagerTest::UpdateIsosurface() {
@@ -832,28 +1022,16 @@ void ASceneManagerTest::UpdateIsosurface() {
 			p[2] += _octree.GetSampledSpacing()[2] * pow(2, _octree.GetTotalLevel() - chunkList[i]->level);
 		}
 	}
-
-	/*gIsosurface.drawCount = isosurfaceIndexList.size();
-
-	glBindBuffer(GL_ARRAY_BUFFER, gIsosurface.vbo); 
-	glBufferData(GL_ARRAY_BUFFER, isosurfacePointList.size() * sizeof(GLfloat), isosurfacePointList.data(), GL_DYNAMIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gIsosurface.ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, isosurfaceIndexList.size() * sizeof(GLuint), isosurfaceIndexList.data(), GL_DYNAMIC_DRAW);*/
 }
 
 void ASceneManagerTest::IncreaseSpawnCount() {
 	if (lineGenerator.spawnCount < 100)
 		lineGenerator.spawnCount += 5;
-	UpdateSteadyStreamLine();
-	UpdateDynamicStreamLine();
 }
 
 void ASceneManagerTest::DecreaseSpawnCount() {
 	if (lineGenerator.spawnCount > 5)
 		lineGenerator.spawnCount -= 5;
-	UpdateSteadyStreamLine();
-	UpdateDynamicStreamLine();
 }
 
 void ASceneManagerTest::ShiftXPos() {
@@ -894,10 +1072,12 @@ void ASceneManagerTest::DecreaseScale() {
 		lineGenerator.scale -= 0.05;
 }
 
-void ASceneManagerTest::UpdateCenter(FVector InCenter) {
-	Center = InCenter;
+void ASceneManagerTest::IncreaseIsoValue() {
+	if (vorticityThreshold < 150)
+		vorticityThreshold += 10;
 }
 
-void ASceneManagerTest::UpdateScale(float InScale) {
-	MyScale = InScale;
+void ASceneManagerTest::DecreaseIsoValue() {
+	if (vorticityThreshold > 0)
+		vorticityThreshold -= 10;
 }

@@ -6,6 +6,7 @@
 #include "Modules/ModuleManager.h"
 #include "SteadyStreamCS.h"
 #include "DynamicStreamCS.h"
+#include "IsosurfaceCS.h"
 
 #define LOCTEXT_NAMESPACE "FMyShaders"
 
@@ -53,6 +54,18 @@ FRDGBufferUAVRef GenerateBufferUAV(FRDGBuilder& GraphBuilder, TArray<FVector4f>&
 		data.Num(),
 		data.GetData(),
 		sizeof(FVector4f) * data.Num(),
+		ERDGInitialDataFlags::None);
+	return GraphBuilder.CreateUAV(BufferDesc);
+}
+
+FRDGBufferUAVRef GenerateBufferUAV(FRDGBuilder& GraphBuilder, TArray<FVector3f>& data, const TCHAR* Name) {
+	FRDGBufferRef BufferDesc = CreateStructuredBuffer(
+		GraphBuilder,
+		Name,
+		sizeof(FVector3f),
+		data.Num(),
+		data.GetData(),
+		sizeof(FVector3f) * data.Num(),
 		ERDGInitialDataFlags::None);
 	return GraphBuilder.CreateUAV(BufferDesc);
 }
@@ -118,8 +131,7 @@ void FMyShaders::ShutdownModule()
 {
 }
 
-
-void FMyShaders::GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FSteadyStreamParameters& params) {
+void FMyShaders::GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FStreamLineParameters& params) {
 	TArray<int> index_tbo_data;
 	TArray<int> status_tbo_data;
 	TArray<FVector3f> vel_tbo_data;
@@ -136,7 +148,7 @@ void FMyShaders::GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<in
 	USteadyStreamCS::Dispath(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, params);
 }
 
-void FMyShaders::GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FDynamicStreamParameters& params) {
+void FMyShaders::GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FStreamLineParameters& params) {
 	TArray<int> index_tbo_data;
 	TArray<int> status_tbo_data;
 	TArray<FVector3f> vel_tbo_data;
@@ -151,6 +163,26 @@ void FMyShaders::GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<i
 	AssignVectorToTArray(pre_tbo, pre_tbo_data);
 
 	UDynamicStreamCS::Dispath(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, params);
+}
+
+void FMyShaders::GetIsosufacePos(std::vector<float>& isosurfacePointList, std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, FIsosurfaceParameters& params) {
+	TArray<int> index_tbo_data;
+	TArray<int> status_tbo_data;
+	TArray<FVector3f> vel_tbo_data;
+
+	AssignVectorToTArray(index_tbo, index_tbo_data);
+	AssignVectorToTArray(status_tbo, status_tbo_data);
+	for (int i = 0; i < vel_tbo.size(); i += 3) {
+		FVector3f data = FVector3f(vel_tbo[i], vel_tbo[i + 1], vel_tbo[i + 2]);
+		vel_tbo_data.Push(data);
+	}
+	params.isosurfacePoint.Empty();
+	for (int i = 0; i < isosurfacePointList.size(); i += 3) {
+		FVector4f data = FVector4f(isosurfacePointList[i], isosurfacePointList[i + 1], isosurfacePointList[i + 2], 0);
+		params.isosurfacePoint.Push(data);
+	}
+	
+	UIsosurfaceCS::Dispath(index_tbo_data, status_tbo_data, vel_tbo_data, params);
 }
 
 #undef LOCTEXT_NAMESPACE

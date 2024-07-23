@@ -74,7 +74,7 @@ public:
 		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), THREADGROUPSIZE_Z);
 	}
 
-	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FDynamicStreamParameters& params)
+	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FStreamLineParameters& params)
 	{
 		if (vel_tbo_data.Num() == 0) return;
 
@@ -84,11 +84,6 @@ public:
 		FRDGBufferSRVRef Status = GenerateBufferSRV(GraphBuilder, status_tbo_data, TEXT("StatusBuffer"));
 		FRDGBufferSRVRef Vel = GenerateBufferSRV(GraphBuilder, vel_tbo_data, TEXT("VelBuffer"));
 		FRDGBufferSRVRef Pre = GenerateBufferSRV(GraphBuilder, pre_tbo_data, TEXT("PreBuffer"));
-
-		/*TArray<FVector4f> givenPoints;
-		for (int i = 0; i < 100; i++) {
-			givenPoints.Add(FVector4f(0, -0.31 + i * 0.0062f, 0, 0));
-		}*/
 
 		FRDGBufferUAVRef pointUAV = GenerateBufferUAV(GraphBuilder, params.points, TEXT("point"));
 		
@@ -115,17 +110,6 @@ public:
 		PassParameters->vel_tex = Vel;
 		PassParameters->pre_tex = Pre;
 
-		/*PassParameters->collideForce = 1;
-		PassParameters->dt = 0.033;
-		PassParameters->maxLength = 1000;
-		PassParameters->stepDivider = 53;
-		PassParameters->index_length = 4225;
-		PassParameters->chunklist_length = 3002;
-		PassParameters->chunkSize = FVector3f(13, 5, 4);
-		PassParameters->minPos = FVector3f(-1.2425, -0.675, 0);
-		PassParameters->maxPos = FVector3f(2.4325, 0.675, 1.19);
-		PassParameters->spacing = FVector3f(0.00883413f, 0.0084375f, 0.00929688f);
-		PassParameters->totalLevel = 5;*/
 		PassParameters->collideForce = params.collideForce;
 		PassParameters->dt = params.dt;
 		PassParameters->maxLength = params.maxLength;
@@ -149,6 +133,8 @@ public:
 		//FIntVector GroupCounts = FIntVector(FMath::DivideAndRoundUp((float)params.points.Num(), 16.0f), 1, 1);
 		FIntVector GroupCounts = FIntVector(params.points.Num(), 1, 1);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("DynamicStreamCS"), ERDGPassFlags::Compute, ComputeShader, PassParameters, GroupCounts);
+		//UE_LOG(LogTemp, Log, TEXT("threadCount is %f, %f, %f"), threadCount.X, threadCount.Y, threadCount.Z);
+		UE_LOG(LogTemp, Log, TEXT("GroupCounts is %i, %i, %i"), GroupCounts.X, GroupCounts.Y, GroupCounts.Z);
 
 		TArray<FVector4f> pathLine;
 		pathLine.SetNumZeroed(params.points.Num() * params.maxLength);
@@ -172,9 +158,8 @@ public:
 				}
 
 				params.pathLine = pathLine;
-				//FVector3f center = (params.minPos + params.maxPos) / 2;
 
-				float scaleSize = 100.0 * params.myScale;
+				float scaleSize = 100.0;
 				TArray<FBatchedLine> lines;
 				for (int i = 0; i < params.points.Num(); i++)
 				{
@@ -187,14 +172,14 @@ public:
 						if (pathLine[offset].W <= 0 || pathLine[offset + 1].W <= 0)
 							continue;
 
-						FVector start = FVector(pathLine[offset].X , pathLine[offset].Y , pathLine[offset].Z);
-						FVector end = FVector(pathLine[offset + 1].X, pathLine[offset + 1].Y, pathLine[offset + 1].Z );
+						FVector start = FVector(pathLine[offset].X, pathLine[offset].Y, pathLine[offset].Z);
+						FVector end = FVector(pathLine[offset + 1].X, pathLine[offset + 1].Y, pathLine[offset + 1].Z);
 
-						FBatchedLine line = FBatchedLine(start * scaleSize + params.center,
-							end * scaleSize + params.center,
+						FBatchedLine line = FBatchedLine(start * scaleSize,
+							end * scaleSize,
 							colormap(pathLine[offset].W / params.maxMag), //pathLine[offset].W = 0.0035 -> red
 							0.1, // for long period draw
-							0.5 * params.myScale,
+							0.5,
 							0
 						);
 						lines.Add(line);
@@ -208,7 +193,7 @@ public:
 
 IMPLEMENT_GLOBAL_SHADER(FDynamicStreamCS, "/ARShaders/Private/DynamicStreamCS.usf", "MainCS", SF_Compute);
 
-void UDynamicStreamCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FDynamicStreamParameters& params)
+void UDynamicStreamCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FStreamLineParameters& params)
 {
 	ENQUEUE_RENDER_COMMAND(CommandList)(
 		[index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, &params](FRHICommandListImmediate& RHICmdList)

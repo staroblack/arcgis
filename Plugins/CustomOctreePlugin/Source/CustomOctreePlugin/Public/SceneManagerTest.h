@@ -17,38 +17,22 @@
 
 #define ENABLE_CACHE 1
 
+enum SpawnType { SPHERE, SQUARE, LINE };
 struct LineGenerator {
+	float stepDivider;
+	SpawnType spawnType;
 	glm::vec3 transform;
 	glm::vec3 rotation;
 	float scale;
 	int spawnCount;
+	float collideForce;
+
+	vector<glm::vec3> randomValue;
 
 	LineGenerator();
 };
 
-struct FSteadyStreamParameters {
-	TArray<FVector4f> points;
-	TArray<FVector4f> pathLine;
-	TArray<FBatchedLine> lines;
-
-	float collideForce;
-	float dt;
-	int maxLength;
-	float stepDivider;
-	int indexLength;
-	int chunkListLength;
-	FVector3f chunkSize;
-	FVector3f minPos;
-	FVector3f maxPos;
-	FVector3f spacing;
-	int totalLevel;
-	float maxMag;
-
-	FSteadyStreamParameters();
-	FSteadyStreamParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree);
-};
-
-struct FDynamicStreamParameters {
+struct FStreamLineParameters {
 	TArray<FVector4f> points;
 	TArray<FVector4f> pathLine;
 	TArray<FBatchedLine> lines;
@@ -71,13 +55,35 @@ struct FDynamicStreamParameters {
 
 	bool hack;
 
-	FVector center;
-	FVector transform;
-	float myScale;
+	FStreamLineParameters();
+	FStreamLineParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree);
+};
 
+struct FIsosurfaceParameters {
+	TArray<FVector4f> isosurfacePoint;
+	TArray<FVector> outputPos;
+	TArray<int> OutTris;
 
-	FDynamicStreamParameters();
-	FDynamicStreamParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree);
+	int indexLength;
+	int chunkListLength;
+
+	FMatrix44f viewProj;
+	FMatrix44f model;
+
+	FVector3f chunkSize;
+
+	FVector3f minPos;
+	FVector3f maxPos;
+	FVector3f spacing;
+	int totalLevel;
+
+	int isQCritirea;
+	float isovalue;
+	float minIsovalue;
+	float maxIsovalue;
+
+	FIsosurfaceParameters();
+	FIsosurfaceParameters(int index_length, int chunklist_length, float threshold, FMatrix camViewProj, CustomOctree& octree);
 };
 
 UCLASS()
@@ -100,7 +106,7 @@ public:
 	vector<ifstream*> fileIndexList;
 	vector<ifstream*> baseFileValueList;
 	vector<ifstream*> baseFileIndexList;
-	float baseViewDistance = 50.f;
+	float baseViewDistance = 50.0f;
 
 	int loadChunkCount = 0;
 
@@ -109,8 +115,8 @@ public:
 	std::vector<float> vel_tbo_data;
 	std::vector<float> pre_tbo_data;
 	
-	FSteadyStreamParameters steadyStreamParams;
-	FDynamicStreamParameters dynamicStreamParams;
+	FStreamLineParameters streamLineParams;
+	FIsosurfaceParameters isosurfaceParams;
 	LineGenerator lineGenerator;
 
 	UTexture2D* IndexTex = NULL;
@@ -119,6 +125,9 @@ public:
 	UTexture2D* PreTex = NULL;
 
 	ULineBatchComponent* lineComponent = NULL;
+	UProceduralMeshComponent* planePMC = NULL;
+	UProceduralMeshComponent* isosurfacePMC = NULL;
+	UProceduralMeshComponent* isosurfacePMC2 = NULL;
 
 	vector<float> isosurfacePointList; //GLfloat
 	vector<uint32> isosurfaceIndexList; //GLuint
@@ -132,21 +141,20 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	USceneComponent* randomComponent;
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	UProceduralMeshComponent* ProceduralMeshComponent;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMaterialInterface* MaterialToApplyToClickedObject;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool DrawRedDot;
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	FVector Center;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float QCritireaThreshold1 = 100;
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	float MyScale;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float QCritireaThreshold2 = 100;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float vorticityThreshold = 30;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -159,7 +167,6 @@ public:
 
 	void DrawCube(FVector min, FVector max);
 
-	// shader part
 	void UpdateTexBuffer();
 	void FillIndexTex_Recursive(CustomChunk* _Chunk, Frame& fc, int tbo_index);
 	void CreateTextures();
@@ -167,14 +174,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	FMatrix GetCameraViewProj();
 
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void UpdateProceduralMesh();
+	void UpdateSpawnPointPositions(std::vector<glm::vec4>& points);
 
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void UpdateSteadyStreamLine();
+	void UpdateIsosurface();
 
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void UpdateDynamicStreamLine();
+	void UpdatePlane();
+	void DrawPlane();
+	void UpdateStreamLine(bool isDynamic);
+	void DrawStreamLines();
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void IncreaseSpawnCount();
@@ -209,19 +216,27 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void DecreaseScale();
 
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void IncreaseIsoValue();
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void UpdateCenter(FVector InCenter);
+	void DecreaseIsoValue();
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void UpdateScale(float scale);
+	void DrawVorticity();
 
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void DrawQCritirea();
 
-	void UpdateSpawnPointPositions(std::vector<glm::vec4>& points);
-
-	void UpdateIsosurface();
+	int drawType = 0;
 
 	bool once = false;
+
+	// plane params
+	int selectedAxis = 2;
+	float planeOffset = 0.2;
+	int planeDrawType = 4;
+
 	unsigned long lastAnimate = 0;
 	int first = 1;
 	float animateSpeed = 1.0f;

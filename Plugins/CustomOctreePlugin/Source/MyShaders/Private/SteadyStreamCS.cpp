@@ -134,7 +134,7 @@ public:
 		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), THREADGROUPSIZE_Z);
 	}
 
-	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FSteadyStreamParameters& params)
+	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FStreamLineParameters& params)
 	{
 		FRDGBuilder GraphBuilder(RHICmdList);
 		const TShaderMapRef<FSteadyStreamCS> ComputeShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
@@ -174,17 +174,6 @@ public:
 		PassParameters->vel_tex = Vel;
 		PassParameters->pre_tex = Pre;
 
-		/*PassParameters->collideForce = 1;
-		PassParameters->dt = 0.033;
-		PassParameters->maxLength = 1000;
-		PassParameters->stepDivider = 53;
-		PassParameters->index_length = 4225;
-		PassParameters->chunklist_length = 3002;
-		PassParameters->chunkSize = FVector3f(13, 5, 4);
-		PassParameters->minPos = FVector3f(-1.2425, -0.675, 0);
-		PassParameters->maxPos = FVector3f(2.4325, 0.675, 1.19);
-		PassParameters->spacing = FVector3f(0.00883413f, 0.0084375f, 0.00929688f);
-		PassParameters->totalLevel = 5;*/
 		PassParameters->collideForce = params.collideForce;
 		PassParameters->dt = params.dt;
 		PassParameters->maxLength = params.maxLength;
@@ -224,25 +213,23 @@ public:
 
 				params.pathLine = pathLine;
 
-				float zoomSize = 1.0f;
+				float scaleSize = 100.0f;
 				TArray<FBatchedLine> lines;	
 				for (int i = 0; i < params.points.Num(); i++)
 				{
 					for (int j = 0; j < params.maxLength - 1; j++) {
 						int offset = i * params.maxLength + j;
-
 						if (offset >= pathLine.Num())
 							continue;
 
 						FVector start = FVector(pathLine[offset].X, pathLine[offset].Y, pathLine[offset].Z);
 						FVector end = FVector(pathLine[offset + 1].X, pathLine[offset + 1].Y, pathLine[offset + 1].Z);
 
-						float scaleSize = 100.0f;
 						FBatchedLine line = FBatchedLine(start * scaleSize,
 							end * scaleSize,
 							colormap(pathLine[offset].W / params.maxMag),
 							0.1, // for long period draw
-							25,
+							0.5,
 							0
 						); 
 						lines.Add(line);
@@ -268,7 +255,7 @@ IMPLEMENT_GLOBAL_SHADER(FSteadyStreamCS, "/ARShaders/Private/SteadyStreamCS.usf"
 //	);
 //}
 
-void USteadyStreamCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FSteadyStreamParameters& params)
+void USteadyStreamCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FStreamLineParameters& params)
 {
 	ENQUEUE_RENDER_COMMAND(CommandList)(
 		[index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, &params](FRHICommandListImmediate& RHICmdList)

@@ -3,18 +3,10 @@
 RWBuffer<float4> positions;
 RWBuffer<float4> pathLine;
 
-//Texture2D<float4> index_tex;
-//Texture2D<float4> status_tex;
-//Texture2D<float4> vel_tex;
-//Texture2D<float4> pre_tex;
-
 Buffer<int> index_tex;
 Buffer<int> status_tex;
 Buffer<float3> vel_tex;
 Buffer<float> pre_tex;
-
-//int index_tex_size;
-//int vel_tex_size;
 
 float collideForce;
 
@@ -47,12 +39,7 @@ int returnValue;
     {
         if (location >= index_length)
             return -1;
-
-        //int rowI = location / index_tex_size;
-        //int colI = location - rowI * index_tex_size;
-        //int3 coord = int3(colI, rowI, 0);
-        //int status = int(status_tex.Load(coord).r);
-        //int index = int(index_tex.Load(coord).r);
+        
         int status = int(status_tex.Load(location));
         int index = int(index_tex.Load(location));
         //int status = int(texelFetch(status_tex, location).r);
@@ -151,11 +138,7 @@ float3 SampleFromTexture(float3 position)
             continue;
         int dataIndex = int(startIndex + (xIndex + xBias) + (chunkSize.x + 1) * ((yIndex + yBias) + (chunkSize.y + 1) * (zIndex + zBias)));
         float3 cornerPos = float3((xIndex + xBias) * spacingPerLevel.x, (yIndex + yBias) * spacingPerLevel.y, (zIndex + zBias) * spacingPerLevel.z);
-
-        //int rowI = dataIndex / index_tex_size;
-        //int colI = dataIndex - rowI * index_tex_size;
-        //int3 coord = int3(colI, rowI, 0);
-        //float3 vel = vel_tex.Load(coord).rgb;
+        
         float3 vel = vel_tex.Load(dataIndex).rgb;
         //float3 vel = texelFetch(vel_tex, dataIndex).rgb;
         float dist;
@@ -203,7 +186,11 @@ void MainCS(uint3 gid : SV_DispatchThreadID)
     chunkPointCount = int(chunkSize.x + 1) * int(chunkSize.y + 1) * int(chunkSize.z + 1);
     finalMinPos = minPos;
     finalMaxPos = maxPos;
+    
+    float3 mid = (minPos + maxPos) / 2.0;
     float4 pos = positions[gid.x];
+    float4 swapPos = float4(pos.x, 2 * mid.y - pos.y, pos.z, pos.w);
+    pos = swapPos;
 
     valid = 1;
     for (int i = 0; i < maxLength; i++)
@@ -232,6 +219,7 @@ void MainCS(uint3 gid : SV_DispatchThreadID)
             }
             pos = new_p;
         }
-        pathLine[i + gid.x * maxLength] = new_p;
+        //pathLine[i + gid.x * maxLength] = new_p;
+        pathLine[i + gid.x * maxLength] = float4(new_p.x, 2 * mid.y - new_p.y, new_p.z, new_p.w);
     }
 }

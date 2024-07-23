@@ -16,6 +16,8 @@ FRDGBufferSRVRef GenerateBufferSRV(FRDGBuilder& GraphBuilder, TArray<float>& dat
 
 FRDGBufferUAVRef GenerateBufferUAV(FRDGBuilder& GraphBuilder, TArray<FVector4f>& data, const TCHAR* Name);
 
+FRDGBufferUAVRef GenerateBufferUAV(FRDGBuilder& GraphBuilder, TArray<FVector3f>& data, const TCHAR* Name);
+
 float colormap_red(float x);
 
 float colormap_green(float x);
@@ -37,8 +39,9 @@ public:
 		return FModuleManager::Get().IsModuleLoaded("MyShaders");
 	}
 
-	static void GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FSteadyStreamParameters& params);
-	static void GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FDynamicStreamParameters& params);
+	static void GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FStreamLineParameters& params);
+	static void GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FStreamLineParameters& params);
+	static void GetIsosufacePos(std::vector<float>& isosurfacePointList, std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, FIsosurfaceParameters& params);
 
 public:
 
