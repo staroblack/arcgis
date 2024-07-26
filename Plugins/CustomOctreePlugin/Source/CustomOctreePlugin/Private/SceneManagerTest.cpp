@@ -249,8 +249,6 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	DrawCube(glm2FVec(_octree.GetMin()), glm2FVec(_octree.GetMax()));
 
 	UpdateTexBuffer();
-	
-	//DrawIsosuface();
 
 	switch (drawType) {
 	case 1:
@@ -457,20 +455,20 @@ void ASceneManagerTest::DrawCube(FVector min, FVector max) {
 		int index = rotateArr[i];
 		FVector base((index & 1) ? min.X : max.X, (index & 2) ? min.Y : max.Y, min.Z);
 		FVector target(base.X, base.Y, max.Z);
-		float scaleSize = 100.0f;
+		float scaleSize = 100.0f * MyScale;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize, target * scaleSize, FColor::Cyan, false, 1, 0, 5);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
 
 		int index2 = rotateArr[(i + 1) & 3];
 		target = FVector((index2 & 1) ? min.X : max.X, (index2 & 2) ? min.Y : max.Y, min.Z);
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize, target * scaleSize, FColor::Cyan, false, 1, 0, 5);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
 
 		base.Z = target.Z = max.Z;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize, target * scaleSize, FColor::Cyan, false, 1, 0, 5);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
 	}
-}
+}	
 
 void ASceneManagerTest::UpdateTexBuffer()
 {
@@ -752,11 +750,12 @@ void ASceneManagerTest::UpdatePlane() {
 		lt[0],lt[1],lt[2],
 	};*/
 
+	float scaleSize = 100.0f * MyScale;
 	TArray<FVector> points;
-	points.Add(glm2FVec(lb) * 100);
-	points.Add(glm2FVec(rb) * 100);
-	points.Add(glm2FVec(rt) * 100);
-	points.Add(glm2FVec(lt) * 100);
+	points.Add(glm2FVec(lb) * scaleSize + Center);
+	points.Add(glm2FVec(rb) * scaleSize + Center);
+	points.Add(glm2FVec(rt) * scaleSize + Center);
+	points.Add(glm2FVec(lt) * scaleSize + Center);
 
 	TArray<int> indexs{
 		0,2,1,
@@ -821,6 +820,9 @@ void ASceneManagerTest::DrawPlane() {
 			MID->SetScalarParameterValue("minValue", 0.0f);
 			MID->SetScalarParameterValue("maxValue", _octree.GetMaxMagnitude());
 		}
+
+		MID->SetScalarParameterValue("scale", MyScale);
+		MID->SetVectorParameterValue("center", Center);
 	}
 }
 
@@ -834,6 +836,8 @@ void ASceneManagerTest::UpdateStreamLine(bool isDynamic) {
 	streamLineParams.invisibleLength = invisibleLength;
 	streamLineParams.animateTime = animateTime;
 	streamLineParams.hack = hack;
+	streamLineParams.center = Center;
+	streamLineParams.myScale = MyScale;
 
 	if (isDynamic)
 		FMyShaders::GetDynamicStreamLine(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, streamLineParams);
@@ -928,6 +932,8 @@ void ASceneManagerTest::DrawVorticity() {
 	isosurfaceParams.minIsovalue = 0;
 	isosurfaceParams.maxIsovalue = 0;
 	isosurfaceParams.isQCritirea = 0;
+	isosurfaceParams.myScale = MyScale;
+	isosurfaceParams.center = Center;
 
 	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, isosurfaceParams);
 
@@ -957,6 +963,8 @@ void ASceneManagerTest::DrawQCritirea() {
 	isosurfaceParams.minIsovalue = _octree.GetMinQCritirea();
 	isosurfaceParams.maxIsovalue = _octree.GetMaxQCritirea();
 	isosurfaceParams.isQCritirea = 1;
+	isosurfaceParams.myScale = MyScale;
+	isosurfaceParams.center = Center;
 
 	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, isosurfaceParams);
 
@@ -1080,4 +1088,12 @@ void ASceneManagerTest::IncreaseIsoValue() {
 void ASceneManagerTest::DecreaseIsoValue() {
 	if (vorticityThreshold > 0)
 		vorticityThreshold -= 10;
+}
+
+void ASceneManagerTest::UpdateCenter(FVector InCenter) {
+	Center = InCenter;
+}
+
+void ASceneManagerTest::UpdateScale(float InScale) {
+	MyScale = InScale;
 }

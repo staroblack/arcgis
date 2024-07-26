@@ -15,76 +15,6 @@
 #define THREADGROUPSIZE_Y 1
 #define THREADGROUPSIZE_Z 1
 
-//class FComputeShaderRDG : public FGlobalShader
-//{
-//public:
-//	DECLARE_GLOBAL_SHADER(FComputeShaderRDG)
-//	SHADER_USE_PARAMETER_STRUCT(FComputeShaderRDG, FGlobalShader)
-//
-//		BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-//		SHADER_PARAMETER(FIntPoint, TextureSize)
-//		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, OutputTexture) // RDG UAV
-//		END_SHADER_PARAMETER_STRUCT()
-//
-//		static inline FIntVector ThreadGroupSize = FIntVector(16, 16, 1);
-//
-//	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
-//	{
-//		return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
-//	}
-//
-//	static void ModifyCompilationEnvironment(const FGlobalShaderPermutationParameters& Parameters,
-//		FShaderCompilerEnvironment& Environment)
-//	{
-//		Environment.SetDefine(TEXT("THREADGROUPSIZE_X"), ThreadGroupSize.X);
-//		Environment.SetDefine(TEXT("THREADGROUPSIZE_Y"), ThreadGroupSize.Y);
-//		Environment.SetDefine(TEXT("THREADGROUPSIZE_Z"), ThreadGroupSize.Z);
-//	}
-//
-//	static void Execute(FRHICommandListImmediate& RHICmdList, UTextureRenderTarget2D* renderTarget)
-//	{
-//		int32 Width = renderTarget->SizeX;
-//		int32 Height = renderTarget->SizeY;
-//		if (Width < 1 || Height < 1) return;
-//
-//		FRDGBuilder GraphBuilder(RHICmdList);
-//		const TShaderMapRef<FComputeShaderRDG> ComputeShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
-//
-//		// create resource
-//		const FRDGTextureDesc& RenderTargetDesc = FRDGTextureDesc::Create2D(
-//			FIntPoint(Width, Height),
-//			renderTarget->GetFormat(),
-//			FClearValueBinding::Black,
-//			TexCreate_RenderTargetable |
-//			TexCreate_ShaderResource | TexCreate_UAV);
-//		FRDGTextureRef RDGRenderTarget = GraphBuilder.CreateTexture(RenderTargetDesc, TEXT("RDGRenderTarget"));
-//		FRDGTextureUAVDesc UAVDesc(RDGRenderTarget);
-//
-//		// set params
-//		FParameters* PassParameters = GraphBuilder.AllocParameters<FParameters>();
-//		PassParameters->OutputTexture = GraphBuilder.CreateUAV(UAVDesc);
-//
-//		uint32 GroupSizeX = FMath::DivideAndRoundUp(Width, ThreadGroupSize.X);
-//		uint32 GroupSizeY = FMath::DivideAndRoundUp(Height, ThreadGroupSize.Y);
-//
-//		FComputeShaderUtils::AddPass(
-//			GraphBuilder,
-//			RDG_EVENT_NAME("ComputeShaderRDG"),
-//			ERDGPassFlags::Compute,
-//			ComputeShader,
-//			PassParameters,
-//			FIntVector(GroupSizeX, GroupSizeY, 1));
-//
-//		TRefCountPtr<IPooledRenderTarget> PooledRenderTarget;
-//		GraphBuilder.QueueTextureExtraction(RDGRenderTarget, &PooledRenderTarget);
-//
-//		GraphBuilder.Execute();
-//
-//		RHICmdList.CopyTexture(PooledRenderTarget->GetRHI(),
-//			renderTarget->GetRenderTargetResource()->TextureRHI, FRHICopyTextureInfo());
-//	}
-//};
-
 class FSteadyStreamCS : public FGlobalShader
 {
 public:
@@ -145,11 +75,6 @@ public:
 		FRDGBufferSRVRef Vel = GenerateBufferSRV(GraphBuilder, vel_tbo_data, TEXT("VelBuffer"));
 		FRDGBufferSRVRef Pre = GenerateBufferSRV(GraphBuilder, pre_tbo_data, TEXT("PreBuffer"));
 
-		/*TArray<FVector4f> givenPoints;
-		for (int i = 0; i < 100; i++) {
-			givenPoints.Add(FVector4f(0, -0.31 + i * 0.0062f, 0, 0));
-		}*/
-
 		FRDGBufferUAVRef pointUAV = GenerateBufferUAV(GraphBuilder, params.points, TEXT("point"));
 		
 		TArray<FVector4f> paths;
@@ -186,7 +111,6 @@ public:
 		PassParameters->spacing = params.spacing;
 		PassParameters->totalLevel = params.totalLevel;
 
-		//FIntVector GroupCounts = FIntVector(FMath::DivideAndRoundUp(100.0f, 16.0f), 1, 1);
 		FIntVector GroupCounts = FIntVector(params.points.Num(), 1, 1);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("SteadyStreamCS"), ERDGPassFlags::Compute, ComputeShader, PassParameters, GroupCounts);
 
@@ -213,8 +137,8 @@ public:
 
 				params.pathLine = pathLine;
 
-				float scaleSize = 100.0f;
-				TArray<FBatchedLine> lines;	
+				float scaleSize = 100.0 * params.myScale;
+				TArray<FBatchedLine> lines;
 				for (int i = 0; i < params.points.Num(); i++)
 				{
 					for (int j = 0; j < params.maxLength - 1; j++) {
@@ -225,13 +149,13 @@ public:
 						FVector start = FVector(pathLine[offset].X, pathLine[offset].Y, pathLine[offset].Z);
 						FVector end = FVector(pathLine[offset + 1].X, pathLine[offset + 1].Y, pathLine[offset + 1].Z);
 
-						FBatchedLine line = FBatchedLine(start * scaleSize,
-							end * scaleSize,
+						FBatchedLine line = FBatchedLine(start * scaleSize + params.center,
+							end * scaleSize + params.center,
 							colormap(pathLine[offset].W / params.maxMag),
 							0.1, // for long period draw
-							0.5,
+							0.5 * scaleSize,
 							0
-						); 
+						);
 						lines.Add(line);
 					}
 				}

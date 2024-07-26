@@ -55,6 +55,9 @@ struct FStreamLineParameters {
 
 	bool hack;
 
+	FVector center;
+	float myScale;
+
 	FStreamLineParameters();
 	FStreamLineParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree);
 };
@@ -81,6 +84,9 @@ struct FIsosurfaceParameters {
 	float isovalue;
 	float minIsovalue;
 	float maxIsovalue;
+
+	FVector center;
+	float myScale;
 
 	FIsosurfaceParameters();
 	FIsosurfaceParameters(int index_length, int chunklist_length, float threshold, FMatrix camViewProj, CustomOctree& octree);
@@ -146,6 +152,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool DrawRedDot;
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	FVector Center;
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	float MyScale;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float QCritireaThreshold1 = 100;
@@ -218,6 +230,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void IncreaseIsoValue();
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void UpdateCenter(FVector InCenter);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void UpdateScale(float scale);
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void DecreaseIsoValue();

@@ -159,8 +159,8 @@ public:
 
 				params.pathLine = pathLine;
 
-				float scaleSize = 100.0;
-				TArray<FBatchedLine> lines;
+				float scaleSize = 100.0 * params.myScale;
+				TArray<FBatchedLine> lines;					
 				for (int i = 0; i < params.points.Num(); i++)
 				{
 					for (int j = 0; j < params.maxLength - 1; j++) {
@@ -175,11 +175,11 @@ public:
 						FVector start = FVector(pathLine[offset].X, pathLine[offset].Y, pathLine[offset].Z);
 						FVector end = FVector(pathLine[offset + 1].X, pathLine[offset + 1].Y, pathLine[offset + 1].Z);
 
-						FBatchedLine line = FBatchedLine(start * scaleSize,
-							end * scaleSize,
-							colormap(pathLine[offset].W / params.maxMag), //pathLine[offset].W = 0.0035 -> red
+						FBatchedLine line = FBatchedLine(start * scaleSize + params.center,
+							end * scaleSize + params.center,
+							colormap(pathLine[offset].W / params.maxMag),
 							0.1, // for long period draw
-							0.5,
+							0.5 * scaleSize,
 							0
 						);
 						lines.Add(line);

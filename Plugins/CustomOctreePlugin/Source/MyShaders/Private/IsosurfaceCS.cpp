@@ -166,7 +166,6 @@ public:
 		PassParameters->isovalue = params.isovalue;
 
 		FVector3f threadCount = cbrt(params.chunkListLength) * params.chunkSize;
-		//FIntVector GroupCounts = FComputeShaderUtils::GetGroupCount(FIntVector(threadCount.X , threadCount.Y, threadCount.Z), FIntVector(THREADGROUPSIZE_X, THREADGROUPSIZE_Y, THREADGROUPSIZE_Z));
 		FIntVector GroupCounts = FComputeShaderUtils::GetGroupCount(FIntVector(threadCount.X * threadCount.Y * threadCount.Z, 1, 1), FIntVector(THREADGROUPSIZE_X, THREADGROUPSIZE_Y, THREADGROUPSIZE_Z));
 		/*UE_LOG(LogTemp, Log, TEXT("threadCount is %f, %f, %f"), threadCount.X, threadCount.Y, threadCount.Z);
 		UE_LOG(LogTemp, Log, TEXT("GroupCounts is %i, %i, %i"), GroupCounts.X, GroupCounts.Y, GroupCounts.Z);*/
@@ -178,7 +177,6 @@ public:
 		
 		OutPos.Empty();
 		OutPos.SetNumZeroed(NumTris);
-		//readbackPos.Init(FVector4f(0, 0, 0, 0), NumTris);
 
 		GraphBuilder.AddPass(
 			RDG_EVENT_NAME("PooledBufferDownload(%s)", outPosDesc->Name),
@@ -194,11 +192,6 @@ public:
 		
 		GraphBuilder.Execute();
 
-		/*params.outputPos.Empty();
-		params.outputPos = readbackPos;
-
-		TArray<FVector> outputPoints;
-		TArray<int> OutTris;*/
 		params.outputPos.Empty();
 		params.OutTris.Empty();
 		int offset[3] = { 0, 1, -1 };
@@ -206,8 +199,8 @@ public:
 			if (OutPos[i] == FVector4f(-1, -1, -1, -1))
 				continue;
 
-			params.OutTris.Add(params.OutTris.Num()/* + offset[params.OutTris.Num() % 3]*/);
-			params.outputPos.Add(FVector(OutPos[i]));
+			params.OutTris.Add(params.OutTris.Num());
+			params.outputPos.Add(FVector(OutPos[i]) * params.myScale + params.center);
 		}
 	}
 };
