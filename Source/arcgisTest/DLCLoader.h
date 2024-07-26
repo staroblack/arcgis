@@ -7,6 +7,7 @@
 #include "Runtime/Engine/Classes/Engine/AssetManager.h"
 #include "Engine/ObjectLibrary.h"
 #include "Engine/StreamableManager.h"
+#include "icon.h"
 
 #include "DLCLoader.generated.h"
 
@@ -44,6 +45,7 @@ public:
 	FString loadModelPath = "city_model_path";
 };
 
+
 // descriptor class
 class ModelInfo {
 public:
@@ -66,6 +68,7 @@ public:
 
 	TSharedPtr<FStreamableHandle> requestHandle;
 	UStaticMeshComponent* comp = nullptr;
+	
 
 	FCriticalSection signalLock;
 	TArray<ModelInfo*> unloadSignal;
@@ -86,7 +89,7 @@ public:
 };
 
 UCLASS()
-class PAKLOADER_API ADLCLoader : public AActor
+class ARCGISTEST_API ADLCLoader : public AActor
 {
 	GENERATED_BODY()
 
@@ -111,6 +114,9 @@ private:
 	TArray<FSoftObjectPath> softPathes;
 	TArray<FAssetData> assetDatas;
 	TArray<UStaticMeshComponent*> meshComps;
+
+	TArray<Aicon*> icons;
+	int iconsCount = 0;
 
 public:	
 	// Sets default values for this actor's properties
@@ -145,6 +151,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "jsonWriting")
 	static void WriteStructFromJsonFile(FString filepath, FinputStruct inputStruct, bool& bOutSuccess, FString& OutInfoMessage);
+
+	UFUNCTION(BlueprintCallable, Category = "pakloading")
+	TArray<Aicon*> getIcons();
 
 public:
 	static IPlatformFile* oldPlatform;

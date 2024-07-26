@@ -14,6 +14,7 @@
 
 
 
+
 IPlatformFile* ADLCLoader::oldPlatform = nullptr;
 
 // Sets default values
@@ -46,6 +47,7 @@ void ADLCLoader::Tick(float DeltaTime)
 
 TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FString& OutInfoMessage)
 {
+	bOutSuccess = true;
 	TArray<FString> files;
 	IFileManager& fileManager = IFileManager::Get();
 	FString absFolderPath = fileManager.ConvertToAbsolutePathForExternalAppForRead(*pakFolder);
@@ -103,6 +105,13 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		UE_LOG(LogTemp, Warning, TEXT("new mount point: %s"), *mountPoint);
 		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
 
+		//test spawninfo
+		FActorSpawnParameters spawnInfo;
+		spawnInfo.Name = "testing";
+		Aicon* tempActor = (Aicon*)GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
+		tempActor->index = iconsCount;
+		icons.Add(tempActor);
+
 		// mount pak
 		if (pakPlatform->Mount(*pakFilePath, 1, *pakFile->GetMountPoint())) {
 			GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount Pak Success : " + pakFilePath);
@@ -125,19 +134,6 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 			this->m_objectLibrary->GetAssetDataList(this->assetDatas);
 			this->m_objectLibrary->ClearLoaded();
 
-			// build assetDataMap
-			for (auto& assetData : assetDatas) {
-				assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
-				GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
-				if (loading == 1) {
-					ModelInfo* model = new ModelInfo();
-					model->Init(this, &assetData, pakPlatform);
-					model->Load();
-					this->models.Add(model);
-				}
-			}
-
-			
 			// scan filenames for descriptor
 			for (FString& filename : filenames) {
 
@@ -146,6 +142,18 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 					bOutSuccess = true;
 					output = ReadStructFromJsonFile(filename, bOutSuccess, OutInfoMessage);
 
+
+					tempActor->caseName = output.caseName;
+					tempActor->madeUnit = output.madeUnit;
+					tempActor->madePerson = output.madePerson;
+					tempActor->uploadDate = output.uploadDate;
+					tempActor->modelCity = output.modelCity;
+					tempActor->quote = output.quote;
+					tempActor->simArea = output.simArea;
+					tempActor->simTime = output.simTime;
+					tempActor->lat = output.lat;
+					tempActor->lon = output.lon;
+					
 					//FString fileDir = filename;
 					//FString json;
 					//FFileHelper::LoadFileToString(json, *fileDir);
@@ -164,10 +172,24 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 				}
 			}
 
+			// build assetDataMap
+			for (auto& assetData : assetDatas) {
+				assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
+				GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
+				tempActor->assets.Add(&assetData);
+				if (loading == 1) {
+					/*ModelInfo* model = new ModelInfo();
+					model->Init(this, &assetData, pakPlatform);
+					model->Load();
+					this->models.Add(model);*/
+				}
+			}
+			
 		}
 		else {
 			UE_LOG(LogTemp, Warning, TEXT("failed to mount pak file"));
 		}
+		iconsCount++;
 	return output;
 }
 
@@ -315,6 +337,7 @@ void ModelInfo::Complete(ModelInfo* info)
 		info->comp->SetStaticMesh(obj);
 		info->comp->SetWorldScale3D(FVector(100, 100, 100));
 		info->comp->SetVisibility(true, true);
+		
 
 		// using static mesh calibrate bounding box 
 		if (!info->boundingBoxCalibrationFlag) {
@@ -438,5 +461,9 @@ void ADLCLoader::WriteStringToFile(FString filepath, FString inputString, bool& 
 	bOutSuccess = true;
 	OutInfoMessage = FString::Printf(TEXT("write string to file Succeeded - '%s'"), *filepath);
 	return;
+}
+
+TArray<Aicon*> ADLCLoader::getIcons() {
+	return icons;
 }
 
