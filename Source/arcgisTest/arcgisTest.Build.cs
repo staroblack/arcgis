@@ -8,7 +8,17 @@ public class arcgisTest : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities" });
+		PublicDependencyModuleNames.AddRange(new string[] { 
+			"Core", 
+			"CoreUObject", 
+			"Engine", 
+			"InputCore",
+			"Slate",
+            "SlateCore",
+            "PakFile", 
+			"Json", 
+			"JsonUtilities" 
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
