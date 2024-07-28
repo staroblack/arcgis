@@ -143,16 +143,16 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 					output = ReadStructFromJsonFile(filename, bOutSuccess, OutInfoMessage);
 
 
-					tempActor->caseName = output.caseName;
-					tempActor->madeUnit = output.madeUnit;
-					tempActor->madePerson = output.madePerson;
-					tempActor->uploadDate = output.uploadDate;
-					tempActor->modelCity = output.modelCity;
-					tempActor->quote = output.quote;
-					tempActor->simArea = output.simArea;
-					tempActor->simTime = output.simTime;
-					tempActor->lat = output.lat;
-					tempActor->lon = output.lon;
+					tempActor->output.caseName = output.caseName;
+					tempActor->output.madeUnit = output.madeUnit;
+					tempActor->output.madePerson = output.madePerson;
+					tempActor->output.uploadDate = output.uploadDate;
+					tempActor->output.modelCity = output.modelCity;
+					tempActor->output.quote = output.quote;
+					tempActor->output.simArea = output.simArea;
+					tempActor->output.simTime = output.simTime;
+					tempActor->output.lat = output.lat;
+					tempActor->output.lon = output.lon;
 					
 					//FString fileDir = filename;
 					//FString json;
