@@ -110,7 +110,6 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		spawnInfo.Name = "testing";
 		Aicon* tempActor = (Aicon*)GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
 		tempActor->index = iconsCount;
-		icons.Add(tempActor);
 
 		// mount pak
 		if (pakPlatform->Mount(*pakFilePath, 1, *pakFile->GetMountPoint())) {

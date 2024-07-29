@@ -86,7 +86,7 @@ void Aicon::complete()
 		meshComponent->SetWorldScale3D(FVector(70, 70, 70));
 		meshComponent->SetVisibility(true, true);
 
-		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Success!");
+		
 	}
 	else {
 		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Failed!");
