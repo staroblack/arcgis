@@ -107,8 +107,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 
 		//test spawninfo
 		FActorSpawnParameters spawnInfo;
-		spawnInfo.Name = "testing";
-		Aicon* tempActor = (Aicon*)GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
+		Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
 		tempActor->index = iconsCount;
 
 		// mount pak
@@ -133,11 +132,24 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 			this->m_objectLibrary->GetAssetDataList(this->assetDatas);
 			this->m_objectLibrary->ClearLoaded();
 
+			// build assetDataMap
+			for (auto& assetData : assetDatas) {
+				assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
+				GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
+				tempActor->assets.Add(&assetData);
+				if (loading == 1) {
+					/*ModelInfo* model = new ModelInfo();
+					model->Init(this, &assetData, pakPlatform);
+					model->Load();
+					this->models.Add(model);*/
+				}
+			}
+
 			// scan filenames for descriptor
 			for (FString& filename : filenames) {
 
 				// load descriptor from json
-				if (filename.Contains("GridDescriptor.json")) {
+				if (filename.Contains(".json")) {
 					bOutSuccess = true;
 					output = ReadStructFromJsonFile(filename, bOutSuccess, OutInfoMessage);
 
@@ -168,19 +180,6 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 				else {
 					UE_LOG(LogTemp, Warning, TEXT("no json"));
 					bOutSuccess = false;
-				}
-			}
-
-			// build assetDataMap
-			for (auto& assetData : assetDatas) {
-				assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
-				GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
-				tempActor->assets.Add(&assetData);
-				if (loading == 1) {
-					/*ModelInfo* model = new ModelInfo();
-					model->Init(this, &assetData, pakPlatform);
-					model->Load();
-					this->models.Add(model);*/
 				}
 			}
 			

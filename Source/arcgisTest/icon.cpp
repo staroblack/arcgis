@@ -117,3 +117,18 @@ void Aicon::setFirstLoad(bool loaded) {
 	firstLoad = loaded;
 }
 
+TArray<float> Aicon::getSimArea(FString line) {
+	std::string stringLine = std::string(TCHAR_TO_UTF8(*line));
+	std::string delimiter = "x";
+	TArray<float> result;
+	size_t pos = 0;
+	std::string token;
+	while ((pos = stringLine.find(delimiter)) != std::string::npos) {
+		token = stringLine.substr(0, pos);
+		result.Add(std::stof(token));
+		stringLine.erase(0, pos + delimiter.length());
+	}
+	result.Add(std::stof(stringLine));
+	return result;
+}
+

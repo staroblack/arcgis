@@ -90,4 +90,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
 	void setFirstLoad(bool loaded);
+	
+	UFUNCTION(BlueprintCallable, Category = "pakloading")
+	TArray<float> getSimArea(FString line);
 };
