@@ -77,13 +77,13 @@ void Aicon::complete()
 	meshComponent->OnComponentCreated();
 	meshComponent->RegisterComponent();
 	meshComponent->SetWorldLocation(FVector(0, 0, 0));
-	meshComponent->SetWorldScale3D(FVector(70, 70, 70));
+	meshComponent->SetWorldScale3D(FVector(55, 55, 55));
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	UStaticMesh* obj = Cast<UStaticMesh>(this->requestHandle->GetLoadedAsset());
 	if (obj) {
 		meshComponent->SetStaticMesh(obj);
-		meshComponent->SetWorldScale3D(FVector(70, 70, 70));
+		meshComponent->SetWorldScale3D(FVector(55, 55, 55));
 		meshComponent->SetVisibility(true, true);
 
 		
