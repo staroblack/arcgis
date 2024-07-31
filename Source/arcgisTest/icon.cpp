@@ -18,17 +18,54 @@ Aicon::Aicon()
 
 }
 
+void Aicon::hitboxInit()
+{
+	//FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'"))
+#if WITH_EDITOR
+	this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'")), FStreamableDelegate::CreateLambda(&Aicon::hitboxComplete, this), 0, true);
+	//this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(assetData.ToSoftObjectPath(), FStreamableDelegate::CreateLambda(&Aicon::complete, this), 0, true);
+#else
+	this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'")), FStreamableDelegate::CreateLambda(&Aicon::hitboxComplete, this), 0, true);
+#endif
+}
+
+void Aicon::hitboxComplete()
+{
+	AActor* actor = Cast<AActor>(this);
+	hitboxCube = NewObject<UStaticMeshComponent>(this);
+	actor->AddInstanceComponent(hitboxCube);
+	hitboxCube->OnComponentCreated();
+	hitboxCube->RegisterComponent();
+	hitboxCube->SetWorldLocation(FVector(0, 0, 0));
+	hitboxCube->SetWorldScale3D(FVector(140, 140, 140));
+	hitboxCube->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+	UStaticMesh* obj = Cast<UStaticMesh>(this->requestHandle->GetLoadedAsset());
+	if (obj) {
+		hitboxCube->SetStaticMesh(obj);
+		hitboxCube->SetWorldScale3D(FVector(140, 140, 140));
+		hitboxCube->SetVisibility(true, true);
+		hitboxCube->SetCollisionObjectType(ECC_GameTraceChannel12);
+
+		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Success!");
+	}
+	else {
+		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Failed!");
+	}
+}
 
 void Aicon::load()
 {
-	//FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Sphere.Sphere\'"))
+	//FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'"))
 #if WITH_EDITOR
 	for (int i = 0; i < assets.Num(); i++) {
 		this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(assets[i]->ToSoftObjectPath(), FStreamableDelegate::CreateLambda(&Aicon::complete, this), 0, true);
 	}
 	//this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(assetData.ToSoftObjectPath(), FStreamableDelegate::CreateLambda(&Aicon::complete, this), 0, true);
 #else
-	this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(assets[i]->ToSoftObjectPath(), FStreamableDelegate::CreateLambda(&Aicon::complete, this), 0, true);
+	for (int i = 0; i < assets.Num(); i++) {
+		this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(assets[i]->ToSoftObjectPath(), FStreamableDelegate::CreateLambda(&Aicon::complete, this), 0, true);
+	}
 #endif
 }
 
@@ -40,16 +77,16 @@ void Aicon::complete()
 	meshComponent->OnComponentCreated();
 	meshComponent->RegisterComponent();
 	meshComponent->SetWorldLocation(FVector(0, 0, 0));
-	meshComponent->SetWorldScale3D(FVector(10000, 10000, 10000));
+	meshComponent->SetWorldScale3D(FVector(70, 70, 70));
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	UStaticMesh* obj = Cast<UStaticMesh>(this->requestHandle->GetLoadedAsset());
 	if (obj) {
 		meshComponent->SetStaticMesh(obj);
-		meshComponent->SetWorldScale3D(FVector(10000, 10000, 10000));
+		meshComponent->SetWorldScale3D(FVector(70, 70, 70));
 		meshComponent->SetVisibility(true, true);
 
-		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Success!");
+		
 	}
 	else {
 		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Failed!");
@@ -58,5 +95,40 @@ void Aicon::complete()
 
 int Aicon::getIconIndex() {
 	return index;
+}
+
+FOutputStruct Aicon::getOutputStruct() {
+	return output;
+}
+
+UStaticMeshComponent* Aicon::getHitbox() {
+	return hitboxCube;
+}
+
+UStaticMeshComponent* Aicon::getMeshComponent() {
+	return meshComponent;
+}
+
+bool Aicon::getFirstLoad() {
+	return firstLoad;
+}
+
+void Aicon::setFirstLoad(bool loaded) {
+	firstLoad = loaded;
+}
+
+TArray<float> Aicon::getSimArea(FString line) {
+	std::string stringLine = std::string(TCHAR_TO_UTF8(*line));
+	std::string delimiter = "x";
+	TArray<float> result;
+	size_t pos = 0;
+	std::string token;
+	while ((pos = stringLine.find(delimiter)) != std::string::npos) {
+		token = stringLine.substr(0, pos);
+		result.Add(std::stof(token));
+		stringLine.erase(0, pos + delimiter.length());
+	}
+	result.Add(std::stof(stringLine));
+	return result;
 }
 
