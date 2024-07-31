@@ -137,7 +137,7 @@ public:
 
 				params.pathLine = pathLine;
 
-				float scaleSize = 100.0 * params.myScale;
+				float scaleSize = 100.0f * params.myScale;
 				TArray<FBatchedLine> lines;
 				for (int i = 0; i < params.points.Num(); i++)
 				{
@@ -153,7 +153,7 @@ public:
 							end * scaleSize + params.center,
 							colormap(pathLine[offset].W / params.maxMag),
 							0.1, // for long period draw
-							0.5 * scaleSize,
+							0.5 * params.myScale,
 							0
 						);
 						lines.Add(line);

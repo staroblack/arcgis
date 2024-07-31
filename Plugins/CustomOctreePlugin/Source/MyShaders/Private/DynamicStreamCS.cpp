@@ -133,8 +133,7 @@ public:
 		//FIntVector GroupCounts = FIntVector(FMath::DivideAndRoundUp((float)params.points.Num(), 16.0f), 1, 1);
 		FIntVector GroupCounts = FIntVector(params.points.Num(), 1, 1);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("DynamicStreamCS"), ERDGPassFlags::Compute, ComputeShader, PassParameters, GroupCounts);
-		//UE_LOG(LogTemp, Log, TEXT("threadCount is %f, %f, %f"), threadCount.X, threadCount.Y, threadCount.Z);
-		UE_LOG(LogTemp, Log, TEXT("GroupCounts is %i, %i, %i"), GroupCounts.X, GroupCounts.Y, GroupCounts.Z);
+		//UE_LOG(LogTemp, Log, TEXT("GroupCounts is %i, %i, %i"), GroupCounts.X, GroupCounts.Y, GroupCounts.Z);
 
 		TArray<FVector4f> pathLine;
 		pathLine.SetNumZeroed(params.points.Num() * params.maxLength);
@@ -179,7 +178,7 @@ public:
 							end * scaleSize + params.center,
 							colormap(pathLine[offset].W / params.maxMag),
 							0.1, // for long period draw
-							0.5 * scaleSize,
+							0.5 * params.myScale,
 							0
 						);
 						lines.Add(line);

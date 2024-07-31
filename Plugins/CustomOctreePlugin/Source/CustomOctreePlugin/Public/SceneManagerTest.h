@@ -159,10 +159,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	float MyScale;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float QCritireaThreshold1 = 100;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float QCritireaThreshold2 = 100;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -196,49 +194,10 @@ public:
 	void DrawStreamLines();
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void IncreaseSpawnCount();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void DecreaseSpawnCount();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void ShiftXPos();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void ShiftXNeg();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void ShiftYPos();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void ShiftYNeg();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void ShiftZPos();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void ShiftZNeg();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void SwitchHack();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void IncreaseScale();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void DecreaseScale();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void IncreaseIsoValue();
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void UpdateCenter(FVector InCenter);
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void UpdateScale(float scale);
-
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
-	void DecreaseIsoValue();
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void DrawVorticity();
@@ -246,13 +205,73 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void DrawQCritirea();
 
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetDrawType(int DrawType);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetStepDivider(int stepDivider);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetSpawnCount(int spawnCount);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetSpawnRange(float spawnRange);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetXPos(float xPos);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetYPos(float yPos);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetZPos(float zPos);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetXRot(float xRot);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetYRot(float yRot);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetZRot(float zRot);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetSpawnType(int spawnType);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetVisibleLength(float VisibleLength);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetInvisibleLength(float InvisibleLength);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetAnimateSpeed(float AnimateSpeed);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetSelectedAxis(int SelectedAxis);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetPlaneOffset(float PlaneOffset);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetPlaneDrawType(int PlaneDrawType);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetVoricityValue(float voricityValue);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetQCritirea1Value(float QCritirea1Value);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetQCritirea2Value(float QCritirea2Value);
+
 	int drawType = 0;
 
 	bool once = false;
 
 	// plane params
 	int selectedAxis = 2;
-	float planeOffset = 0.2;
+	float planeOffset = 0.05;
 	int planeDrawType = 4;
 
 	unsigned long lastAnimate = 0;

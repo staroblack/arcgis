@@ -17,11 +17,11 @@ inline FVector3f glm2FVec3f(const glm::vec3& p) {
 }
 
 LineGenerator::LineGenerator() {
-	stepDivider = 53;
-	transform = glm::vec3(0.2f, 0.5f, 0.09f);
+	stepDivider = 60;
+	transform = glm::vec3(0.15f, 0.5f, 0.09f);
 	rotation = glm::vec3(0, 0, 0);
-	scale = 0.3f;
-	spawnCount = 10;
+	scale = 0.31f;
+	spawnCount = 20;
 	collideForce = 1;
 
 	spawnType = SpawnType::LINE;
@@ -52,7 +52,6 @@ FStreamLineParameters::FStreamLineParameters(std::vector<glm::vec4>& point, int 
 	collideForce = 1;
 	dt = 0.033f;
 	maxLength = 1000;
-	stepDivider = 53;
 	indexLength = index_length;
 	chunkListLength = chunklist_length;
 	chunkSize = glm2FVec3f(glm::vec3(octree.GetChunkSize()));
@@ -66,8 +65,6 @@ FStreamLineParameters::FStreamLineParameters(std::vector<glm::vec4>& point, int 
 	animateTime = 1;
 
 	hack = false;
-
-	maxMag = 0.033f / stepDivider * octree.GetMaxMagnitude();
 }
 
 FIsosurfaceParameters::FIsosurfaceParameters() {}
@@ -250,13 +247,16 @@ void ASceneManagerTest::Tick(float DeltaTime)
 
 	UpdateTexBuffer();
 
+	planePMC->ClearAllMeshSections();
+	isosurfacePMC->ClearAllMeshSections();
+	isosurfacePMC2->ClearAllMeshSections();
 	switch (drawType) {
 	case 1:
-		UpdateStreamLine(true);
+		UpdateStreamLine(false);
 		DrawStreamLines();
 		break;
 	case 2:
-		UpdateStreamLine(false);
+		UpdateStreamLine(true);
 		DrawStreamLines();
 		break;
 	case 3:
@@ -779,6 +779,9 @@ void ASceneManagerTest::UpdatePlane() {
 void ASceneManagerTest::DrawPlane() {
 	CreateTextures();
 
+	isosurfacePMC->ClearAllMeshSections();
+	isosurfacePMC2->ClearAllMeshSections();
+
 	for (int32 j = 0; j < planePMC->GetNumSections(); j++) {
 		planePMC->SetMaterial(j, MaterialToApplyToClickedObject);
 		UMaterialInstanceDynamic* MID = planePMC->CreateAndSetMaterialInstanceDynamic(j);
@@ -821,7 +824,7 @@ void ASceneManagerTest::DrawPlane() {
 			MID->SetScalarParameterValue("maxValue", _octree.GetMaxMagnitude());
 		}
 
-		MID->SetScalarParameterValue("scale", MyScale);
+		MID->SetScalarParameterValue("scale", MyScale * 100.f);
 		MID->SetVectorParameterValue("center", Center);
 	}
 }
@@ -832,6 +835,9 @@ void ASceneManagerTest::UpdateStreamLine(bool isDynamic) {
 	UpdateSpawnPointPositions(points);
 
 	streamLineParams = FStreamLineParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
+	streamLineParams.stepDivider = lineGenerator.stepDivider;
+	streamLineParams.maxMag = 0.033f / streamLineParams.stepDivider * _octree.GetMaxMagnitude();
+
 	streamLineParams.visibleLength = visibleLength;
 	streamLineParams.invisibleLength = invisibleLength;
 	streamLineParams.animateTime = animateTime;
@@ -923,10 +929,10 @@ void ASceneManagerTest::UpdateSpawnPointPositions(std::vector<glm::vec4>& points
 }
 
 void ASceneManagerTest::DrawVorticity() {
-	UpdateIsosurface();
+	planePMC->ClearAllMeshSections();
+	isosurfacePMC2->ClearAllMeshSections();
 
-	/*for (int i = 0; i < isosurfacePointList.size(); i += 3)
-		DrawDebugPoint(GetWorld(), FVector(isosurfacePointList[i], isosurfacePointList[i + 1], isosurfacePointList[i + 2]) * 100, 1, FColor::Red, false, 100);*/
+	UpdateIsosurface();
 
 	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), vorticityThreshold, GetCameraViewProj(), _octree);
 	isosurfaceParams.minIsovalue = 0;
@@ -955,9 +961,6 @@ void ASceneManagerTest::DrawVorticity() {
 
 void ASceneManagerTest::DrawQCritirea() {
 	UpdateIsosurface();
-
-	/*for (int i = 0; i < isosurfacePointList.size(); i += 3)
-		DrawDebugPoint(GetWorld(), FVector(isosurfacePointList[i], isosurfacePointList[i + 1], isosurfacePointList[i + 2]) * 100, 1, FColor::Red, false, 100);*/
 
 	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), QCritireaThreshold1, GetCameraViewProj(), _octree);
 	isosurfaceParams.minIsovalue = _octree.GetMinQCritirea();
@@ -1032,68 +1035,95 @@ void ASceneManagerTest::UpdateIsosurface() {
 	}
 }
 
-void ASceneManagerTest::IncreaseSpawnCount() {
-	if (lineGenerator.spawnCount < 100)
-		lineGenerator.spawnCount += 5;
-}
-
-void ASceneManagerTest::DecreaseSpawnCount() {
-	if (lineGenerator.spawnCount > 5)
-		lineGenerator.spawnCount -= 5;
-}
-
-void ASceneManagerTest::ShiftXPos() {
-	lineGenerator.transform.x += 0.025;
-}
-
-void ASceneManagerTest::ShiftXNeg() {
-	lineGenerator.transform.x -= 0.025;
-}
-
-void ASceneManagerTest::ShiftYPos() {
-	lineGenerator.transform.y += 0.025;
-}
-
-void ASceneManagerTest::ShiftYNeg() {
-	lineGenerator.transform.y -= 0.025;
-}
-
-void ASceneManagerTest::ShiftZPos() {
-	lineGenerator.transform.z += 0.01;
-}
-
-void ASceneManagerTest::ShiftZNeg() {
-	lineGenerator.transform.z -= 0.01;
-}
-
-void ASceneManagerTest::SwitchHack() {
-	hack = !hack;
-}
-
-void ASceneManagerTest::IncreaseScale() {
-	if (lineGenerator.scale < 1)
-		lineGenerator.scale += 0.05;
-}
-
-void ASceneManagerTest::DecreaseScale() {
-	if (lineGenerator.scale > 0.05)
-		lineGenerator.scale -= 0.05;
-}
-
-void ASceneManagerTest::IncreaseIsoValue() {
-	if (vorticityThreshold < 150)
-		vorticityThreshold += 10;
-}
-
-void ASceneManagerTest::DecreaseIsoValue() {
-	if (vorticityThreshold > 0)
-		vorticityThreshold -= 10;
-}
-
 void ASceneManagerTest::UpdateCenter(FVector InCenter) {
 	Center = InCenter;
 }
 
 void ASceneManagerTest::UpdateScale(float InScale) {
 	MyScale = InScale;
+}
+
+void ASceneManagerTest::SetDrawType(int DrawType) {
+	this->drawType = DrawType;
+}
+
+void ASceneManagerTest::SetStepDivider(int stepDivider) {
+	lineGenerator.stepDivider = stepDivider;
+}
+
+void ASceneManagerTest::SetSpawnCount(int spawnCount) {
+	lineGenerator.spawnCount = spawnCount;
+}
+
+void ASceneManagerTest::SetSpawnRange(float spawnRange) {
+	lineGenerator.scale = spawnRange;
+}
+
+void ASceneManagerTest::SetXPos(float xPos) {
+	lineGenerator.transform.x = xPos;
+}
+
+void ASceneManagerTest::SetYPos(float yPos) {
+	lineGenerator.transform.y = yPos;
+}
+
+void ASceneManagerTest::SetZPos(float zPos) {
+	lineGenerator.transform.z = zPos;
+}
+
+void ASceneManagerTest::SetXRot(float xRot) {
+	lineGenerator.rotation.x = xRot;
+}
+
+void ASceneManagerTest::SetYRot(float yRot) {
+	lineGenerator.rotation.y = yRot;
+}
+
+void ASceneManagerTest::SetZRot(float zRot) {
+	lineGenerator.rotation.z = zRot;
+}
+
+void ASceneManagerTest::SetSpawnType(int spawnType) {
+	if (spawnType == 0)
+		lineGenerator.spawnType = SpawnType::SPHERE;
+	else if (spawnType == 1)
+		lineGenerator.spawnType = SpawnType::SQUARE;
+	else if (spawnType == 2)
+		lineGenerator.spawnType = SpawnType::LINE;
+}
+
+void ASceneManagerTest::SetVisibleLength(float VisibleLength) {
+	this->visibleLength = VisibleLength;
+}
+
+void ASceneManagerTest::SetInvisibleLength(float InvisibleLength) {
+	this->invisibleLength = InvisibleLength;
+}
+
+void ASceneManagerTest::SetAnimateSpeed(float AnimateSpeed) {
+	this->animateSpeed = AnimateSpeed;
+}
+
+void ASceneManagerTest::SetSelectedAxis(int SelectedAxis) {
+	this->selectedAxis = SelectedAxis;
+}
+
+void ASceneManagerTest::SetPlaneOffset(float PlaneOffset) {
+	this->planeOffset = PlaneOffset;
+}
+
+void ASceneManagerTest::SetPlaneDrawType(int PlaneDrawType) {
+	this->planeDrawType = PlaneDrawType;
+}
+
+void ASceneManagerTest::SetVoricityValue(float voricityValue) {
+	this->vorticityThreshold = voricityValue;
+}
+
+void ASceneManagerTest::SetQCritirea1Value(float QCritirea1Value) {
+	this->QCritireaThreshold1 = QCritirea1Value;
+}
+
+void ASceneManagerTest::SetQCritirea2Value(float QCritirea2Value) {
+	this->QCritireaThreshold2 = QCritirea2Value;
 }
