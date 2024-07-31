@@ -73,6 +73,8 @@ public:
 	FCriticalSection signalLock;
 	TArray<ModelInfo*> unloadSignal;
 	int referenceCounter = 0;
+
+
 public:
 	ModelInfo() = default;
 	~ModelInfo() = default;
@@ -115,8 +117,10 @@ private:
 	TArray<FAssetData> assetDatas;
 	TArray<UStaticMeshComponent*> meshComps;
 
-	TArray<Aicon*> icons;
+	std::vector<Aicon*> icons;
 	int iconsCount = 0;
+
+	ULineBatchComponent* lineComponent = NULL;
 
 public:	
 	// Sets default values for this actor's properties
@@ -153,7 +157,13 @@ public:
 	static void WriteStructFromJsonFile(FString filepath, FinputStruct inputStruct, bool& bOutSuccess, FString& OutInfoMessage);
 
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
-	TArray<Aicon*> getIcons();
+	void initIconsHitbox();
+
+	UFUNCTION(BlueprintCallable, Category = "drawing hitbox")
+	void drawHitbox(TArray<FVector> points, FLinearColor color, float thickness);
+
+	UFUNCTION(BlueprintCallable, Category = "drawing hitbox")
+	TArray<FVector> getCorners(FVector center, FVector Extent);
 
 public:
 	static IPlatformFile* oldPlatform;

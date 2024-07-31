@@ -55,7 +55,7 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 
 	for (auto& file : files) {
 		file = absFolderPath + "/" + file;
-		//LoadPak(file, 0, bOutSuccess, OutInfoMessage);
+		LoadPak(file, 0, bOutSuccess, OutInfoMessage);
 	}
 	return files;
 }
@@ -109,6 +109,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		FActorSpawnParameters spawnInfo;
 		Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
 		tempActor->index = iconsCount;
+		icons.push_back(tempActor);
 
 		// mount pak
 		if (pakPlatform->Mount(*pakFilePath, 1, *pakFile->GetMountPoint())) {
@@ -192,9 +193,6 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 }
 
 
-/*
-
-*/
 
 
 // helper class methods
@@ -461,7 +459,38 @@ void ADLCLoader::WriteStringToFile(FString filepath, FString inputString, bool& 
 	return;
 }
 
-TArray<Aicon*> ADLCLoader::getIcons() {
-	return icons;
+void ADLCLoader::initIconsHitbox() {
+	for (int i = 0; i < icons.size(); i++) {
+		icons[i]->hitboxInit();
+	}
+}
+
+void ADLCLoader::drawHitbox(TArray<FVector> points, FLinearColor color, float thickness) {
+	lineComponent = this->GetWorld()->PersistentLineBatcher;
+	float lifetime = 10000000;
+
+	TArray<FBatchedLine> lines;
+	for (int i = 0; i < 4; i++) {
+		FBatchedLine line;
+		if (i == 3) {
+			line = FBatchedLine(points[3], points[0], color, lifetime, thickness, 0);
+		}
+		else {
+			line = FBatchedLine(points[i], points[i + 1], color, lifetime, thickness, 0);
+		}
+		lines.Add(line);
+	}
+	lineComponent->DrawLines(lines);
+}
+
+TArray<FVector> ADLCLoader::getCorners(FVector center, FVector Extent) {
+	TArray<FVector> corners;
+
+	corners.Add(center + FVector(Extent.X, Extent.Y, Extent.Z));
+	corners.Add(center + FVector(-Extent.X, Extent.Y, Extent.Z));
+	corners.Add(center + FVector(-Extent.X, -Extent.Y, Extent.Z));
+	corners.Add(center + FVector(Extent.X, -Extent.Y, Extent.Z));
+
+	return corners;
 }
 

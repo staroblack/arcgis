@@ -7,6 +7,7 @@
 #include "../../Engine/Source/Runtime/Engine/Classes/Engine/ObjectLibrary.h"
 #include "../../Engine/Source/Runtime/Engine/Classes/Engine/StreamableManager.h"
 #include "../../Engine/Source/Runtime/Engine/Classes/Engine/AssetManager.h"
+#include "Components/LineBatchComponent.h"
 
 #include "icon.generated.h"
 
@@ -59,6 +60,8 @@ public:
 	TSharedPtr<FStreamableHandle> requestHandle;
 
 	bool firstLoad = true;
+	ULineBatchComponent* lineComponent = NULL;
+
 
 protected:
 
@@ -94,6 +97,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
 	TArray<float> getSimArea(FString line);
 
-	UFUNCTION(BlueprintCallable, Category = "pakloading")
-	TArray<FVector> getCorners(FVector center, FVector Extent);
+	
+	
 };
