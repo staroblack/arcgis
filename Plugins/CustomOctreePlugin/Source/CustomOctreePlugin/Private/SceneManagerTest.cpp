@@ -23,6 +23,7 @@ LineGenerator::LineGenerator() {
 	scale = 0.31f;
 	spawnCount = 20;
 	collideForce = 1;
+	lineThickness = 0.5;
 
 	spawnType = SpawnType::LINE;
 
@@ -152,11 +153,19 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	//glm::mat4 cameraViewProj = cameraProj * cameraView;
 
 	// test camera for voricity isosurface
-	glm::mat4 cameraViewProj = glm::mat4(
+	/*glm::mat4 cameraViewProj = glm::mat4(
 		glm::vec4(-1.2182, 1.21388, 0.532041, 0.506088),
 		glm::vec4(-1.06213, -1.57212, -0.545959, -0.519327),
 		glm::vec4(-0.0920113, 2.07645, -0.723917, -0.688604),
 		glm::vec4(2.24047, 0.186117, 1.99532, 2.09311)
+	);*/
+
+	// test camera for whole view
+	glm::mat4 cameraViewProj = glm::mat4(
+		glm::vec4(0, 0, 0, 1),
+		glm::vec4(0.520118, 0, 0, 0),
+		glm::vec4(0, 1.33333, 0, 0),
+		glm::vec4(36.408244, -179.157487, 10, 540)
 	);
 
 	//FMatrix camViewProjMat;
@@ -175,7 +184,7 @@ void ASceneManagerTest::Tick(float DeltaTime)
 		{
 			// Note: FMatrix is column based, glm::mat4 is row based, need to switch // orignal was commented
 			//cameraViewProj[Col][Row] = Matrix.M[Row][Col]; // orignal was commented
-			cameraViewProj[Col][Row] = Matrix.M[Col][Row];
+			//cameraViewProj[Col][Row] = Matrix.M[Col][Row];
 		}
 	}
 
@@ -237,7 +246,6 @@ void ASceneManagerTest::Tick(float DeltaTime)
 
 		once = true;
 	}
-	
 
 	//UE_LOG(LogTemp, Log, TEXT("Loaded %d chunks."), loadChunkCount);
 	//FVector playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
@@ -398,7 +406,12 @@ void ASceneManagerTest::GetChunkInFrustum(CustomChunk* _Chunk, vector<CustomChun
 	else {
 		for (int i = 0; i < 8; i++) {
 			if (ClipFrustum(_Chunk->child[i], frustumEquation)) {
-				FVector distVec = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation() - glm2FVec(_Chunk->child[i]->center);
+				// defalut way
+				//FVector distVec = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation() - glm2FVec(_Chunk->child[i]->center);
+
+				// cam pos for video
+				FVector distVec = FVector(-540, -70, 134.36) - glm2FVec(_Chunk->child[i]->center);
+
 				//FVector distVec = glm2FVec(_Chunk->child[i]->center) - FVector(0.0064959, 1.98018, 1.4058);
 				//UE_LOG(LogTemp, Log, TEXT("distVec[%i]: %f, %f, %f"), i, distVec.X, distVec.Y, distVec.Z);
 
@@ -760,6 +773,8 @@ void ASceneManagerTest::UpdatePlane() {
 	TArray<int> indexs{
 		0,2,1,
 		0,3,2,
+		0,1,2,
+		0,2,3
 	};
 
 	TArray<FVector2D> UV0;
@@ -833,9 +848,13 @@ void ASceneManagerTest::UpdateStreamLine(bool isDynamic) {
 	std::vector<glm::vec4> points;
 	points.resize(lineGenerator.spawnCount);
 	UpdateSpawnPointPositions(points);
+	for (int i = 0; i < lineGenerator.spawnCount; i++) {
+		UE_LOG(LogTemp, Log, TEXT("spawn points[%i]]: %f, %f, %f"), i, points[i].x, points[i].y, points[i].z);
+	}
 
 	streamLineParams = FStreamLineParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
 	streamLineParams.stepDivider = lineGenerator.stepDivider;
+	streamLineParams.lineThickness = lineGenerator.lineThickness;
 	streamLineParams.maxMag = 0.033f / streamLineParams.stepDivider * _octree.GetMaxMagnitude();
 
 	streamLineParams.visibleLength = visibleLength;
@@ -876,9 +895,6 @@ void ASceneManagerTest::UpdateSpawnPointPositions(std::vector<glm::vec4>& points
 	glm::vec3 unitPos(0, -1, -1);
 	float bias = 2.f / (float)(sideCount - 1);
 
-	unitPos = glm::vec3(0, -1, 0);
-	bias = 2.f / (float)(lineGenerator.spawnCount - 1);
-
 	switch (lineGenerator.spawnType)
 	{
 	case SpawnType::SPHERE:
@@ -893,7 +909,7 @@ void ASceneManagerTest::UpdateSpawnPointPositions(std::vector<glm::vec4>& points
 		}
 		break;
 	case SpawnType::SQUARE:
-
+		UE_LOG(LogTemp, Log, TEXT("SideCount: %i"), sideCount);
 		for (int i = 0; i < sideCount; i++)
 		{
 			for (int j = 0; j < sideCount; j++) {
@@ -1052,7 +1068,10 @@ void ASceneManagerTest::SetStepDivider(int stepDivider) {
 }
 
 void ASceneManagerTest::SetSpawnCount(int spawnCount) {
-	lineGenerator.spawnCount = spawnCount;
+	if (lineGenerator.spawnType == SpawnType::SQUARE)
+		lineGenerator.spawnCount = spawnCount < 20 ? 4 : pow(spawnCount / 10, 2);
+	else
+		lineGenerator.spawnCount = spawnCount;
 }
 
 void ASceneManagerTest::SetSpawnRange(float spawnRange) {
@@ -1083,13 +1102,21 @@ void ASceneManagerTest::SetZRot(float zRot) {
 	lineGenerator.rotation.z = zRot;
 }
 
+void ASceneManagerTest::SetLineThickness(float lineThickness) {
+	lineGenerator.lineThickness = lineThickness;
+}
+
 void ASceneManagerTest::SetSpawnType(int spawnType) {
-	if (spawnType == 0)
+	if (spawnType == 0) {
 		lineGenerator.spawnType = SpawnType::SPHERE;
-	else if (spawnType == 1)
+	}
+	else if (spawnType == 1) {
 		lineGenerator.spawnType = SpawnType::SQUARE;
-	else if (spawnType == 2)
+		lineGenerator.spawnCount = lineGenerator.spawnCount < 20 ? 4 : pow(lineGenerator.spawnCount / 10, 2);
+	}
+	else if (spawnType == 2) {
 		lineGenerator.spawnType = SpawnType::LINE;
+	}
 }
 
 void ASceneManagerTest::SetVisibleLength(float VisibleLength) {

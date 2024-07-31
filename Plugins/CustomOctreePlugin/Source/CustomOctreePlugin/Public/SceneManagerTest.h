@@ -26,6 +26,7 @@ struct LineGenerator {
 	float scale;
 	int spawnCount;
 	float collideForce;
+	float lineThickness;
 
 	vector<glm::vec3> randomValue;
 
@@ -57,6 +58,7 @@ struct FStreamLineParameters {
 
 	FVector center;
 	float myScale;
+	float lineThickness;
 
 	FStreamLineParameters();
 	FStreamLineParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree);
@@ -234,6 +236,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void SetZRot(float zRot);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetLineThickness(float lineThickness);
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void SetSpawnType(int spawnType);
