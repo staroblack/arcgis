@@ -132,3 +132,13 @@ TArray<float> Aicon::getSimArea(FString line) {
 	return result;
 }
 
+TArray<FVector> Aicon::getCorners(FVector center, FVector Extent) {
+	TArray<FVector> corners;
+
+	corners.Add(center + FVector(Extent.X, Extent.Y, Extent.Z));
+	corners.Add(center + FVector(-Extent.X, Extent.Y, Extent.Z));
+	corners.Add(center + FVector(-Extent.X, -Extent.Y, Extent.Z));
+	corners.Add(center + FVector(Extent.X, -Extent.Y, Extent.Z));
+
+	return corners;
+}

@@ -93,4 +93,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
 	TArray<float> getSimArea(FString line);
+
+	UFUNCTION(BlueprintCallable, Category = "pakloading")
+	TArray<FVector> getCorners(FVector center, FVector Extent);
 };

@@ -1154,3 +1154,7 @@ void ASceneManagerTest::SetQCritirea1Value(float QCritirea1Value) {
 void ASceneManagerTest::SetQCritirea2Value(float QCritirea2Value) {
 	this->QCritireaThreshold2 = QCritirea2Value;
 }
+
+void ASceneManagerTest::Hack() {
+	hack = !hack;
+}

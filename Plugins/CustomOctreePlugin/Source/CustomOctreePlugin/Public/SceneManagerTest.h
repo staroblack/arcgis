@@ -270,6 +270,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void SetQCritirea2Value(float QCritirea2Value);
 
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void Hack();
+
 	int drawType = 0;
 
 	bool once = false;
