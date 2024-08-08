@@ -93,7 +93,7 @@ FIsosurfaceParameters::FIsosurfaceParameters(int index_length, int chunklist_len
 // Sets default values
 ASceneManagerTest::ASceneManagerTest()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	randomComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Random Component"));
@@ -115,12 +115,9 @@ void ASceneManagerTest::BeginPlay()
 	Super::BeginPlay();
 
 	//Testing SetupInfo
-	//FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/uniform_1f_collection/gridinfo.bin");
-	FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/101data2_collection/gridinfo.bin");
+	/*FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/101data2_collection/gridinfo.bin");
 
 	_octree.SetupInfo(FilePath, 1);
-	int totalLevel = _octree.GetTotalLevel();
-	UE_LOG(LogTemp, Log, TEXT("totalLevel is %d"), totalLevel);
 
 	fileValueList.clear();
 	fileIndexList.clear();
@@ -134,7 +131,7 @@ void ASceneManagerTest::BeginPlay()
 	octreeLODList.push_back(8);
 	octreeLODList.push_back(16);
 	octreeLODList.push_back(32);
-	octreeLODList.push_back(64);
+	octreeLODList.push_back(64);*/
 
 	//for (auto& ol : octreeLODList) ol = pow(ol, 2);
 }
@@ -149,23 +146,16 @@ void ASceneManagerTest::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	float frustumEquation[24];
-	//glm::mat4 cameraViewProj = cameraProj * cameraView;
+	if (!drawing)
+		return;
 
+	float frustumEquation[24];
 	// test camera for voricity isosurface
-	/*glm::mat4 cameraViewProj = glm::mat4(
+	glm::mat4 cameraViewProj = glm::mat4(
 		glm::vec4(-1.2182, 1.21388, 0.532041, 0.506088),
 		glm::vec4(-1.06213, -1.57212, -0.545959, -0.519327),
 		glm::vec4(-0.0920113, 2.07645, -0.723917, -0.688604),
 		glm::vec4(2.24047, 0.186117, 1.99532, 2.09311)
-	);*/
-
-	// test camera for whole view
-	glm::mat4 cameraViewProj = glm::mat4(
-		glm::vec4(0, 0, 0, 1),
-		glm::vec4(0.520118, 0, 0, 0),
-		glm::vec4(0, 1.33333, 0, 0),
-		glm::vec4(36.408244, -179.157487, 10, 540)
 	);
 
 	//FMatrix camViewProjMat;
@@ -183,69 +173,61 @@ void ASceneManagerTest::Tick(float DeltaTime)
 		for (int32 Col = 0; Col < 4; ++Col)
 		{
 			// Note: FMatrix is column based, glm::mat4 is row based, need to switch // orignal was commented
-			//cameraViewProj[Col][Row] = Matrix.M[Row][Col]; // orignal was commented
-			//cameraViewProj[Col][Row] = Matrix.M[Col][Row];
+			cameraViewProj[Col][Row] = Matrix.M[Col][Row];
 		}
 	}
 
 	extract_planes_from_projmat(cameraViewProj, frustumEquation);
 
 	//vector<CustomChunk*> chunkList // orignal was commented
-	if (!once) {
-		chunkList.clear();
-		fileValueList.clear();
-		fileIndexList.clear();
+	chunkList.clear();
+	fileValueList.clear();
+	fileIndexList.clear();
 
-		this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectPluginsDir())) + L"CustomOctreePlugin/Source/CustomOctreePlugin/101data2_collection/101data2";
+	this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectPluginsDir())) + L"CustomOctreePlugin/Source/CustomOctreePlugin/101data2_collection/101data2";
 
-		for (int i = 0; i <= _octree.GetTotalLevel(); i++) {
-			ifstream* in1 = new ifstream, * in2 = new ifstream;
-			wstring loadpath;
-			if (_octree.GetTotalFrame() == 1)
-				loadpath = this->dataFolder + L"/Level" + to_wstring(i) + L"_compressed.bin";
-			else
-				loadpath = this->dataFolder + to_wstring(nowFrame) + L"/Level" + to_wstring(i) + L"_compressed.bin";
-			in1->open(loadpath, ios_base::in | ios_base::binary);
-			fileValueList.push_back(in1);
-			//cout << loadpath << endl;
+	for (int i = 0; i <= _octree.GetTotalLevel(); i++) {
+		ifstream* in1 = new ifstream, * in2 = new ifstream;
+		wstring loadpath;
+		if (_octree.GetTotalFrame() == 1)
+			loadpath = this->dataFolder + L"/Level" + to_wstring(i) + L"_compressed.bin";
+		else
+			loadpath = this->dataFolder + to_wstring(nowFrame) + L"/Level" + to_wstring(i) + L"_compressed.bin";
+		in1->open(loadpath, ios_base::in | ios_base::binary);
+		fileValueList.push_back(in1);
 
-			if (_octree.GetTotalFrame() == 1)
-				loadpath = this->dataFolder + L"/Level" + to_wstring(i) + L"_index.bin";
-			else
-				loadpath = this->dataFolder + to_wstring(nowFrame) + L"/Level" + to_wstring(i) + L"_index.bin";
-			in2->open(loadpath, ios_base::in | ios_base::binary);
-			fileIndexList.push_back(in2);
-			//cout << loadpath << endl;
-		}
-
-		baseFileValueList.clear();
-		baseFileIndexList.clear();
-
-		for (int i = 0; i <= _octree.GetTotalLevel(); i++) {
-			ifstream* in1 = new ifstream, * in2 = new ifstream;
-			wstring loadpath;
-			if (_octree.GetTotalFrame() == 1)
-				loadpath = this->dataFolder + L"/Level" + to_wstring(i) + L"_compressed.bin";
-			else
-				loadpath = this->dataFolder + to_wstring(nowFrame - ((nowFrame - 1) % timeBase)) + L"/Level" + to_wstring(i) + L"_compressed.bin";
-			in1->open(loadpath, ios_base::in | ios_base::binary);
-			baseFileValueList.push_back(in1);
-			//cout << loadpath << endl;
-
-			if (_octree.GetTotalFrame() == 1)
-				loadpath = this->dataFolder + L"/Level" + to_wstring(i) + L"_index.bin";
-			else
-				loadpath = this->dataFolder + to_wstring(nowFrame - ((nowFrame - 1) % timeBase)) + L"/Level" + to_wstring(i) + L"_index.bin";
-			in2->open(loadpath, ios_base::in | ios_base::binary);
-			baseFileIndexList.push_back(in2);
-
-		}
-
-		loadChunkCount = 0;
-		GetChunkInFrustum(_octree.GetRoot(), chunkList, frustumEquation);
-
-		once = true;
+		if (_octree.GetTotalFrame() == 1)
+			loadpath = this->dataFolder + L"/Level" + to_wstring(i) + L"_index.bin";
+		else
+			loadpath = this->dataFolder + to_wstring(nowFrame) + L"/Level" + to_wstring(i) + L"_index.bin";
+		in2->open(loadpath, ios_base::in | ios_base::binary);
+		fileIndexList.push_back(in2);
 	}
+
+	baseFileValueList.clear();
+	baseFileIndexList.clear();
+
+	for (int i = 0; i <= _octree.GetTotalLevel(); i++) {
+		ifstream* in1 = new ifstream, * in2 = new ifstream;
+		wstring loadpath;
+		if (_octree.GetTotalFrame() == 1)
+			loadpath = this->dataFolder + L"/Level" + to_wstring(i) + L"_compressed.bin";
+		else
+			loadpath = this->dataFolder + to_wstring(nowFrame - ((nowFrame - 1) % timeBase)) + L"/Level" + to_wstring(i) + L"_compressed.bin";
+		in1->open(loadpath, ios_base::in | ios_base::binary);
+		baseFileValueList.push_back(in1);
+
+		if (_octree.GetTotalFrame() == 1)
+			loadpath = this->dataFolder + L"/Level" + to_wstring(i) + L"_index.bin";
+		else
+			loadpath = this->dataFolder + to_wstring(nowFrame - ((nowFrame - 1) % timeBase)) + L"/Level" + to_wstring(i) + L"_index.bin";
+		in2->open(loadpath, ios_base::in | ios_base::binary);
+		baseFileIndexList.push_back(in2);
+
+	}
+
+	loadChunkCount = 0;
+	GetChunkInFrustum(_octree.GetRoot(), chunkList, frustumEquation);
 
 	//UE_LOG(LogTemp, Log, TEXT("Loaded %d chunks."), loadChunkCount);
 	//FVector playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
@@ -280,7 +262,7 @@ void ASceneManagerTest::Tick(float DeltaTime)
 		DrawQCritirea();
 		break;
 	default:
-			break;
+		break;
 	}
 
 }
@@ -288,7 +270,7 @@ void ASceneManagerTest::Tick(float DeltaTime)
 //Editing LoadChunkDataFromFile Function
 void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkListIndex) {
 	if (DrawRedDot)
-		DrawDebugPoint(GetWorld(), glm2FVec(_Chunk->center), 5, FColor::Red, false, 0.1f);
+		DrawDebugPoint(GetWorld(), glm2FVec(_Chunk->center) * MyScale * 100.0f + Center, 5, FColor::Red, false, 0.1f);
 
 	try {
 		++loadChunkCount;
@@ -377,8 +359,9 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 
 bool ASceneManagerTest::ClipFrustum(CustomChunk* _Chunk, float frustumEquation[24])
 {
-	glm::dvec4 _min = glm::dvec4(_Chunk->min[0], _Chunk->min[1], _Chunk->min[2], 1);
-	glm::dvec4 _max = glm::dvec4(_Chunk->max[0], _Chunk->max[1], _Chunk->max[2], 1);
+	float scaleSize = MyScale * 100.0f;
+	glm::dvec4 _min = glm::dvec4(_Chunk->min[0], _Chunk->min[1], _Chunk->min[2], 1) * double(scaleSize) + glm::dvec4(Center.X, Center.Y, Center.Z, 1);
+	glm::dvec4 _max = glm::dvec4(_Chunk->max[0], _Chunk->max[1], _Chunk->max[2], 1) * double(scaleSize) + glm::dvec4(Center.X, Center.Y, Center.Z, 1);
 
 	// check box outside/inside of frustum
 	for (int i = 0; i < 6; i++)
@@ -404,15 +387,11 @@ void ASceneManagerTest::GetChunkInFrustum(CustomChunk* _Chunk, vector<CustomChun
 		LoadChunkDataFromFile(_Chunk, chunkList.size() - 1);
 	}
 	else {
+		float scaleSize = 100.0f * MyScale;
 		for (int i = 0; i < 8; i++) {
 			if (ClipFrustum(_Chunk->child[i], frustumEquation)) {
-				// defalut way
-				//FVector distVec = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation() - glm2FVec(_Chunk->child[i]->center);
-
-				// cam pos for video
-				FVector distVec = FVector(-540, -70, 134.36) - glm2FVec(_Chunk->child[i]->center);
-
-				//FVector distVec = glm2FVec(_Chunk->child[i]->center) - FVector(0.0064959, 1.98018, 1.4058);
+				FVector Loc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+				FVector distVec = Loc - (glm2FVec(_Chunk->child[i]->center) * scaleSize + Center);
 				//UE_LOG(LogTemp, Log, TEXT("distVec[%i]: %f, %f, %f"), i, distVec.X, distVec.Y, distVec.Z);
 
 				if (distVec.Length() < octreeLODList[_octree.GetTotalLevel() - _Chunk->level] * baseViewDistance) {
@@ -464,7 +443,7 @@ FMatrix ASceneManagerTest::GetCameraViewProj() {
 
 void ASceneManagerTest::DrawCube(FVector min, FVector max) {
 	const vector<int> rotateArr = { 0b00, 0b01, 0b11, 0b10 };
-	for (int i = 0; i < 4;++i) {
+	for (int i = 0; i < 4; ++i) {
 		int index = rotateArr[i];
 		FVector base((index & 1) ? min.X : max.X, (index & 2) ? min.Y : max.Y, min.Z);
 		FVector target(base.X, base.Y, max.Z);
@@ -481,7 +460,7 @@ void ASceneManagerTest::DrawCube(FVector min, FVector max) {
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
 		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
 	}
-}	
+}
 
 void ASceneManagerTest::UpdateTexBuffer()
 {
@@ -848,9 +827,6 @@ void ASceneManagerTest::UpdateStreamLine(bool isDynamic) {
 	std::vector<glm::vec4> points;
 	points.resize(lineGenerator.spawnCount);
 	UpdateSpawnPointPositions(points);
-	for (int i = 0; i < lineGenerator.spawnCount; i++) {
-		UE_LOG(LogTemp, Log, TEXT("spawn points[%i]]: %f, %f, %f"), i, points[i].x, points[i].y, points[i].z);
-	}
 
 	streamLineParams = FStreamLineParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
 	streamLineParams.stepDivider = lineGenerator.stepDivider;
@@ -909,7 +885,6 @@ void ASceneManagerTest::UpdateSpawnPointPositions(std::vector<glm::vec4>& points
 		}
 		break;
 	case SpawnType::SQUARE:
-		UE_LOG(LogTemp, Log, TEXT("SideCount: %i"), sideCount);
 		for (int i = 0; i < sideCount; i++)
 		{
 			for (int j = 0; j < sideCount; j++) {
@@ -1157,4 +1132,46 @@ void ASceneManagerTest::SetQCritirea2Value(float QCritirea2Value) {
 
 void ASceneManagerTest::Hack() {
 	hack = !hack;
+}
+
+void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScale) {
+	//FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/101data2_collection/gridinfo.bin");
+	FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "testpak/", FileName, "/gridinfo.bin");
+
+	_octree.SetupInfo(FilePath, 1);
+
+	fileValueList.clear();
+	fileIndexList.clear();
+	baseFileValueList.clear();
+	baseFileIndexList.clear();
+
+	octreeLODList.clear();
+	octreeLODList.push_back(1);
+	octreeLODList.push_back(2);
+	octreeLODList.push_back(4);
+	octreeLODList.push_back(8);
+	octreeLODList.push_back(16);
+	octreeLODList.push_back(32);
+	octreeLODList.push_back(64);
+
+	Center = InCenter;
+	MyScale = InScale;
+
+	drawing = true;
+}
+
+void ASceneManagerTest::ClearData() {
+	_octree.CleanUpChunkStructure();
+
+	fileValueList.clear();
+	fileIndexList.clear();
+	baseFileValueList.clear();
+	baseFileIndexList.clear();
+
+	octreeLODList.clear();
+
+	Center = FVector(0, 0, 0);
+	MyScale = 0.f;
+
+	drawing = false;
 }
