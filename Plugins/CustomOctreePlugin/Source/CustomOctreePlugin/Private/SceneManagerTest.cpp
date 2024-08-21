@@ -150,12 +150,12 @@ void ASceneManagerTest::Tick(float DeltaTime)
 		return;
 
 	float frustumEquation[24];
-	// test camera for voricity isosurface
+	// test camera
 	glm::mat4 cameraViewProj = glm::mat4(
-		glm::vec4(-1.2182, 1.21388, 0.532041, 0.506088),
-		glm::vec4(-1.06213, -1.57212, -0.545959, -0.519327),
-		glm::vec4(-0.0920113, 2.07645, -0.723917, -0.688604),
-		glm::vec4(2.24047, 0.186117, 1.99532, 2.09311)
+		glm::vec4(-0.551658, 2.21549, 0.566149, 0.538532),
+		glm::vec4(-1.52128, -0.850582, -0.178956, -0.170226),
+		glm::vec4(-0.0443065, 1.62013, -0.86755, -0.825231),
+		glm::vec4(1.96573, 0.486973, 1.56626, 1.68498)
 	);
 
 	//FMatrix camViewProjMat;
@@ -181,10 +181,11 @@ void ASceneManagerTest::Tick(float DeltaTime)
 
 	//vector<CustomChunk*> chunkList // orignal was commented
 	chunkList.clear();
+
 	fileValueList.clear();
 	fileIndexList.clear();
 
-	this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectPluginsDir())) + L"CustomOctreePlugin/Source/CustomOctreePlugin/101data2_collection/101data2";
+	//this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectPluginsDir())) + L"CustomOctreePlugin/Source/CustomOctreePlugin/uniform_1f_collection/uniform_1f";
 
 	for (int i = 0; i <= _octree.GetTotalLevel(); i++) {
 		ifstream* in1 = new ifstream, * in2 = new ifstream;
@@ -223,7 +224,10 @@ void ASceneManagerTest::Tick(float DeltaTime)
 			loadpath = this->dataFolder + to_wstring(nowFrame - ((nowFrame - 1) % timeBase)) + L"/Level" + to_wstring(i) + L"_index.bin";
 		in2->open(loadpath, ios_base::in | ios_base::binary);
 		baseFileIndexList.push_back(in2);
-
+	}
+	once = true;
+	if (!once) {
+		
 	}
 
 	loadChunkCount = 0;
@@ -264,6 +268,8 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	default:
 		break;
 	}
+
+	ReleaseChunkData();
 
 }
 
@@ -329,7 +335,7 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 				velIndexes.resize(_octree.GetChunkPointCount());
 				vector<unsigned char> preIndexes;
 				preIndexes.resize(_octree.GetChunkPointCount());
-
+					
 				fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
 				velValues.resize(sizeVelValues);
 				fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
@@ -362,6 +368,8 @@ bool ASceneManagerTest::ClipFrustum(CustomChunk* _Chunk, float frustumEquation[2
 	float scaleSize = MyScale * 100.0f;
 	glm::dvec4 _min = glm::dvec4(_Chunk->min[0], _Chunk->min[1], _Chunk->min[2], 1) * double(scaleSize) + glm::dvec4(Center.X, Center.Y, Center.Z, 1);
 	glm::dvec4 _max = glm::dvec4(_Chunk->max[0], _Chunk->max[1], _Chunk->max[2], 1) * double(scaleSize) + glm::dvec4(Center.X, Center.Y, Center.Z, 1);
+	//glm::vec4 _min = glm::vec4(_Chunk->min[0], _Chunk->min[1], _Chunk->min[2], 1);
+	//glm::vec4 _max = glm::vec4(_Chunk->max[0], _Chunk->max[1], _Chunk->max[2], 1);
 
 	// check box outside/inside of frustum
 	for (int i = 0; i < 6; i++)
@@ -392,11 +400,23 @@ void ASceneManagerTest::GetChunkInFrustum(CustomChunk* _Chunk, vector<CustomChun
 			if (ClipFrustum(_Chunk->child[i], frustumEquation)) {
 				FVector Loc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 				FVector distVec = Loc - (glm2FVec(_Chunk->child[i]->center) * scaleSize + Center);
-				//UE_LOG(LogTemp, Log, TEXT("distVec[%i]: %f, %f, %f"), i, distVec.X, distVec.Y, distVec.Z);
 
-				if (distVec.Length() < octreeLODList[_octree.GetTotalLevel() - _Chunk->level] * baseViewDistance) {
+				//FVector Loc = FVector(-0.570114, 1.46258, 1.2469);
+				//FVector distVec = glm2FVec(_Chunk->child[i]->center) - Loc;
+
+				float dist = distVec.Length();//pow(distVec[0], 2) + pow(distVec[1], 2) + pow(distVec[2], 2);
+				//UE_LOG(LogTemp, Log, TEXT("dist: %f"), dist);
+
+				/*if (dist < octreeLODList[_octree.GetTotalLevel() - _Chunk->level] * baseViewDistance) {
 					GetChunkInFrustum(_Chunk->child[i], _chunkList, frustumEquation);
 				}
+				else {
+					chunkList.push_back(_Chunk->child[i]);
+					LoadChunkDataFromFile(_Chunk->child[i], chunkList.size() - 1);
+				}*/
+
+				if (dist < octreeLODList[_octree.GetTotalLevel() - _Chunk->level] * baseViewDistance)
+					GetChunkInFrustum(_Chunk->child[i], _chunkList, frustumEquation);
 				else {
 					chunkList.push_back(_Chunk->child[i]);
 					LoadChunkDataFromFile(_Chunk->child[i], chunkList.size() - 1);
@@ -553,6 +573,62 @@ void ASceneManagerTest::FillIndexTex_Recursive(CustomChunk* _Chunk, Frame& fc, i
 			index_tbo_data[tbo_index] = c.chunkListIndex;
 			status_tbo_data[tbo_index] = 2;
 		}
+	}
+}
+
+void ASceneManagerTest::ReleaseChunkData() {
+	try {
+		int totalFrame = _octree.GetTotalFrame();
+		Frame& frameCollection = _octree.GetFrameCollection()[nowFrame - 1];
+		Frame& frameCollectionPrev = _octree.GetFrameCollection()[(nowFrame - 1 - 1 + totalFrame) % totalFrame];
+
+		for (int j = 0; j < frameCollection.levelFile.size(); j++) {
+			for (int k = 0; k < frameCollection.levelFile[j].chunk.size(); k++) {
+				frameCollection.levelFile[j].chunk[k].chunkListIndex = -1;
+				frameCollection.levelFile[j].chunk[k].hasChildInChunkList = false;
+				if (ENABLE_CACHE) {
+					if (frameCollection.levelFile[j].chunk[k].chunkAge > 5)
+					{
+						std::vector<CustomPointData>().swap(frameCollection.levelFile[j].chunk[k].points);
+						frameCollection.levelFile[j].chunk[k].chunkAge = 0;
+					}
+					else if (frameCollection.levelFile[j].chunk[k].chunkAge > 0)
+						frameCollection.levelFile[j].chunk[k].chunkAge++;
+					/*if (nowFrame != lastFrame) {
+						std::vector<CustomPointData>().swap(frameCollectionPrev.levelFile[j].chunk[k].points);
+						frameCollectionPrev.levelFile[j].chunk[k].chunkAge = 0;
+					}*/
+				}
+				else {
+					std::vector<CustomPointData>().swap(frameCollection.levelFile[j].chunk[k].points);
+				}
+				std::vector<LagrangianVelSource>().swap(frameCollection.levelFile[j].chunk[k].velSources);
+				std::vector<LagrangianPreSource>().swap(frameCollection.levelFile[j].chunk[k].preSources);
+			}
+		}
+		/*for (int i = 0; i < fileList.size(); i++)
+		{
+			fileList[i]->close();
+			delete fileList[i];
+		}*/
+		for (int i = 0; i < fileIndexList.size(); i++)
+		{
+			fileIndexList[i]->close();
+			delete fileIndexList[i];
+			fileValueList[i]->close();
+			delete fileValueList[i];
+		}
+		for (int i = 0; i < baseFileIndexList.size(); i++)
+		{
+			baseFileIndexList[i]->close();
+			delete baseFileIndexList[i];
+			baseFileValueList[i]->close();
+			delete baseFileValueList[i];
+		}
+		//lastFrame = nowFrame;
+	}
+	catch (exception& e) {
+		cout << e.what() << endl;
 	}
 }
 
@@ -1135,9 +1211,11 @@ void ASceneManagerTest::Hack() {
 }
 
 void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScale) {
-	//FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/101data2_collection/gridinfo.bin");
-	FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "testpak/", FileName, "/gridinfo.bin");
-
+	ClearData();
+	FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/", FileName + "_collection/gridinfo.bin");
+	wstring fileName = wstring((wchar_t*)TCHAR_TO_UTF16(*FileName));
+	this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectPluginsDir())) + L"CustomOctreePlugin/Source/CustomOctreePlugin/" + fileName + L"_collection/" + fileName;
+	//FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "testpak/", FileName, "/gridinfo.bin");
 	_octree.SetupInfo(FilePath, 1);
 
 	fileValueList.clear();
@@ -1162,7 +1240,7 @@ void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScal
 
 void ASceneManagerTest::ClearData() {
 	_octree.CleanUpChunkStructure();
-
+	
 	fileValueList.clear();
 	fileIndexList.clear();
 	baseFileValueList.clear();

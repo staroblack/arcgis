@@ -431,10 +431,9 @@ void CustomOctree::SetupInfo(FString s, float scale) {
 
 		min *= scale;
 		max *= scale;
-
-		preprocessed = true;
+			
+		preprocessed = true;	
 		this->FillTreeStructureFromInfo();
-
 	}
 }
 

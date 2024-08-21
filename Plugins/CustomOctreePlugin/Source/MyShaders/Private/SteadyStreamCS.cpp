@@ -146,6 +146,10 @@ public:
 						if (offset >= pathLine.Num())
 							continue;
 
+						// if not valid dont draw
+						if (pathLine[offset].W <= 0 || pathLine[offset + 1].W <= 0)
+							continue;
+
 						FVector start = FVector(pathLine[offset].X, pathLine[offset].Y, pathLine[offset].Z);
 						FVector end = FVector(pathLine[offset + 1].X, pathLine[offset + 1].Y, pathLine[offset + 1].Z);
 
@@ -165,19 +169,7 @@ public:
 	}
 };
 
-//IMPLEMENT_GLOBAL_SHADER(FComputeShaderRDG, "/ARShaders/Private/TaSimpleColorCS.usf", "MainCS", SF_Compute);
 IMPLEMENT_GLOBAL_SHADER(FSteadyStreamCS, "/ARShaders/Private/SteadyStreamCS.usf", "MainCS", SF_Compute);
-
-
-//void USteadyStreamCS::RunComputeShader(UTextureRenderTarget2D* Texture)
-//{
-//	ENQUEUE_RENDER_COMMAND(CommandList)(
-//		[Texture](FRHICommandListImmediate& RHICmdList)
-//		{
-//			FComputeShaderRDG::Execute(RHICmdList, Texture);
-//		}
-//	);
-//}
 
 void USteadyStreamCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FStreamLineParameters& params)
 {

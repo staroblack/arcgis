@@ -133,7 +133,6 @@ public:
 		//FIntVector GroupCounts = FIntVector(FMath::DivideAndRoundUp((float)params.points.Num(), 16.0f), 1, 1);
 		FIntVector GroupCounts = FIntVector(params.points.Num(), 1, 1);
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("DynamicStreamCS"), ERDGPassFlags::Compute, ComputeShader, PassParameters, GroupCounts);
-		//UE_LOG(LogTemp, Log, TEXT("GroupCounts is %i, %i, %i"), GroupCounts.X, GroupCounts.Y, GroupCounts.Z);
 
 		TArray<FVector4f> pathLine;
 		pathLine.SetNumZeroed(params.points.Num() * params.maxLength);

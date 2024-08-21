@@ -15,7 +15,7 @@
 #include "GameFramework/Actor.h"
 #include "SceneManagerTest.generated.h"
 
-#define ENABLE_CACHE 1
+#define ENABLE_CACHE 0
 
 enum SpawnType { SPHERE, SQUARE, LINE };
 struct LineGenerator {
@@ -115,7 +115,7 @@ public:
 	vector<ifstream*> baseFileValueList;
 	vector<ifstream*> baseFileIndexList;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float baseViewDistance = 40.0f;
+	float baseViewDistance = 10.0f;
 
 	int loadChunkCount = 0;
 
@@ -182,8 +182,8 @@ public:
 	void UpdateTexBuffer();
 	void FillIndexTex_Recursive(CustomChunk* _Chunk, Frame& fc, int tbo_index);
 	void CreateTextures();
+	void ReleaseChunkData();
 
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	FMatrix GetCameraViewProj();
 
 	void UpdateSpawnPointPositions(std::vector<glm::vec4>& points);
@@ -289,4 +289,6 @@ public:
 	float invisibleLength = 20.0f;
 	float animateTime = 10;
 	bool hack = false;
+
+	bool once = false;
 };
