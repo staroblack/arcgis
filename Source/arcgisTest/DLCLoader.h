@@ -115,12 +115,15 @@ private:
 	FSoftObjectPath softPath;
 	TArray<FSoftObjectPath> softPathes;
 	TArray<FAssetData> assetDatas;
+	TArray<FAssetData> tempDatas;
 	TArray<UStaticMeshComponent*> meshComps;
 
+	UObjectLibrary* loadLibrary;
 	std::vector<Aicon*> icons;
 	int iconsCount = 0;
 
 	ULineBatchComponent* lineComponent = NULL;
+	TArray<FString> paths;
 
 public:	
 	// Sets default values for this actor's properties
@@ -155,6 +158,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "jsonWriting")
 	static void WriteStructFromJsonFile(FString filepath, FinputStruct inputStruct, bool& bOutSuccess, FString& OutInfoMessage);
+
+	UFUNCTION(BlueprintCallable, Category = "pakloading")
+	TArray<FString> getPaths();
 
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
 	void initIconsHitbox();

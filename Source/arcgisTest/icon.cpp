@@ -60,6 +60,7 @@ void Aicon::load()
 	//FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'"))
 #if WITH_EDITOR
 	for (int i = 0; i < assets.Num(); i++) {
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assets[i]->AssetName.ToString());
 		this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(assets[i]->ToSoftObjectPath(), FStreamableDelegate::CreateLambda(&Aicon::complete, this), 0, true);
 	}
 	//this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(assetData.ToSoftObjectPath(), FStreamableDelegate::CreateLambda(&Aicon::complete, this), 0, true);
@@ -82,16 +83,21 @@ void Aicon::complete()
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	UStaticMesh* obj = Cast<UStaticMesh>(this->requestHandle->GetLoadedAsset());
+	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, "debug");
 	if (obj) {
 		meshComponent->SetStaticMesh(obj);
 		meshComponent->SetWorldScale3D(FVector(55, 55, 55));
 		meshComponent->SetVisibility(true, true);
-
-		
 	}
 	else {
 		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Failed!");
 	}
+
+
+}
+
+void Aicon::unloadModel() {
+	 meshComponent = NewObject<UStaticMeshComponent>(this);
 }
 
 int Aicon::getIconIndex() {
