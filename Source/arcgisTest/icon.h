@@ -99,7 +99,4 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
 	TArray<float> getSimArea(FString line);
-
-	
-	
 };

@@ -98,8 +98,8 @@ UCLASS()
 class CUSTOMOCTREEPLUGIN_API ASceneManagerTest : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ASceneManagerTest();
 	//Testing
@@ -114,7 +114,8 @@ public:
 	vector<ifstream*> fileIndexList;
 	vector<ifstream*> baseFileValueList;
 	vector<ifstream*> baseFileIndexList;
-	float baseViewDistance = 50.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float baseViewDistance = 40.0f;
 
 	int loadChunkCount = 0;
 
@@ -122,7 +123,7 @@ public:
 	std::vector<int> status_tbo_data;
 	std::vector<float> vel_tbo_data;
 	std::vector<float> pre_tbo_data;
-	
+
 	FStreamLineParameters streamLineParams;
 	FIsosurfaceParameters isosurfaceParams;
 	LineGenerator lineGenerator;
@@ -137,15 +138,15 @@ public:
 	UProceduralMeshComponent* isosurfacePMC = NULL;
 	UProceduralMeshComponent* isosurfacePMC2 = NULL;
 
-	vector<float> isosurfacePointList; //GLfloat
-	vector<uint32> isosurfaceIndexList; //GLuint
+	vector<float> isosurfacePointList;
+	vector<uint32> isosurfaceIndexList;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void BeginDestroy() override;
 
-public:	
+public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	USceneComponent* randomComponent;
 
@@ -165,7 +166,6 @@ public:
 
 	float QCritireaThreshold2 = 100;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float vorticityThreshold = 30;
 
 	// Called every frame
@@ -187,13 +187,17 @@ public:
 	FMatrix GetCameraViewProj();
 
 	void UpdateSpawnPointPositions(std::vector<glm::vec4>& points);
-
 	void UpdateIsosurface();
-
 	void UpdatePlane();
 	void DrawPlane();
 	void UpdateStreamLine(bool isDynamic);
 	void DrawStreamLines();
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetData(FString FileName, FVector InCenter, float InScale);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void ClearData();
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void UpdateCenter(FVector InCenter);
@@ -201,10 +205,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void UpdateScale(float scale);
 
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void DrawVorticity();
 
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void DrawQCritirea();
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
@@ -273,11 +275,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void Hack();
 
+	bool drawing = false;
 	int drawType = 0;
 
-	bool once = false;
-
-	// plane params
 	int selectedAxis = 2;
 	float planeOffset = 0.05;
 	int planeDrawType = 4;
