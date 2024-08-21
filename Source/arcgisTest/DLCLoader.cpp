@@ -47,6 +47,9 @@ void ADLCLoader::Tick(float DeltaTime)
 
 TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FString& OutInfoMessage)
 {
+	UObjectLibrary* tempLibrary = UObjectLibrary::CreateLibrary(nullptr, false, GIsEditor);
+	tempLibrary->bRecursivePaths = true;
+	loadLibrary = tempLibrary;
 	bOutSuccess = true;
 	TArray<FString> files;
 	IFileManager& fileManager = IFileManager::Get();
@@ -55,14 +58,16 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 
 	for (auto& file : files) {
 		file = absFolderPath + "/" + file;
-		LoadPak(file, 0, bOutSuccess, OutInfoMessage);
+		paths.Add(file);
+		LoadPak(file, 1, bOutSuccess, OutInfoMessage);
 	}
 	return files;
 }
 
 FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSuccess, FString& OutInfoMessage)
 {
-	
+	//UObjectLibrary* tempLibrary = UObjectLibrary::CreateLibrary(nullptr, false, GIsEditor);
+	//tempLibrary->bRecursivePaths = true;
 	FPakPlatformFile* pakPlatform = new FPakPlatformFile();
 
 	// initialize pak platform file
@@ -104,12 +109,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		UE_LOG(LogTemp, Warning, TEXT("ori mount point: %s"), *oriMountingPoint);
 		UE_LOG(LogTemp, Warning, TEXT("new mount point: %s"), *mountPoint);
 		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
-
-		//test spawninfo
-		FActorSpawnParameters spawnInfo;
-		Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
-		tempActor->index = iconsCount;
-		icons.push_back(tempActor);
+		
 
 		// mount pak
 		if (pakPlatform->Mount(*pakFilePath, 1, *pakFile->GetMountPoint())) {
@@ -118,6 +118,8 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 			FAssetRegistryModule& assetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 			IAssetRegistry& assetRegistry = assetRegistryModule.Get();
 
+			
+			
 			// rescan registry
 			assetRegistry.ScanPathsSynchronous({ pakFile->GetMountPoint() }, true);
 			assetRegistry.ScanPathsSynchronous({ "/Game/" }, true);
@@ -129,60 +131,81 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 			// load asset datas
 			TMap<FString, FAssetData*> assetDataMap;
 			FString path = mountPoint.Replace(*ProjectContentPath, TEXT("/Game/"));
-			this->m_objectLibrary->LoadAssetDataFromPath(path);
-			this->m_objectLibrary->GetAssetDataList(this->assetDatas);
-			this->m_objectLibrary->ClearLoaded();
+			loadLibrary->LoadAssetDataFromPath(path);
+			loadLibrary->GetAssetDataList(this->assetDatas);
+			//this->m_objectLibrary->LoadAssetsFromAssetData();
+			//loadLibrary->ClearLoaded();
 
-			// build assetDataMap
-			for (auto& assetData : assetDatas) {
-				assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
-				GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
-				tempActor->assets.Add(&assetData);
-				if (loading == 1) {
-					/*ModelInfo* model = new ModelInfo();
-					model->Init(this, &assetData, pakPlatform);
-					model->Load();
-					this->models.Add(model);*/
+			if (loading == 1) {
+				//test spawninfo
+				FActorSpawnParameters spawnInfo;
+				Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
+				tempActor->index = iconsCount;
+				icons.push_back(tempActor);
+
+				for (auto& assetData : assetDatas) {
+
+					assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
+					GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
+					FAssetData* tempAsset = new(FAssetData);
+					*tempAsset = assetData;
+					tempActor->assets.Add(tempAsset);
+					// GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "load in  : " + tempActor->assets[0]->AssetName.ToString());
+					if (loading == 1) {
+						/*ModelInfo* model = new ModelInfo();
+						model->Init(this, &assetData, pakPlatform);
+						model->Load();
+						this->models.Add(model);*/
+					}
+				}
+
+				// scan filenames for descriptor
+				for (FString& filename : filenames) {
+
+					// load descriptor from json
+					if (filename.Contains(".json")) {
+						bOutSuccess = true;
+						output = ReadStructFromJsonFile(filename, bOutSuccess, OutInfoMessage);
+
+
+						tempActor->output.caseName = output.caseName;
+						tempActor->output.madeUnit = output.madeUnit;
+						tempActor->output.madePerson = output.madePerson;
+						tempActor->output.uploadDate = output.uploadDate;
+						tempActor->output.modelCity = output.modelCity;
+						tempActor->output.quote = output.quote;
+						tempActor->output.simArea = output.simArea;
+						tempActor->output.simTime = output.simTime;
+						tempActor->output.lat = output.lat;
+						tempActor->output.lon = output.lon;
+
+						//FString fileDir = filename;
+						//FString json;
+						//FFileHelper::LoadFileToString(json, *fileDir);
+						//FJsonDescriptor desc;
+						//FJsonObjectConverter::JsonObjectStringToUStruct<FJsonDescriptor>(json, &desc);
+
+
+						//this->descriptor.Append(this, &desc, &assetDataMap, pakPlatform);
+
+						//this->m_status = m_E_STATUS::READY;
+						break;
+					}
+					else {
+						UE_LOG(LogTemp, Warning, TEXT("no json"));
+						bOutSuccess = false;
+					}
+				}
+			}
+			
+
+			for (int i = 0; i < icons.size(); i++) {
+				for (int k = 0; k < icons[i]->assets.Num(); k++) {
+					GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "all  : "+ icons[i]->assets[k]->AssetName.ToString());
 				}
 			}
 
-			// scan filenames for descriptor
-			for (FString& filename : filenames) {
-
-				// load descriptor from json
-				if (filename.Contains(".json")) {
-					bOutSuccess = true;
-					output = ReadStructFromJsonFile(filename, bOutSuccess, OutInfoMessage);
-
-
-					tempActor->output.caseName = output.caseName;
-					tempActor->output.madeUnit = output.madeUnit;
-					tempActor->output.madePerson = output.madePerson;
-					tempActor->output.uploadDate = output.uploadDate;
-					tempActor->output.modelCity = output.modelCity;
-					tempActor->output.quote = output.quote;
-					tempActor->output.simArea = output.simArea;
-					tempActor->output.simTime = output.simTime;
-					tempActor->output.lat = output.lat;
-					tempActor->output.lon = output.lon;
-					
-					//FString fileDir = filename;
-					//FString json;
-					//FFileHelper::LoadFileToString(json, *fileDir);
-					//FJsonDescriptor desc;
-					//FJsonObjectConverter::JsonObjectStringToUStruct<FJsonDescriptor>(json, &desc);
-
-
-					//this->descriptor.Append(this, &desc, &assetDataMap, pakPlatform);
-
-					//this->m_status = m_E_STATUS::READY;
-					break;
-				}
-				else {
-					UE_LOG(LogTemp, Warning, TEXT("no json"));
-					bOutSuccess = false;
-				}
-			}
+			
 			
 		}
 		else {
@@ -193,6 +216,9 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 }
 
 
+TArray<FString> ADLCLoader::getPaths() {
+	return paths;
+}
 
 
 // helper class methods
@@ -319,6 +345,8 @@ void ModelInfo::UnloadAllSignal(bool forceUnload)
 		model->Unload(forceUnload);
 	}
 }
+
+
 
 void ModelInfo::Complete(ModelInfo* info)
 {

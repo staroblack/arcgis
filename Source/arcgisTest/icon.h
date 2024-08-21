@@ -89,6 +89,9 @@ public:
 	UStaticMeshComponent* getHitbox();
 
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
+	void unloadModel();
+
+	UFUNCTION(BlueprintCallable, Category = "pakloading")
 	bool getFirstLoad();
 
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
