@@ -47,14 +47,15 @@ void ADLCLoader::Tick(float DeltaTime)
 
 TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FString& OutInfoMessage)
 {
+	FString pakPath = FPaths::Combine(FPaths::ProjectDir(), "testpak");
 	UObjectLibrary* tempLibrary = UObjectLibrary::CreateLibrary(nullptr, false, GIsEditor);
 	tempLibrary->bRecursivePaths = true;
 	loadLibrary = tempLibrary;
 	bOutSuccess = true;
 	TArray<FString> files;
 	IFileManager& fileManager = IFileManager::Get();
-	FString absFolderPath = fileManager.ConvertToAbsolutePathForExternalAppForRead(*pakFolder);
-	fileManager.FindFiles(files, *pakFolder, TEXT("pak"));
+	FString absFolderPath = fileManager.ConvertToAbsolutePathForExternalAppForRead(*pakPath);
+	fileManager.FindFiles(files, *pakPath, TEXT("pak"));
 
 	for (auto& file : files) {
 		file = absFolderPath + "/" + file;
@@ -81,13 +82,13 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		// check file exist
 		if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*pakFilePath)) {
 			UE_LOG(LogTemp, Warning, TEXT("pak file: %s not found"), *pakFilePath);
-			GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file not find : " + pakFilePath);
+			//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file not find : " + pakFilePath);
 
 			// return to old platform file
 			// FPlatformFileManager::Get().SetPlatformFile(*ADLCLoader::oldPlatform);
 		}
 		UE_LOG(LogTemp, Warning, TEXT("pak file: %s founded"), *pakFilePath);
-		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
+		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
 
 		// prepare mount point
 		FPakFile* pakFile = new FPakFile(pakPlatform, *pakFilePath, false);
@@ -108,12 +109,12 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		UE_LOG(LogTemp, Warning, TEXT("project dir: %s"), *ProjectPath);
 		UE_LOG(LogTemp, Warning, TEXT("ori mount point: %s"), *oriMountingPoint);
 		UE_LOG(LogTemp, Warning, TEXT("new mount point: %s"), *mountPoint);
-		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
+		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
 		
 
 		// mount pak
 		if (pakPlatform->Mount(*pakFilePath, 1, *pakFile->GetMountPoint())) {
-			GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount Pak Success : " + pakFilePath);
+			//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount Pak Success : " + pakFilePath);
 
 			FAssetRegistryModule& assetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 			IAssetRegistry& assetRegistry = assetRegistryModule.Get();
@@ -131,12 +132,14 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 			// load asset datas
 			TMap<FString, FAssetData*> assetDataMap;
 			FString path = mountPoint.Replace(*ProjectContentPath, TEXT("/Game/"));
-			loadLibrary->LoadAssetDataFromPath(path);
-			loadLibrary->GetAssetDataList(this->assetDatas);
+			
+			
 			//this->m_objectLibrary->LoadAssetsFromAssetData();
 			//loadLibrary->ClearLoaded();
 
 			if (loading == 1) {
+				loadLibrary->LoadAssetDataFromPath(path);
+				loadLibrary->GetAssetDataList(this->assetDatas);
 				//test spawninfo
 				FActorSpawnParameters spawnInfo;
 				Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
@@ -146,7 +149,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 				for (auto& assetData : assetDatas) {
 
 					assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
-					GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
+					//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
 					FAssetData* tempAsset = new(FAssetData);
 					*tempAsset = assetData;
 					tempActor->assets.Add(tempAsset);
@@ -201,7 +204,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 
 			for (int i = 0; i < icons.size(); i++) {
 				for (int k = 0; k < icons[i]->assets.Num(); k++) {
-					GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "all  : "+ icons[i]->assets[k]->AssetName.ToString());
+					//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "all  : "+ icons[i]->assets[k]->AssetName.ToString());
 				}
 			}
 
@@ -522,3 +525,26 @@ TArray<FVector> ADLCLoader::getCorners(FVector center, FVector Extent) {
 	return corners;
 }
 
+Aicon* ADLCLoader::findIcon(FString input) {
+	for (int i = 0; i < icons.size(); i++) {
+		if (input == icons[i]->output.caseName) {
+			return icons[i];
+		}
+	}
+	return nullptr;
+}
+
+bool ADLCLoader::compareString(FString input, FString compare) {
+	if (input == compare) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void ADLCLoader::flushline() {
+	lineComponent = this->GetWorld()->PersistentLineBatcher;
+	lineComponent->Flush();
+	return;
+}

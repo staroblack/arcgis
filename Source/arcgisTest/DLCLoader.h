@@ -171,6 +171,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "drawing hitbox")
 	TArray<FVector> getCorners(FVector center, FVector Extent);
 
+	UFUNCTION(BlueprintCallable, Category = "drawing hitbox")
+	void flushline();
+
+	UFUNCTION(BlueprintCallable, Category = "compare string")
+	Aicon* findIcon(FString input);
+
+	UFUNCTION(BlueprintCallable, Category = "compare string")
+	bool compareString(FString input, FString compare);
+
 public:
 	static IPlatformFile* oldPlatform;
 
