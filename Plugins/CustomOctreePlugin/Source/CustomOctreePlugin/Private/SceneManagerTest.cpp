@@ -469,16 +469,16 @@ void ASceneManagerTest::DrawCube(FVector min, FVector max) {
 		FVector target(base.X, base.Y, max.Z);
 		float scaleSize = 100.0f * MyScale;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 0.05, 0, 5 * MyScale);
 
 		int index2 = rotateArr[(i + 1) & 3];
 		target = FVector((index2 & 1) ? min.X : max.X, (index2 & 2) ? min.Y : max.Y, min.Z);
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 0.05, 0, 5 * MyScale);
 
 		base.Z = target.Z = max.Z;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 1, 0, 5 * MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 0.05, 0, 5 * MyScale);
 	}
 }
 
