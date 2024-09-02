@@ -278,89 +278,81 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 	if (DrawRedDot)
 		DrawDebugPoint(GetWorld(), glm2FVec(_Chunk->center) * MyScale * 100.0f + Center, 5, FColor::Red, false, 0.1f);
 
-	try {
-		++loadChunkCount;
-		Frame& fc = _octree.GetFrameCollection()[nowFrame - 1];
-		//設定Tree中的當個Chunk對應ChunkList的Index,Chunk.dataIndex代表該Chunk在該Level中的Index(DFS)
-		fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkListIndex = _chunkListIndex;
-		//更新該Chunk的所有parent的狀態為True
-		CustomChunk* cc = _Chunk;
-		while (1) {
-			fc.levelFile[cc->level].chunk[cc->dataIndex].hasChildInChunkList = true;
-			if (cc->parent != nullptr)
-				cc = cc->parent;
-			else
-				break;
-		}
+	++loadChunkCount;
+	Frame& fc = _octree.GetFrameCollection()[nowFrame - 1];
+	//設定Tree中的當個Chunk對應ChunkList的Index,Chunk.dataIndex代表該Chunk在該Level中的Index(DFS)
+	fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkListIndex = _chunkListIndex;
+	//更新該Chunk的所有parent的狀態為True
+	CustomChunk* cc = _Chunk;
+	while (1) {
+		fc.levelFile[cc->level].chunk[cc->dataIndex].hasChildInChunkList = true;
+		if (cc->parent != nullptr)
+			cc = cc->parent;
+		else
+			break;
+	}
 
-		fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points.resize(_octree.GetChunkPointCount());
+	fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points.resize(_octree.GetChunkPointCount());
 
-		if (fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkAge == 0 || !ENABLE_CACHE) {
-			Frame& cachedFrame = _octree.GetCachedFrame();
-			istream* fil = fileIndexList[_Chunk->level], * fvl = fileValueList[_Chunk->level];
+	if (fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkAge == 0 || !ENABLE_CACHE) {
+		Frame& cachedFrame = _octree.GetCachedFrame();
+		istream* fil = fileIndexList[_Chunk->level], * fvl = fileValueList[_Chunk->level];
 
-			if (!fil || !fvl || !fil->good() || !fvl->good())
-				return;
+		if (!fil || !fvl || !fil->good() || !fvl->good())
+			return;
 
-			int startIndex;
-			fil->seekg(_Chunk->dataIndex * sizeof(int), ios::beg);
-			fil->read((char*)&startIndex, sizeof(int));
+		int startIndex;
+		fil->seekg(_Chunk->dataIndex * sizeof(int), ios::beg);
+		fil->read((char*)&startIndex, sizeof(int));
 
-			bool skipReading = false;
-			if (startIndex == -1) {
-				if (nowFrame - ((nowFrame - 1) % timeBase) != nowFrame
-					&& cachedFrame.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkAge != 0) {//Cached,Skip Reading
-					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points
-						= cachedFrame.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points;
-					skipReading = true;
-				}
-				if (!skipReading) {
-					fil = baseFileIndexList[_Chunk->level];
-					fil->seekg(_Chunk->dataIndex * sizeof(int), ios::beg);
-					fil->read((char*)&startIndex, sizeof(int));
-					fvl = baseFileValueList[_Chunk->level];
-				}
+		bool skipReading = false;
+		if (startIndex == -1) {
+			if (nowFrame - ((nowFrame - 1) % timeBase) != nowFrame
+				&& cachedFrame.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkAge != 0) {//Cached,Skip Reading
+				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points
+					= cachedFrame.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points;
+				skipReading = true;
 			}
-
 			if (!skipReading) {
-				actuallyReadChunkCount++;
-				fvl->seekg(startIndex, ios::beg);
-
-				int sizeVelValues;
-				int sizePreValues;
-				vector<glm::vec3> velValues;
-				vector<float> preValues;
-
-				vector<unsigned char> velIndexes;
-				velIndexes.resize(_octree.GetChunkPointCount());
-				vector<unsigned char> preIndexes;
-				preIndexes.resize(_octree.GetChunkPointCount());
-					
-				fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
-				velValues.resize(sizeVelValues);
-				fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
-				preValues.resize(sizePreValues);
-				fvl->read((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
-				fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
-				fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
-				fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
-
-				for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
-					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetXYZVel(velValues[velIndexes[i]]);
-					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
-				}
+				fil = baseFileIndexList[_Chunk->level];
+				fil->seekg(_Chunk->dataIndex * sizeof(int), ios::beg);
+				fil->read((char*)&startIndex, sizeof(int));
+				fvl = baseFileValueList[_Chunk->level];
 			}
 		}
-		if (ENABLE_CACHE)
-			fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkAge = 1;
 
+		if (!skipReading) {
+			actuallyReadChunkCount++;
+			fvl->seekg(startIndex, ios::beg);
+
+			int sizeVelValues;
+			int sizePreValues;
+			vector<glm::vec3> velValues;
+			vector<float> preValues;
+
+			vector<unsigned char> velIndexes;
+			velIndexes.resize(_octree.GetChunkPointCount());
+			vector<unsigned char> preIndexes;
+			preIndexes.resize(_octree.GetChunkPointCount());
+					
+			fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
+			velValues.resize(sizeVelValues);
+			fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
+			preValues.resize(sizePreValues);
+			fvl->read((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
+			fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
+			fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
+			fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
+
+			for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
+				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetXYZVel(velValues[velIndexes[i]]);
+				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
+			}
+		}
 	}
-	catch (exception e)
-	{
-		cout << "Load Chunk Data From File Error! Cause: " << e.what() << endl;
-		UE_LOG(LogTemp, Log, TEXT("Load Chunk Data From File Error!"));
-		return;
-	}
+	if (ENABLE_CACHE)
+		fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkAge = 1;
+
 }
 
 bool ASceneManagerTest::ClipFrustum(CustomChunk* _Chunk, float frustumEquation[24])
@@ -484,60 +476,53 @@ void ASceneManagerTest::DrawCube(FVector min, FVector max) {
 
 void ASceneManagerTest::UpdateTexBuffer()
 {
-	try {
-		index_tbo_data.clear();
-		status_tbo_data.clear();
-		vel_tbo_data.clear();
-		pre_tbo_data.clear();
+	index_tbo_data.clear();
+	status_tbo_data.clear();
+	vel_tbo_data.clear();
+	pre_tbo_data.clear();
 
-		Frame& fc = _octree.GetFrameCollection()[nowFrame - 1];
-		CustomChunk* _Chunk = _octree.GetRoot();
+	Frame& fc = _octree.GetFrameCollection()[nowFrame - 1];
+	CustomChunk* _Chunk = _octree.GetRoot();
 
-		if (fc.levelFile[0].chunk[0].hasChildInChunkList == false) {//填Root的G，有節點
-			index_tbo_data.push_back(-10);
-			status_tbo_data.push_back(0);
-			return;
+	if (fc.levelFile[0].chunk[0].hasChildInChunkList == false) {//填Root的G，有節點
+		index_tbo_data.push_back(-10);
+		status_tbo_data.push_back(0);
+		return;
+	}
+	else {
+		if (fc.levelFile[0].chunk[0].chunkListIndex == -1 && _Chunk->child.size() != 0) {
+
+			index_tbo_data.push_back(1);
+			status_tbo_data.push_back(1);
+			int startIndex = index_tbo_data.size();
+			for (int i = 0; i < 8; i++) {
+				index_tbo_data.push_back(-2);
+				status_tbo_data.push_back(-2);
+			}
+			for (int i = 0; i < 8; i++) {
+				FillIndexTex_Recursive(_Chunk->child[i], fc, startIndex + i);
+			}
 		}
 		else {
-			if (fc.levelFile[0].chunk[0].chunkListIndex == -1 && _Chunk->child.size() != 0) {
-
-				index_tbo_data.push_back(1);
-				status_tbo_data.push_back(1);
-				int startIndex = index_tbo_data.size();
-				for (int i = 0; i < 8; i++) {
-					index_tbo_data.push_back(-2);
-					status_tbo_data.push_back(-2);
-				}
-				for (int i = 0; i < 8; i++) {
-					FillIndexTex_Recursive(_Chunk->child[i], fc, startIndex + i);
-				}
-			}
-			else {
-				index_tbo_data.push_back(fc.levelFile[0].chunk[0].chunkListIndex);
-				status_tbo_data.push_back(2);
-			}
-		}
-
-
-		int cpc = _octree.GetChunkPointCount();
-		vel_tbo_data.resize(chunkList.size() * 3 * cpc);
-		pre_tbo_data.resize(chunkList.size() * cpc);
-		glm::vec3 vel;
-		for (int i = 0; i < chunkList.size(); i++) {
-			vector<CustomPointData>& cp = fc.levelFile[chunkList[i]->level].chunk[chunkList[i]->dataIndex].points;
-			for (int j = 0; j < cpc; j++) {
-				vel = cp[j].GetVel();
-				vel_tbo_data[(i * cpc + j) * 3 + 0] = vel.x;
-				vel_tbo_data[(i * cpc + j) * 3 + 1] = vel.y;
-				vel_tbo_data[(i * cpc + j) * 3 + 2] = vel.z;
-				pre_tbo_data[(i * cpc + j)] = cp[j].GetPressure();
-			}
+			index_tbo_data.push_back(fc.levelFile[0].chunk[0].chunkListIndex);
+			status_tbo_data.push_back(2);
 		}
 	}
-	catch (exception e)
-	{
-		cout << "Update Tex Buffer Error! Cause: " << e.what() << endl;
-		return;
+
+
+	int cpc = _octree.GetChunkPointCount();
+	vel_tbo_data.resize(chunkList.size() * 3 * cpc);
+	pre_tbo_data.resize(chunkList.size() * cpc);
+	glm::vec3 vel;
+	for (int i = 0; i < chunkList.size(); i++) {
+		vector<CustomPointData>& cp = fc.levelFile[chunkList[i]->level].chunk[chunkList[i]->dataIndex].points;
+		for (int j = 0; j < cpc; j++) {
+			vel = cp[j].GetVel();
+			vel_tbo_data[(i * cpc + j) * 3 + 0] = vel.x;
+			vel_tbo_data[(i * cpc + j) * 3 + 1] = vel.y;
+			vel_tbo_data[(i * cpc + j) * 3 + 2] = vel.z;
+			pre_tbo_data[(i * cpc + j)] = cp[j].GetPressure();
+		}
 	}
 }
 
@@ -577,59 +562,54 @@ void ASceneManagerTest::FillIndexTex_Recursive(CustomChunk* _Chunk, Frame& fc, i
 }
 
 void ASceneManagerTest::ReleaseChunkData() {
-	try {
-		int totalFrame = _octree.GetTotalFrame();
-		Frame& frameCollection = _octree.GetFrameCollection()[nowFrame - 1];
-		Frame& frameCollectionPrev = _octree.GetFrameCollection()[(nowFrame - 1 - 1 + totalFrame) % totalFrame];
+	int totalFrame = _octree.GetTotalFrame();
+	Frame& frameCollection = _octree.GetFrameCollection()[nowFrame - 1];
+	Frame& frameCollectionPrev = _octree.GetFrameCollection()[(nowFrame - 1 - 1 + totalFrame) % totalFrame];
 
-		for (int j = 0; j < frameCollection.levelFile.size(); j++) {
-			for (int k = 0; k < frameCollection.levelFile[j].chunk.size(); k++) {
-				frameCollection.levelFile[j].chunk[k].chunkListIndex = -1;
-				frameCollection.levelFile[j].chunk[k].hasChildInChunkList = false;
-				if (ENABLE_CACHE) {
-					if (frameCollection.levelFile[j].chunk[k].chunkAge > 5)
-					{
-						std::vector<CustomPointData>().swap(frameCollection.levelFile[j].chunk[k].points);
-						frameCollection.levelFile[j].chunk[k].chunkAge = 0;
-					}
-					else if (frameCollection.levelFile[j].chunk[k].chunkAge > 0)
-						frameCollection.levelFile[j].chunk[k].chunkAge++;
-					/*if (nowFrame != lastFrame) {
-						std::vector<CustomPointData>().swap(frameCollectionPrev.levelFile[j].chunk[k].points);
-						frameCollectionPrev.levelFile[j].chunk[k].chunkAge = 0;
-					}*/
-				}
-				else {
+	for (int j = 0; j < frameCollection.levelFile.size(); j++) {
+		for (int k = 0; k < frameCollection.levelFile[j].chunk.size(); k++) {
+			frameCollection.levelFile[j].chunk[k].chunkListIndex = -1;
+			frameCollection.levelFile[j].chunk[k].hasChildInChunkList = false;
+			if (ENABLE_CACHE) {
+				if (frameCollection.levelFile[j].chunk[k].chunkAge > 5)
+				{
 					std::vector<CustomPointData>().swap(frameCollection.levelFile[j].chunk[k].points);
+					frameCollection.levelFile[j].chunk[k].chunkAge = 0;
 				}
-				std::vector<LagrangianVelSource>().swap(frameCollection.levelFile[j].chunk[k].velSources);
-				std::vector<LagrangianPreSource>().swap(frameCollection.levelFile[j].chunk[k].preSources);
+				else if (frameCollection.levelFile[j].chunk[k].chunkAge > 0)
+					frameCollection.levelFile[j].chunk[k].chunkAge++;
+				/*if (nowFrame != lastFrame) {
+					std::vector<CustomPointData>().swap(frameCollectionPrev.levelFile[j].chunk[k].points);
+					frameCollectionPrev.levelFile[j].chunk[k].chunkAge = 0;
+				}*/
 			}
+			else {
+				std::vector<CustomPointData>().swap(frameCollection.levelFile[j].chunk[k].points);
+			}
+			std::vector<LagrangianVelSource>().swap(frameCollection.levelFile[j].chunk[k].velSources);
+			std::vector<LagrangianPreSource>().swap(frameCollection.levelFile[j].chunk[k].preSources);
 		}
-		/*for (int i = 0; i < fileList.size(); i++)
-		{
-			fileList[i]->close();
-			delete fileList[i];
-		}*/
-		for (int i = 0; i < fileIndexList.size(); i++)
-		{
-			fileIndexList[i]->close();
-			delete fileIndexList[i];
-			fileValueList[i]->close();
-			delete fileValueList[i];
-		}
-		for (int i = 0; i < baseFileIndexList.size(); i++)
-		{
-			baseFileIndexList[i]->close();
-			delete baseFileIndexList[i];
-			baseFileValueList[i]->close();
-			delete baseFileValueList[i];
-		}
-		//lastFrame = nowFrame;
 	}
-	catch (exception& e) {
-		cout << e.what() << endl;
+	/*for (int i = 0; i < fileList.size(); i++)
+	{
+		fileList[i]->close();
+		delete fileList[i];
+	}*/
+	for (int i = 0; i < fileIndexList.size(); i++)
+	{
+		fileIndexList[i]->close();
+		delete fileIndexList[i];
+		fileValueList[i]->close();
+		delete fileValueList[i];
 	}
+	for (int i = 0; i < baseFileIndexList.size(); i++)
+	{
+		baseFileIndexList[i]->close();
+		delete baseFileIndexList[i];
+		baseFileValueList[i]->close();
+		delete baseFileValueList[i];
+	}
+	//lastFrame = nowFrame;
 }
 
 void ASceneManagerTest::CreateTextures() {
@@ -647,8 +627,9 @@ void ASceneManagerTest::CreateTextures() {
 	VelTex = UTexture2D::CreateTransient(VelSize, VelSize, PF_FloatRGBA); // PF_B8G8R8A8
 	PreTex = UTexture2D::CreateTransient(PreSize, PreSize, PF_FloatRGBA); // PF_B8G8R8A8
 
-	TextureMipGenSettings IndexOldMipSetting, StatusOldMipSetting, VelOldMipSetting, PreOldMipSetting;
-	IndexOldMipSetting = IndexTex->MipGenSettings;
+	// Editor Only
+	//TextureMipGenSettings IndexOldMipSetting, StatusOldMipSetting, VelOldMipSetting, PreOldMipSetting;
+	/*IndexOldMipSetting = IndexTex->MipGenSettings;
 	StatusOldMipSetting = StatusTex->MipGenSettings;
 	VelOldMipSetting = VelTex->MipGenSettings;
 	PreOldMipSetting = PreTex->MipGenSettings;
@@ -656,10 +637,26 @@ void ASceneManagerTest::CreateTextures() {
 	StatusTex->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
 	VelTex->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
 	PreTex->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
+
 	IndexTex->UpdateResource();
 	StatusTex->UpdateResource();
 	VelTex->UpdateResource();
-	PreTex->UpdateResource();
+	PreTex->UpdateResource();*/
+
+	ETextureMipLoadOptions IndexOldMipLoadOptions, StatusOldMipLoadOptions, VelOldMipLoadOptions, PreOldMipLoadOptions;
+	IndexOldMipLoadOptions = IndexTex->MipLoadOptions;
+	StatusOldMipLoadOptions = StatusTex->MipLoadOptions;
+	VelOldMipLoadOptions = VelTex->MipLoadOptions;
+	PreOldMipLoadOptions = PreTex->MipLoadOptions;
+	IndexTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
+	StatusTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
+	VelTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
+	PreTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
+
+	IndexTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
+	StatusTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
+	VelTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
+	PreTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
 
 	// IndexTex write data
 	FFloat16* Ptr0 = (FFloat16*)IndexTex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE); // this can do read and write
@@ -768,10 +765,19 @@ void ASceneManagerTest::CreateTextures() {
 
 	PreTex->GetPlatformData()->Mips[0].BulkData.Unlock();
 
-	IndexTex->MipGenSettings = IndexOldMipSetting;
+	//Editor Only
+	/*IndexTex->MipGenSettings = IndexOldMipSetting;
 	StatusTex->MipGenSettings = StatusOldMipSetting;
 	VelTex->MipGenSettings = VelOldMipSetting;
 	PreTex->MipGenSettings = PreOldMipSetting;
+	IndexTex->UpdateResource();
+	StatusTex->UpdateResource();
+	VelTex->UpdateResource();
+	PreTex->UpdateResource();*/
+	IndexTex->MipLoadOptions = IndexOldMipLoadOptions;
+	StatusTex->MipLoadOptions = StatusOldMipLoadOptions;
+	VelTex->MipLoadOptions = VelOldMipLoadOptions;
+	PreTex->MipLoadOptions = PreOldMipLoadOptions;
 	IndexTex->UpdateResource();
 	StatusTex->UpdateResource();
 	VelTex->UpdateResource();

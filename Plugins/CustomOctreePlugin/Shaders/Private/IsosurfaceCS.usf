@@ -1,7 +1,6 @@
 #include "/Engine/Public/Platform.ush"
 
 RWBuffer<float4> inPos;
-
 RWBuffer<float4> outPos;
 //RWBuffer<float3> outNormal;
 //RWBuffer<int> outTris;
@@ -221,7 +220,8 @@ float GetCornerVorticity(float3 position, float3 _minPos, float3 _maxPos)
     float kVorticity_m = (xDirVel_m.y - origin.y) / spacing.x - (yDirVel_m.x - origin.x) / spacing.y;
     float vorticity_m = sqrt(pow(iVorticity_m, 2) + pow(jVorticity_m, 2) + pow(kVorticity_m, 2)); //Left
 
-    return (vorticity + vorticity_m) / 2;
+    float returnVar = (vorticity + vorticity_m) / 2;
+    return returnVar;
 }
 
 float GetCornerQCritirea(float3 position, float3 _minPos, float3 _maxPos)
@@ -262,7 +262,8 @@ float GetCornerQCritirea(float3 position, float3 _minPos, float3 _maxPos)
     float QValue = omega + shear; //Right
     float QValue_m = omega_m + shear_m; //Left
 
-    return (QValue + QValue_m) / 2;
+    float returnVar = (QValue + QValue_m) / 2;
+    return returnVar;
 }
 
 struct GridCube
@@ -292,28 +293,33 @@ void render_isosurface(float4 position, uint3 threadID)
         if (i == 4 || i == 5 || i == 6 || i == 7)
             zBias = 1;
         float3 cornerPos = position.xyz + float3(xBias, yBias, zBias) * spacingPerLevel;
+        
         if (isQCritirea == 0)
+        {
             grid.vertex_val[i] = float4(cornerPos, GetCornerVorticity(cornerPos, minPos, maxPos));
+        }
         else if (isQCritirea == 1)
+        {
             grid.vertex_val[i] = float4(cornerPos, GetCornerQCritirea(cornerPos, minPos, maxPos));
+        }
     }
 
     if (OutOfBound == 1)
         return;
     int groundCount = 0;
-    for (int i = 0; i < 8; ++i)
+    for (int j = 0; j < 8; ++j)
     {
-        if (grid.vertex_val[i].z == 0)
+        if (grid.vertex_val[j].z == 0)
         {
             groundCount++;
         }
     }
 	//if(groundCount > 0)
 		//return;
-    for (int i = 0; i < 8; ++i)
+    for (int k = 0; k < 8; ++k)
     {
-        if (grid.vertex_val[i].w < isovalue)
-            cubeIndex |= (1 << i);
+        if (grid.vertex_val[k].w < isovalue)
+            cubeIndex |= (1 << k);
     }
 
     if (0 == MC_Edge_Trigger_tex.Load(cubeIndex).r)
@@ -363,13 +369,13 @@ void render_isosurface(float4 position, uint3 threadID)
     float4x4 matrixModelView = model;
     float4x4 matrixNormal = matrixModelView;
     matrixNormal[3] = float4(0, 0, 0, 1);
-    for (int i = 0; MC_Edge_Connect_tex.Load(cubeIndex * 16 + i).r != -1; i += 3)
+    for (int l = 0; MC_Edge_Connect_tex.Load(cubeIndex * 16 + l).r != -1; l += 3)
     {
         float3 vertex0, vertex1, vertex2;
         
-        vertex0 = vertlist[MC_Edge_Connect_tex.Load(cubeIndex * 16 + i).r];
-        vertex1 = vertlist[MC_Edge_Connect_tex.Load(cubeIndex * 16 + i + 1).r];
-        vertex2 = vertlist[MC_Edge_Connect_tex.Load(cubeIndex * 16 + i + 2).r];
+        vertex0 = vertlist[MC_Edge_Connect_tex.Load(cubeIndex * 16 + l).r].xyz;
+        vertex1 = vertlist[MC_Edge_Connect_tex.Load(cubeIndex * 16 + l + 1).r].xyz;
+        vertex2 = vertlist[MC_Edge_Connect_tex.Load(cubeIndex * 16 + l + 2).r].xyz;
 
         numOfTriangle += 1;
         if (numOfTriangle >= 1 && numOfTriangle <= 5)

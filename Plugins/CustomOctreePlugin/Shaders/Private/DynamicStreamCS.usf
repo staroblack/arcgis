@@ -134,14 +134,14 @@ float3 SampleFromTexture(float3 position)
 
     center /= cornerCount;
 
-    for (int p = 0; p < 8; p++)
+    for (int q = 0; q < 8; q++)
     {
         xBias = yBias = zBias = 0;
-        if (p == 1 || p == 3 || p == 5 || p == 7)
+        if (q == 1 || q == 3 || q == 5 || q == 7)
             xBias = 1;
-        if (p == 2 || p == 3 || p == 6 || p == 7)
+        if (q == 2 || q == 3 || q == 6 || q == 7)
             yBias = 1;
-        if (p == 4 || p == 5 || p == 6 || p == 7)
+        if (q == 4 || q == 5 || q == 6 || q == 7)
             zBias = 1;
         if (finalMinPos.z == minPos.z && zIndex == 0 && zBias == 0)
             continue;
