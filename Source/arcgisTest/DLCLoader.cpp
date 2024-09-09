@@ -47,7 +47,10 @@ void ADLCLoader::Tick(float DeltaTime)
 
 TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FString& OutInfoMessage)
 {
+	int count = 0;
+
 	FString pakPath = FPaths::Combine(FPaths::ProjectDir(), "testpak");
+	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, pakPath);
 	UObjectLibrary* tempLibrary = UObjectLibrary::CreateLibrary(nullptr, false, GIsEditor);
 	tempLibrary->bRecursivePaths = true;
 	loadLibrary = tempLibrary;
@@ -58,9 +61,14 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 	fileManager.FindFiles(files, *pakPath, TEXT("pak"));
 
 	for (auto& file : files) {
+		count++;
 		file = absFolderPath + "/" + file;
 		paths.Add(file);
 		LoadPak(file, 1, bOutSuccess, OutInfoMessage);
+	}
+
+	if (count == 0) {
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "no pak found at : " + pakPath);
 	}
 	return files;
 }
@@ -82,13 +90,13 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		// check file exist
 		if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*pakFilePath)) {
 			UE_LOG(LogTemp, Warning, TEXT("pak file: %s not found"), *pakFilePath);
-			//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file not find : " + pakFilePath);
+			GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file not find : " + pakFilePath);
 
 			// return to old platform file
 			// FPlatformFileManager::Get().SetPlatformFile(*ADLCLoader::oldPlatform);
 		}
 		UE_LOG(LogTemp, Warning, TEXT("pak file: %s founded"), *pakFilePath);
-		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
 
 		// prepare mount point
 		FPakFile* pakFile = new FPakFile(pakPlatform, *pakFilePath, false);
@@ -98,18 +106,26 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		FString PakFilename = FPaths::GetBaseFilename(pakFilePath);
 		FString mountPoint = ProjectContentPath + "DLC/" + PakFilename + "/";
 		// mounting point conversion
-#if WITH_EDITOR
+
+//#if WITH_EDITOR
+//		pakFile->SetMountPoint(*FPaths::ConvertRelativePathToFull(mountPoint));
+//		mountPoint = FPaths::ConvertRelativePathToFull(mountPoint);
+//		ProjectContentPath = FPaths::ConvertRelativePathToFull(ProjectContentPath);
+//#else
+//		pakFile->SetMountPoint(*mountPoint);
+//		pakFile->SetMountPoint(*FPaths::ConvertRelativePathToFull(mountPoint));
+//		mountPoint = FPaths::ConvertRelativePathToFull(mountPoint);
+//		ProjectContentPath = FPaths::ConvertRelativePathToFull(ProjectContentPath);
+//#endif
+		
 		pakFile->SetMountPoint(*FPaths::ConvertRelativePathToFull(mountPoint));
 		mountPoint = FPaths::ConvertRelativePathToFull(mountPoint);
 		ProjectContentPath = FPaths::ConvertRelativePathToFull(ProjectContentPath);
-#else
-		pakFile->SetMountPoint(*mountPoint);
-#endif
-		
+
 		UE_LOG(LogTemp, Warning, TEXT("project dir: %s"), *ProjectPath);
 		UE_LOG(LogTemp, Warning, TEXT("ori mount point: %s"), *oriMountingPoint);
 		UE_LOG(LogTemp, Warning, TEXT("new mount point: %s"), *mountPoint);
-		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
+		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
 		
 
 		// mount pak
@@ -140,11 +156,13 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 			if (loading == 1) {
 				loadLibrary->LoadAssetDataFromPath(path);
 				loadLibrary->GetAssetDataList(this->assetDatas);
+
 				//test spawninfo
 				FActorSpawnParameters spawnInfo;
 				Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
 				tempActor->index = iconsCount;
-				icons.push_back(tempActor);
+				icons.Add(tempActor);
+				GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "spawn");
 
 				for (auto& assetData : assetDatas) {
 
@@ -202,7 +220,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 			}
 			
 
-			for (int i = 0; i < icons.size(); i++) {
+			for (int i = 0; i < icons.Num(); i++) {
 				for (int k = 0; k < icons[i]->assets.Num(); k++) {
 					//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "all  : "+ icons[i]->assets[k]->AssetName.ToString());
 				}
@@ -491,7 +509,7 @@ void ADLCLoader::WriteStringToFile(FString filepath, FString inputString, bool& 
 }
 
 void ADLCLoader::initIconsHitbox() {
-	for (int i = 0; i < icons.size(); i++) {
+	for (int i = 0; i < icons.Num(); i++) {
 		icons[i]->hitboxInit();
 	}
 }
@@ -526,7 +544,7 @@ TArray<FVector> ADLCLoader::getCorners(FVector center, FVector Extent) {
 }
 
 Aicon* ADLCLoader::findIcon(FString input) {
-	for (int i = 0; i < icons.size(); i++) {
+	for (int i = 0; i < icons.Num(); i++) {
 		if (input == icons[i]->output.caseName) {
 			return icons[i];
 		}
@@ -547,4 +565,13 @@ void ADLCLoader::flushline() {
 	lineComponent = this->GetWorld()->PersistentLineBatcher;
 	lineComponent->Flush();
 	return;
+}
+
+void  ADLCLoader::printString(FString input) {
+	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, input);
+	return;
+}
+
+TArray<Aicon*> ADLCLoader::getIcons() {
+	return icons;
 }
