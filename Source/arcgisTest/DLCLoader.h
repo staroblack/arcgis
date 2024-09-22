@@ -119,7 +119,7 @@ private:
 	TArray<UStaticMeshComponent*> meshComps;
 
 	UObjectLibrary* loadLibrary;
-	std::vector<Aicon*> icons;
+	TArray<Aicon*> icons;
 	int iconsCount = 0;
 
 	ULineBatchComponent* lineComponent = NULL;
@@ -165,6 +165,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
 	void initIconsHitbox();
 
+	UFUNCTION(BlueprintCallable, Category = "pakloading")
+	TArray<Aicon*> getIcons();
+
 	UFUNCTION(BlueprintCallable, Category = "drawing hitbox")
 	void drawHitbox(TArray<FVector> points, FLinearColor color, float thickness);
 
@@ -179,6 +182,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "compare string")
 	bool compareString(FString input, FString compare);
+
+	UFUNCTION(BlueprintCallable, Category = "compare string")
+	void printString(FString input);
 
 public:
 	static IPlatformFile* oldPlatform;

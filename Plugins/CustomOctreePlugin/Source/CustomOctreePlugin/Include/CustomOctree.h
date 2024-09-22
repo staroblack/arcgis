@@ -44,6 +44,7 @@ protected:
 	//cv::Vec3f vel; //velocity
 	glm::vec3 vel;
 	float pre; //pressure
+	float temp; // temperature
 public:
 	CustomPointData();
 	float GetXVel() const;
@@ -59,6 +60,8 @@ public:
 	void SetXYZVel(glm::vec3 vel);
 	float GetPressure();
 	void SetPressure(float pre);
+	float GetTemperature() const;
+	void SetTemperature(float temp);
 	void SetData(CustomPointData p);
 	float GetMagnitude();
 	CustomPointData friend operator+(CustomPointData l, CustomPointData r);

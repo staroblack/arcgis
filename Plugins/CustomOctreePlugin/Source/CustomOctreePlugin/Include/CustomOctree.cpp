@@ -14,28 +14,40 @@ CustomPointData operator+(CustomPointData l, CustomPointData r) {
 	CustomPointData p;
 	p.SetXYZVel(l.GetXVel() + r.GetXVel(), l.GetYVel() + r.GetYVel(), l.GetZVel() + r.GetZVel());
 	p.SetPressure(l.GetPressure() + r.GetPressure());
+	p.SetTemperature(l.GetTemperature() + r.GetTemperature());
+	return p;
+}
+CustomPointData operator-(CustomPointData l, CustomPointData r)
+{
+	CustomPointData p;
+	p.SetXYZVel(l.GetXVel() - r.GetXVel(), l.GetYVel() - r.GetYVel(), l.GetZVel() - r.GetZVel());
+	p.SetPressure(l.GetPressure() - r.GetPressure());
+	p.SetTemperature(l.GetTemperature() - r.GetTemperature());
 	return p;
 }
 CustomPointData operator*(CustomPointData l, float s) {
 	CustomPointData p;
 	p.SetXYZVel(l.GetXVel() * s, l.GetYVel() * s, l.GetZVel() * s);
 	p.SetPressure(l.GetPressure() * s);
+	p.SetTemperature(l.GetTemperature() * s);
 	return p;
 }
 CustomPointData operator*(float s, CustomPointData l) {
 	CustomPointData p;
 	p.SetXYZVel(l.GetXVel() * s, l.GetYVel() * s, l.GetZVel() * s);
 	p.SetPressure(l.GetPressure() * s);
+	p.SetTemperature(l.GetTemperature() * s);
 	return p;
 }
 CustomPointData operator/(CustomPointData l, float s) {
 	CustomPointData p;
 	p.SetXYZVel(l.GetXVel() / s, l.GetYVel() / s, l.GetZVel() / s);
 	p.SetPressure(l.GetPressure() / s);
+	p.SetTemperature(l.GetTemperature() / s);
 	return p;
 }
 bool operator==(CustomPointData l, CustomPointData r) {
-	if (l.GetMagnitude() - r.GetMagnitude() < 0.1f && l.GetPressure() - r.GetPressure() < 0.1f)
+	if (l.GetMagnitude() - r.GetMagnitude() < 0.1f && l.GetPressure() - r.GetPressure() < 0.1f && l.GetTemperature() - r.GetTemperature() < 0.1f)
 		return true;
 	else
 		return false;
@@ -43,19 +55,20 @@ bool operator==(CustomPointData l, CustomPointData r) {
 ostream& operator<<(ostream& os, const CustomPointData& cp)
 {
 	os << cp.vel[0] << ' ' << cp.vel[1] << ' ' << cp.vel[2] << ' '
-		<< cp.pre << endl;
+		<< cp.pre << ' ' << cp.temp << endl;
 	return os;
 }
 istream& operator>>(istream& is, CustomPointData& cp)
 {
 	is >> cp.vel[0] >> cp.vel[1] >> cp.vel[2]
-		>> cp.pre;
+		>> cp.pre >> cp.temp;
 	return is;
 }
 
 CustomPointData::CustomPointData() {
 	vel[0] = 0; vel[1] = 0; vel[2] = 0;
 	pre = 0;
+	temp = 0;
 }
 
 float CustomPointData::GetXVel() const {
@@ -99,9 +112,16 @@ float CustomPointData::GetPressure() {
 void CustomPointData::SetPressure(float pres) {
 	this->pre = pres;
 }
+float CustomPointData::GetTemperature() const {
+	return temp;
+}
+void CustomPointData::SetTemperature(float tempr) {
+	this->temp = tempr;
+}
 void CustomPointData::SetData(CustomPointData p) {
 	this->vel = p.vel;
 	this->pre = p.pre;
+	this->temp = p.temp;
 }
 float CustomPointData::GetMagnitude()
 {
@@ -115,6 +135,7 @@ CustomPoint operator+(CustomPoint l, CustomPoint r) {
 	p.SetXYZ(l.GetX() + r.GetX(), l.GetY() + r.GetY(), l.GetZ() + r.GetZ());
 	p.SetXYZVel(l.GetXVel() + r.GetXVel(), l.GetYVel() + r.GetYVel(), l.GetZVel() + r.GetZVel());
 	p.SetPressure(l.GetPressure() + r.GetPressure());
+	p.SetTemperature(l.GetTemperature() + r.GetTemperature());
 	return p;
 }
 CustomPoint operator*(CustomPoint l, float s) {
@@ -122,6 +143,7 @@ CustomPoint operator*(CustomPoint l, float s) {
 	p.SetXYZ(l.GetX(), l.GetY(), l.GetZ());
 	p.SetXYZVel(l.GetXVel() * s, l.GetYVel() * s, l.GetZVel() * s);
 	p.SetPressure(l.GetPressure() * s);
+	p.SetTemperature(l.GetTemperature() * s);
 	return p;
 }
 CustomPoint operator*(float s, CustomPoint l) {
@@ -129,6 +151,7 @@ CustomPoint operator*(float s, CustomPoint l) {
 	p.SetXYZ(l.GetX(), l.GetY(), l.GetZ());
 	p.SetXYZVel(l.GetXVel() * s, l.GetYVel() * s, l.GetZVel() * s);
 	p.SetPressure(l.GetPressure() * s);
+	p.SetTemperature(l.GetTemperature() * s);
 	return p;
 }
 CustomPoint operator/(CustomPoint l, float s) {
@@ -136,20 +159,21 @@ CustomPoint operator/(CustomPoint l, float s) {
 	p.SetXYZ(l.GetX(), l.GetY(), l.GetZ());
 	p.SetXYZVel(l.GetXVel() / s, l.GetYVel() / s, l.GetZVel() / s);
 	p.SetPressure(l.GetPressure() / s);
+	p.SetTemperature(l.GetTemperature() / s);
 	return p;
 }
 ostream& operator<<(ostream& os, const CustomPoint& cp)
 {
 	os << cp.pos[0] << ' ' << cp.pos[1] << ' ' << cp.pos[2] << ' '
 		<< cp.vel[0] << ' ' << cp.vel[1] << ' ' << cp.vel[2] << ' '
-		<< cp.pre << endl;
+		<< cp.pre << ' ' << cp.temp << endl;
 	return os;
 }
 istream& operator>>(istream& is, CustomPoint& cp)
 {
 	is >> cp.pos[0] >> cp.pos[1] >> cp.pos[2]
 		>> cp.vel[0] >> cp.vel[1] >> cp.vel[2]
-		>> cp.pre;
+		>> cp.pre >> cp.temp;
 	return is;
 }
 
@@ -157,21 +181,19 @@ CustomPoint::CustomPoint(float x, float y, float z) {
 	pos[0] = x; pos[1] = y; pos[2] = z;
 	vel[0] = 0; vel[1] = 0; vel[2] = 0;
 	pre = 0;
+	temp = 0;
 }
-//CustomPoint::CustomPoint(cv::Vec3f _pos) {
-//	pos = _pos;
-//	vel[0] = 0; vel[1] = 0; vel[2] = 0;
-//	pre = 0;
-//}
 CustomPoint::CustomPoint(glm::vec3 _pos) {
 	pos = _pos;
 	vel[0] = 0; vel[1] = 0; vel[2] = 0;
 	pre = 0;
+	temp = 0;
 }
 CustomPoint::CustomPoint() {
 	pos[0] = 0; pos[1] = 0; pos[2] = 0;
 	vel[0] = 0; vel[1] = 0; vel[2] = 0;
 	pre = 0;
+	temp = 0;
 }
 float CustomPoint::GetX() const {
 	return pos[0];

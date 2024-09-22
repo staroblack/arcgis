@@ -113,27 +113,6 @@ ASceneManagerTest::ASceneManagerTest()
 void ASceneManagerTest::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//Testing SetupInfo
-	/*FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/101data2_collection/gridinfo.bin");
-
-	_octree.SetupInfo(FilePath, 1);
-
-	fileValueList.clear();
-	fileIndexList.clear();
-	baseFileValueList.clear();
-	baseFileIndexList.clear();
-
-	octreeLODList.clear();
-	octreeLODList.push_back(1);
-	octreeLODList.push_back(2);
-	octreeLODList.push_back(4);
-	octreeLODList.push_back(8);
-	octreeLODList.push_back(16);
-	octreeLODList.push_back(32);
-	octreeLODList.push_back(64);*/
-
-	//for (auto& ol : octreeLODList) ol = pow(ol, 2);
 }
 
 void ASceneManagerTest::BeginDestroy()
@@ -160,13 +139,14 @@ void ASceneManagerTest::Tick(float DeltaTime)
 
 	//FMatrix camViewProjMat;
 	FMatrix Matrix = GetCameraViewProj();
-	FString MatrixString = FString::Printf(TEXT("Matrix: [%f, %f, %f, %f], [%f, %f, %f, %f], [%f, %f, %f, %f], [%f, %f, %f, %f]"),
+
+	// output matrix
+	/*FString MatrixString = FString::Printf(TEXT("Matrix: [%f, %f, %f, %f], [%f, %f, %f, %f], [%f, %f, %f, %f], [%f, %f, %f, %f]"),
 		Matrix.M[0][0], Matrix.M[0][1], Matrix.M[0][2], Matrix.M[0][3],
 		Matrix.M[1][0], Matrix.M[1][1], Matrix.M[1][2], Matrix.M[1][3],
 		Matrix.M[2][0], Matrix.M[2][1], Matrix.M[2][2], Matrix.M[2][3],
 		Matrix.M[3][0], Matrix.M[3][1], Matrix.M[3][2], Matrix.M[3][3]);
-
-	//UE_LOG(LogTemp, Log, TEXT("%s"), *MatrixString);
+	UE_LOG(LogTemp, Log, TEXT("%s"), *MatrixString);*/
 
 	for (int32 Row = 0; Row < 4; ++Row)
 	{
@@ -184,8 +164,6 @@ void ASceneManagerTest::Tick(float DeltaTime)
 
 	fileValueList.clear();
 	fileIndexList.clear();
-
-	//this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectPluginsDir())) + L"CustomOctreePlugin/Source/CustomOctreePlugin/uniform_1f_collection/uniform_1f";
 
 	for (int i = 0; i <= _octree.GetTotalLevel(); i++) {
 		ifstream* in1 = new ifstream, * in2 = new ifstream;
@@ -225,17 +203,9 @@ void ASceneManagerTest::Tick(float DeltaTime)
 		in2->open(loadpath, ios_base::in | ios_base::binary);
 		baseFileIndexList.push_back(in2);
 	}
-	once = true;
-	if (!once) {
-		
-	}
 
 	loadChunkCount = 0;
 	GetChunkInFrustum(_octree.GetRoot(), chunkList, frustumEquation);
-
-	//UE_LOG(LogTemp, Log, TEXT("Loaded %d chunks."), loadChunkCount);
-	//FVector playerPos = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-	//UE_LOG(LogTemp, Log, TEXT("playerPos %f, %f %f"), playerPos.X, playerPos.Y, playerPos.Z);
 
 	DrawCube(glm2FVec(_octree.GetMin()), glm2FVec(_octree.GetMax()));
 
@@ -270,7 +240,6 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	}
 
 	ReleaseChunkData();
-
 }
 
 //Editing LoadChunkDataFromFile Function
@@ -309,8 +278,7 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 		if (startIndex == -1) {
 			if (nowFrame - ((nowFrame - 1) % timeBase) != nowFrame
 				&& cachedFrame.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].chunkAge != 0) {//Cached,Skip Reading
-				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points
-					= cachedFrame.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points;
+				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points = cachedFrame.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points;
 				skipReading = true;
 			}
 			if (!skipReading) {
@@ -324,6 +292,68 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 		if (!skipReading) {
 			actuallyReadChunkCount++;
 			fvl->seekg(startIndex, ios::beg);
+
+			/*if (flag & FlowData::DataFlag::VEL_MASK)
+				ReadValueFromFile(*fvl, fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].flowValues.vel);
+			if (flag & FlowData::DataFlag::PRE_MASK)
+				ReadValueFromFile(*fvl, fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].flowValues.pre);
+			if (flag & FlowData::DataFlag::TEMP_MASK)
+				ReadValueFromFile(*fvl, fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].flowValues.temp);*/
+
+			/*bool isCompressed = true;
+
+			{
+				size_t sizeVelValues;
+				vector<glm::vec3> velValues;
+				vector<unsigned char> velIndexes;
+				fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
+				if (sizeVelValues == 0) {
+					isCompressed = false;
+					fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
+					velValues.resize(sizeVelValues);
+				}
+				else {
+					velValues.resize(sizeVelValues);
+					velIndexes.resize(_octree.GetChunkPointCount());
+				}
+				if (isCompressed) {
+					fvl->read((char*)velValues.data(), sizeof(float) * sizeVelValues);
+					fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
+				}
+				else {
+					fvl->read((char*)velValues.data(), sizeof(float) * sizeVelValues);
+				}
+
+				for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
+					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetXYZVel(velValues[velIndexes[i]]);
+				}
+			}
+
+			{
+				size_t sizePreValues;
+				vector<float> preValues;
+				vector<unsigned char> preIndexes;
+				fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
+				if (sizePreValues == 0) {
+					isCompressed = false;
+					fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
+					preValues.resize(sizePreValues);
+				}
+				else {
+					preValues.resize(sizePreValues);
+					preIndexes.resize(_octree.GetChunkPointCount());
+				}
+				if (isCompressed) {
+					fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
+					fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
+				}
+				else {
+					fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
+				}
+				for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
+					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
+				}
+			}*/
 
 			int sizeVelValues;
 			int sizePreValues;
@@ -339,8 +369,10 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 			velValues.resize(sizeVelValues);
 			fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
 			preValues.resize(sizePreValues);
+
 			fvl->read((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
 			fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
+
 			fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
 			fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
 
@@ -393,19 +425,7 @@ void ASceneManagerTest::GetChunkInFrustum(CustomChunk* _Chunk, vector<CustomChun
 				FVector Loc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
 				FVector distVec = Loc - (glm2FVec(_Chunk->child[i]->center) * scaleSize + Center);
 
-				//FVector Loc = FVector(-0.570114, 1.46258, 1.2469);
-				//FVector distVec = glm2FVec(_Chunk->child[i]->center) - Loc;
-
 				float dist = distVec.Length();//pow(distVec[0], 2) + pow(distVec[1], 2) + pow(distVec[2], 2);
-				//UE_LOG(LogTemp, Log, TEXT("dist: %f"), dist);
-
-				/*if (dist < octreeLODList[_octree.GetTotalLevel() - _Chunk->level] * baseViewDistance) {
-					GetChunkInFrustum(_Chunk->child[i], _chunkList, frustumEquation);
-				}
-				else {
-					chunkList.push_back(_Chunk->child[i]);
-					LoadChunkDataFromFile(_Chunk->child[i], chunkList.size() - 1);
-				}*/
 
 				if (dist < octreeLODList[_octree.GetTotalLevel() - _Chunk->level] * baseViewDistance)
 					GetChunkInFrustum(_Chunk->child[i], _chunkList, frustumEquation);
@@ -1218,9 +1238,10 @@ void ASceneManagerTest::Hack() {
 
 void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScale) {
 	ClearData();
-	FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/", FileName + "_collection/gridinfo.bin");
+	//FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/", FileName + "_collection/gridinfo.bin");
+	FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "testpak/", FileName + "_collection/gridinfo.bin");
 	wstring fileName = wstring((wchar_t*)TCHAR_TO_UTF16(*FileName));
-	this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectPluginsDir())) + L"CustomOctreePlugin/Source/CustomOctreePlugin/" + fileName + L"_collection/" + fileName;
+	this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectDir())) + L"testpak/" + fileName + L"_collection/" + fileName;
 	//FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "testpak/", FileName, "/gridinfo.bin");
 	_octree.SetupInfo(FilePath, 1);
 

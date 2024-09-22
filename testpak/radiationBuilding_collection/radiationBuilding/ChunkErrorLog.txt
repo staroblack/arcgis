@@ -1,0 +1,60 @@
+Level: 0
+Total chunk Count: 1
+Total Vel Count: 19
+Total Pre Count: 22
+Compressed Chunk Count: 1
+No Compressed Chunk Count: 0
+Average bad quantized points count: 0
+Max bad quantized points points count: 0
+Average chunk error: 0.0250025
+Max chunk error: 0.0250025
+Level: 1
+Total chunk Count: 8
+Total Vel Count: 100
+Total Pre Count: 150
+Compressed Chunk Count: 8
+No Compressed Chunk Count: 0
+Average bad quantized points count: 0
+Max bad quantized points points count: 0
+Average chunk error: 0.0226067
+Max chunk error: 0.02892
+Level: 2
+Total chunk Count: 64
+Total Vel Count: 413
+Total Pre Count: 943
+Compressed Chunk Count: 64
+No Compressed Chunk Count: 0
+Average bad quantized points count: 0
+Max bad quantized points points count: 0
+Average chunk error: 0.0270198
+Max chunk error: 0.0454286
+Level: 3
+Total chunk Count: 512
+Total Vel Count: 2089
+Total Pre Count: 5372
+Compressed Chunk Count: 512
+No Compressed Chunk Count: 0
+Average bad quantized points count: 0
+Max bad quantized points points count: 0
+Average chunk error: 0.0251197
+Max chunk error: 0.051071
+Level: 4
+Total chunk Count: 4096
+Total Vel Count: 11043
+Total Pre Count: 34826
+Compressed Chunk Count: 4096
+No Compressed Chunk Count: 0
+Average bad quantized points count: 0
+Max bad quantized points points count: 0
+Average chunk error: 0.0217202
+Max chunk error: 0.0525586
+Level: 5
+Total chunk Count: 32768
+Total Vel Count: 62086
+Total Pre Count: 207074
+Compressed Chunk Count: 32768
+No Compressed Chunk Count: 0
+Average bad quantized points count: 0
+Max bad quantized points points count: 0
+Average chunk error: 0.0199631
+Max chunk error: 0.0739284
