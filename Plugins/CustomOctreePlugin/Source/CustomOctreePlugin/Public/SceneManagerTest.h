@@ -154,6 +154,9 @@ public:
 	UMaterialInterface* MaterialToApplyToClickedObject;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	APawn* camera;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool DrawRedDot;
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)

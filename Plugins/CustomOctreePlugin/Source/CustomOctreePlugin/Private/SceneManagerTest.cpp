@@ -152,7 +152,7 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	{
 		for (int32 Col = 0; Col < 4; ++Col)
 		{
-			// Note: FMatrix is column based, glm::mat4 is row based, need to switch // orignal was commented
+			// Note: FMatrix is column based, glm::mat4 is row based, need to switch
 			cameraViewProj[Col][Row] = Matrix.M[Col][Row];
 		}
 	}
@@ -422,7 +422,8 @@ void ASceneManagerTest::GetChunkInFrustum(CustomChunk* _Chunk, vector<CustomChun
 		float scaleSize = 100.0f * MyScale;
 		for (int i = 0; i < 8; i++) {
 			if (ClipFrustum(_Chunk->child[i], frustumEquation)) {
-				FVector Loc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+				//FVector Loc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+				FVector Loc = camera->GetActorLocation();
 				FVector distVec = Loc - (glm2FVec(_Chunk->child[i]->center) * scaleSize + Center);
 
 				float dist = distVec.Length();//pow(distVec[0], 2) + pow(distVec[1], 2) + pow(distVec[2], 2);
@@ -1261,6 +1262,8 @@ void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScal
 
 	Center = InCenter;
 	MyScale = InScale;
+
+	baseViewDistance = 10 * InScale;
 
 	drawing = true;
 }
