@@ -17,7 +17,9 @@ public class arcgisTest : ModuleRules
             "SlateCore",
             "PakFile", 
 			"Json", 
-			"JsonUtilities" 
+			"JsonUtilities" ,
+			"HTTP",
+			"XmlParser"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

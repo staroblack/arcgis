@@ -575,3 +575,15 @@ void  ADLCLoader::printString(FString input) {
 TArray<Aicon*> ADLCLoader::getIcons() {
 	return icons;
 }
+
+void ADLCLoader::sendHttpRequest(FString input) {
+	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
+	Request->OnProcessRequestComplete().BindUObject(this, &ADLCLoader::OnRespondseReceived);
+	Request->SetURL("https://api.nlsc.gov.tw/other/TownVillagePointQuery/120.634413/24.153282/4326");
+	Request->SetVerb("GET");
+	Request->ProcessRequest();
+}
+
+void ADLCLoader::OnRespondseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully){
+	UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
+}

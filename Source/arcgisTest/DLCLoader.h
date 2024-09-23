@@ -8,6 +8,7 @@
 #include "Engine/ObjectLibrary.h"
 #include "Engine/StreamableManager.h"
 #include "icon.h"
+#include "Http.h"
 
 #include "DLCLoader.generated.h"
 
@@ -185,6 +186,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "compare string")
 	void printString(FString input);
+
+	UFUNCTION(BlueprintCallable, Category = "getting Http")
+	void sendHttpRequest(FString input);
+
+	void OnRespondseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
+
+
 
 public:
 	static IPlatformFile* oldPlatform;
