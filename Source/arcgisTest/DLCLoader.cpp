@@ -50,7 +50,7 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 	int count = 0;
 
 	FString pakPath = FPaths::Combine(FPaths::ProjectDir(), "testpak");
-	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, pakPath);
+	//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, pakPath);
 	UObjectLibrary* tempLibrary = UObjectLibrary::CreateLibrary(nullptr, false, GIsEditor);
 	tempLibrary->bRecursivePaths = true;
 	loadLibrary = tempLibrary;
@@ -90,13 +90,13 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		// check file exist
 		if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*pakFilePath)) {
 			UE_LOG(LogTemp, Warning, TEXT("pak file: %s not found"), *pakFilePath);
-			GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file not find : " + pakFilePath);
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "pak file not find : " + pakFilePath);
 
 			// return to old platform file
 			// FPlatformFileManager::Get().SetPlatformFile(*ADLCLoader::oldPlatform);
 		}
 		UE_LOG(LogTemp, Warning, TEXT("pak file: %s founded"), *pakFilePath);
-		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
+		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
 
 		// prepare mount point
 		FPakFile* pakFile = new FPakFile(pakPlatform, *pakFilePath, false);
@@ -125,7 +125,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		UE_LOG(LogTemp, Warning, TEXT("project dir: %s"), *ProjectPath);
 		UE_LOG(LogTemp, Warning, TEXT("ori mount point: %s"), *oriMountingPoint);
 		UE_LOG(LogTemp, Warning, TEXT("new mount point: %s"), *mountPoint);
-		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
+		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
 		
 
 		// mount pak
@@ -162,7 +162,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 				Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
 				tempActor->index = iconsCount;
 				icons.Add(tempActor);
-				GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "spawn");
+				//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "spawn");
 
 				for (auto& assetData : assetDatas) {
 
@@ -576,14 +576,26 @@ TArray<Aicon*> ADLCLoader::getIcons() {
 	return icons;
 }
 
-void ADLCLoader::sendHttpRequest(FString input) {
+void ADLCLoader::sendHttpRequest(FString lon, FString lat) {
 	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
+	FString url = "https://api.nlsc.gov.tw/other/TownVillagePointQuery/" + lon + "/" + lat + "/" + "4326";
+
+	//example
+	//"https://api.nlsc.gov.tw/other/TownVillagePointQuery/120.634413/24.153282/4326"
+
 	Request->OnProcessRequestComplete().BindUObject(this, &ADLCLoader::OnRespondseReceived);
-	Request->SetURL("https://api.nlsc.gov.tw/other/TownVillagePointQuery/120.634413/24.153282/4326");
+	Request->SetURL(url);
 	Request->SetVerb("GET");
 	Request->ProcessRequest();
 }
 
 void ADLCLoader::OnRespondseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully){
 	UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
+	xmlString = *Response->GetContentAsString();
+}
+
+void ADLCLoader::setIconsHttp() {
+	for (int i = 0; i < icons.Num(); i++) {
+		icons[i]->sendHttpRequest();
+	}
 }

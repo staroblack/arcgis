@@ -123,6 +123,8 @@ private:
 	TArray<Aicon*> icons;
 	int iconsCount = 0;
 
+	FString xmlString;
+
 	ULineBatchComponent* lineComponent = NULL;
 	TArray<FString> paths;
 
@@ -188,10 +190,17 @@ public:
 	void printString(FString input);
 
 	UFUNCTION(BlueprintCallable, Category = "getting Http")
-	void sendHttpRequest(FString input);
+	void sendHttpRequest(FString lon, FString lat);
 
 	void OnRespondseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
 
+	UFUNCTION(BlueprintCallable, Category = "getting Http")
+	FString getXmlString() {
+		return xmlString;
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "getting Http")
+	void setIconsHttp();
 
 
 public:

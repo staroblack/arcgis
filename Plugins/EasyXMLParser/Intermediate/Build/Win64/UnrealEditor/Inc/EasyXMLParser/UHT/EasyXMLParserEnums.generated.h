@@ -16,7 +16,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #define EASYXMLPARSER_EasyXMLParserEnums_generated_h
 
 #undef CURRENT_FILE_ID
-#define CURRENT_FILE_ID FID_graphics_arcgis_Plugins_EasyXMLParser_Source_EasyXMLParser_Public_EasyXMLParserEnums_h
+#define CURRENT_FILE_ID FID_graphic_arcgisTest_arcgis_Plugins_EasyXMLParser_Source_EasyXMLParser_Public_EasyXMLParserEnums_h
 
 
 #define FOREACH_ENUM_EEASYXMLPARSERERRORCODE(op) \

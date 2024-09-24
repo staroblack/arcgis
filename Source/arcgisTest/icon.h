@@ -8,6 +8,7 @@
 #include "../../Engine/Source/Runtime/Engine/Classes/Engine/StreamableManager.h"
 #include "../../Engine/Source/Runtime/Engine/Classes/Engine/AssetManager.h"
 #include "Components/LineBatchComponent.h"
+#include "Http.h"
 
 #include "icon.generated.h"
 
@@ -62,6 +63,7 @@ public:
 	bool firstLoad = true;
 	ULineBatchComponent* lineComponent = NULL;
 
+	FString xmlString;
 
 protected:
 
@@ -99,4 +101,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
 	TArray<float> getSimArea(FString line);
+
+	void sendHttpRequest();
+	void OnRespondseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
+
+	UFUNCTION(BlueprintCallable, Category = "xml")
+	FString getXmlString ();
+
 };

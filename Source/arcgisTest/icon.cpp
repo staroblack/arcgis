@@ -140,3 +140,29 @@ TArray<float> Aicon::getSimArea(FString line) {
 }
 
 
+void Aicon::sendHttpRequest() {
+	FHttpRequestRef Request = FHttpModule::Get().CreateRequest();
+	FString lon, lat;
+	lon = FString::SanitizeFloat(output.lon);
+	lat = FString::SanitizeFloat(output.lat);
+	FString url = "https://api.nlsc.gov.tw/other/TownVillagePointQuery/" + lon + "/" + lat + "/" + "4326";
+
+	//example
+	//"https://api.nlsc.gov.tw/other/TownVillagePointQuery/120.634413/24.153282/4326"
+	//"https://api.nlsc.gov.tw/other/TownVillagePointQuery/" + lon + "/" + lat + "/" + "4326";
+
+	Request->OnProcessRequestComplete().BindUObject(this, &Aicon::OnRespondseReceived);
+	Request->SetURL(url);
+	Request->SetVerb("GET");
+	Request->ProcessRequest();
+}
+
+void Aicon::OnRespondseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully) {
+	//UE_LOG(LogTemp, Display, TEXT("Response %s"), *Response->GetContentAsString());
+	xmlString = *Response->GetContentAsString();
+}
+
+
+FString Aicon::getXmlString() {
+	return xmlString;
+}
