@@ -436,6 +436,16 @@ void CustomOctree::SetupInfo(FString s, float scale) {
 		//file open succeed
 		UE_LOG(LogTemp, Log, TEXT("file open succeed"));
 
+		string str;
+		fs >> str;
+		if (str != hdr.fileMagic) {
+			preprocessed = false;
+			return;
+		}
+
+		fs >> hdr.fileName;
+		fs >> hdr.vel >> hdr.pre >> hdr.temp >> hdr.rad;
+
 		fs >> chunkSize[0] >> chunkSize[1] >> chunkSize[2];
 		fs >> totalLevel;
 		fs >> sampledDim[0] >> sampledDim[1] >> sampledDim[2];

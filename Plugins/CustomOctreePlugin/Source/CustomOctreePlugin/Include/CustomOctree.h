@@ -150,6 +150,11 @@ public:
 
 class CustomOctree {
 private:
+	struct fileHeader {
+		string fileMagic = "ARdata";
+		string fileName;
+		int8_t vel, pre, temp, rad;
+	};
 	//No Saving to gridinfo.bin
 	//cv::Vec3f originalSpacing;
 	glm::vec3 originalSpacing;
@@ -200,6 +205,8 @@ private:
 	bool preprocessed = false;
 
 	vector<vector<vector<CustomPointData>>> basePointCacheList;
+
+	fileHeader hdr;
 
 	CustomPoint* GetPointRef(vector<CustomPoint>& points,int i,int j,int k);
 

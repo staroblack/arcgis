@@ -270,9 +270,9 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 		if (!fil || !fvl || !fil->good() || !fvl->good())
 			return;
 
-		int startIndex;
-		fil->seekg(_Chunk->dataIndex * sizeof(int), ios::beg);
-		fil->read((char*)&startIndex, sizeof(int));
+		int64_t startIndex;
+		fil->seekg(_Chunk->dataIndex * sizeof(int64_t), ios::beg);
+		fil->read((char*)&startIndex, sizeof(int64_t));
 
 		bool skipReading = false;
 		if (startIndex == -1) {
@@ -283,8 +283,8 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 			}
 			if (!skipReading) {
 				fil = baseFileIndexList[_Chunk->level];
-				fil->seekg(_Chunk->dataIndex * sizeof(int), ios::beg);
-				fil->read((char*)&startIndex, sizeof(int));
+				fil->seekg(_Chunk->dataIndex * sizeof(int64_t), ios::beg);
+				fil->read((char*)&startIndex, sizeof(int64_t));
 				fvl = baseFileValueList[_Chunk->level];
 			}
 		}
@@ -293,70 +293,10 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 			actuallyReadChunkCount++;
 			fvl->seekg(startIndex, ios::beg);
 
-			/*if (flag & FlowData::DataFlag::VEL_MASK)
-				ReadValueFromFile(*fvl, fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].flowValues.vel);
-			if (flag & FlowData::DataFlag::PRE_MASK)
-				ReadValueFromFile(*fvl, fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].flowValues.pre);
-			if (flag & FlowData::DataFlag::TEMP_MASK)
-				ReadValueFromFile(*fvl, fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].flowValues.temp);*/
-
-			/*bool isCompressed = true;
-
-			{
-				size_t sizeVelValues;
-				vector<glm::vec3> velValues;
-				vector<unsigned char> velIndexes;
-				fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
-				if (sizeVelValues == 0) {
-					isCompressed = false;
-					fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
-					velValues.resize(sizeVelValues);
-				}
-				else {
-					velValues.resize(sizeVelValues);
-					velIndexes.resize(_octree.GetChunkPointCount());
-				}
-				if (isCompressed) {
-					fvl->read((char*)velValues.data(), sizeof(float) * sizeVelValues);
-					fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
-				}
-				else {
-					fvl->read((char*)velValues.data(), sizeof(float) * sizeVelValues);
-				}
-
-				for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
-					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetXYZVel(velValues[velIndexes[i]]);
-				}
-			}
-
-			{
-				size_t sizePreValues;
-				vector<float> preValues;
-				vector<unsigned char> preIndexes;
-				fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
-				if (sizePreValues == 0) {
-					isCompressed = false;
-					fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
-					preValues.resize(sizePreValues);
-				}
-				else {
-					preValues.resize(sizePreValues);
-					preIndexes.resize(_octree.GetChunkPointCount());
-				}
-				if (isCompressed) {
-					fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
-					fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
-				}
-				else {
-					fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
-				}
-				for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
-					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
-				}
-			}*/
-
-			int sizeVelValues;
-			int sizePreValues;
+			size_t sizeVelValues;
+			size_t sizePreValues;
+			/*int sizeVelValues;
+			int sizePreValues;*/
 			vector<glm::vec3> velValues;
 			vector<float> preValues;
 
@@ -422,8 +362,8 @@ void ASceneManagerTest::GetChunkInFrustum(CustomChunk* _Chunk, vector<CustomChun
 		float scaleSize = 100.0f * MyScale;
 		for (int i = 0; i < 8; i++) {
 			if (ClipFrustum(_Chunk->child[i], frustumEquation)) {
-				//FVector Loc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
-				FVector Loc = camera->GetActorLocation();
+				FVector Loc = GetWorld()->GetFirstPlayerController()->GetPawn()->GetActorLocation();
+				//FVector Loc = camera->GetActorLocation();
 				FVector distVec = Loc - (glm2FVec(_Chunk->child[i]->center) * scaleSize + Center);
 
 				float dist = distVec.Length();//pow(distVec[0], 2) + pow(distVec[1], 2) + pow(distVec[2], 2);
@@ -869,8 +809,14 @@ void ASceneManagerTest::UpdatePlane() {
 	Tangents.Init(FProcMeshTangent(1, 0, 0), points.Num());
 	Normals.Init(FVector(0, 0, 1), points.Num());
 
+	//planePMC->ClearAllCachedCookedPlatformData();
 	planePMC->ClearAllMeshSections();
 	planePMC->CreateMeshSection_LinearColor(0, points, indexs, Normals, UV0, Colors, Tangents, false);
+
+	UV0.Empty();
+	Colors.Empty();
+	Tangents.Empty();
+	Normals.Empty();
 }
 
 void ASceneManagerTest::DrawPlane() {
@@ -1260,10 +1206,13 @@ void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScal
 	octreeLODList.push_back(32);
 	octreeLODList.push_back(64);
 
-	Center = InCenter;
-	MyScale = InScale;
+	float leng = glm2FVec(_octree.GetMin() - _octree.GetMax()).Length() / 4;
+	//UE_LOG(LogTemp, Log, TEXT("Area Length: %f"), glm2FVec(_octree.GetMin() - _octree.GetMax()).Length());
 
-	baseViewDistance = 10 * InScale;
+	Center = InCenter;
+	MyScale = InScale * leng;
+
+	baseViewDistance = 2.5 * leng * InScale;
 
 	drawing = true;
 }
