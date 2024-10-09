@@ -4,6 +4,7 @@
 Saved/*
 Intermediate/*
 Binaries/*
+ThirdParty/*
 
 Plugins/ArcGISMapsSDK/*
 Plugins/CustomOctreePlugin/Binaries/*
@@ -12,3 +13,4 @@ Plugins/TemaranShaderTutorial/Binaries/*
 Plugins/TemaranShaderTutorial/Intermediate/*
 Plugins/PakLoader/Binaries/*
 Plugins/PakLoader/Intermediate/*
+Plugins/CityGISUtil/*
