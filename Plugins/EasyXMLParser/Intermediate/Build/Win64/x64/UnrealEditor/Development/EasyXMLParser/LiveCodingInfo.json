@@ -2,6 +2,14 @@
 	"RemapUnityFiles": 
 	{
 		"Module.EasyXMLParser.cpp.obj": [
+			"EasyXMLAsyncLoadFromFile.gen.cpp.obj",
+			"EasyXMLAsyncLoadFromString.gen.cpp.obj",
+			"EasyXMLAttribute.gen.cpp.obj",
+			"EasyXMLElement.gen.cpp.obj",
+			"EasyXMLObject.gen.cpp.obj",
+			"EasyXMLParseManager.gen.cpp.obj",
+			"EasyXMLParser.init.gen.cpp.obj",
+			"EasyXMLParserEnums.gen.cpp.obj",
 			"EasyXMLAsyncLoadFromFile.cpp.obj",
 			"EasyXMLAsyncLoadFromString.cpp.obj",
 			"EasyXMLAttribute.cpp.obj",
@@ -11,15 +19,7 @@
 			"EasyXMLParser.cpp.obj",
 			"NodeAccessTest.cpp.obj",
 			"ReadValueTest.cpp.obj",
-			"CustomXMLParser.cpp.obj",
-			"EasyXMLAsyncLoadFromFile.gen.cpp.obj",
-			"EasyXMLAsyncLoadFromString.gen.cpp.obj",
-			"EasyXMLAttribute.gen.cpp.obj",
-			"EasyXMLElement.gen.cpp.obj",
-			"EasyXMLObject.gen.cpp.obj",
-			"EasyXMLParseManager.gen.cpp.obj",
-			"EasyXMLParser.init.gen.cpp.obj",
-			"EasyXMLParserEnums.gen.cpp.obj"
+			"CustomXMLParser.cpp.obj"
 		]
 	}
 }

@@ -38,13 +38,13 @@ void Aicon::hitboxComplete()
 	hitboxCube->OnComponentCreated();
 	hitboxCube->RegisterComponent();
 	hitboxCube->SetWorldLocation(FVector(0, 0, 0));
-	hitboxCube->SetWorldScale3D(FVector(140, 140, 140));
+	hitboxCube->SetWorldScale3D(FVector(1, 1, 1));
 	hitboxCube->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	UStaticMesh* obj = Cast<UStaticMesh>(this->requestHandle->GetLoadedAsset());
 	if (obj) {
 		hitboxCube->SetStaticMesh(obj);
-		hitboxCube->SetWorldScale3D(FVector(140, 140, 140));
+		hitboxCube->SetWorldScale3D(FVector(1, 1, 1));
 		hitboxCube->SetVisibility(true, true);
 		hitboxCube->SetCollisionObjectType(ECC_GameTraceChannel12);
 
@@ -79,14 +79,14 @@ void Aicon::complete()
 	meshComponent->OnComponentCreated();
 	meshComponent->RegisterComponent();
 	meshComponent->SetWorldLocation(FVector(0, 0, 0));
-	meshComponent->SetWorldScale3D(FVector(55, 55, 55));
+	meshComponent->SetWorldScale3D(FVector(3, 3, 3));
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	UStaticMesh* obj = Cast<UStaticMesh>(this->requestHandle->GetLoadedAsset());
 	//GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, "debug");
 	if (obj) {
 		meshComponent->SetStaticMesh(obj);
-		meshComponent->SetWorldScale3D(FVector(55, 55, 55));
+		meshComponent->SetWorldScale3D(FVector(3, 3, 3));
 		meshComponent->SetVisibility(true, true);
 	}
 	else {
