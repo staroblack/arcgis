@@ -23,7 +23,7 @@ LineGenerator::LineGenerator() {
 	scale = 0.31f;
 	spawnCount = 20;
 	collideForce = 1;
-	lineThickness = 0.5;
+	lineThickness = 0.125;
 
 	spawnType = SpawnType::LINE;
 
@@ -295,30 +295,42 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 
 			size_t sizeVelValues;
 			size_t sizePreValues;
-			/*int sizeVelValues;
-			int sizePreValues;*/
+			//size_t sizeTempValues;
+			
 			vector<glm::vec3> velValues;
 			vector<float> preValues;
+			//vector<float> tempValues;
 
 			vector<unsigned char> velIndexes;
 			velIndexes.resize(_octree.GetChunkPointCount());
 			vector<unsigned char> preIndexes;
 			preIndexes.resize(_octree.GetChunkPointCount());
+			// temp
+			//vector<unsigned char> tempIndexes;
+			//tempIndexes.resize(_octree.GetChunkPointCount());
 					
 			fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
 			velValues.resize(sizeVelValues);
 			fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
 			preValues.resize(sizePreValues);
+			// temp
+			//fvl->read((char*)&sizeTempValues, sizeof(sizeTempValues));
+			//tempValues.resize(sizeTempValues);
 
 			fvl->read((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
 			fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
+			// temp
+			//fvl->read((char*)tempValues.data(), sizeof(float) * sizeTempValues);
 
 			fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
 			fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
+			// temp
+			//fvl->read((char*)tempIndexes.data(), sizeof(unsigned char) * tempIndexes.size());
 
 			for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
 				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetXYZVel(velValues[velIndexes[i]]);
 				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
+				//fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetTemperature(tempValues[tempIndexes[i]]);
 			}
 		}
 	}
@@ -422,16 +434,16 @@ void ASceneManagerTest::DrawCube(FVector min, FVector max) {
 		FVector target(base.X, base.Y, max.Z);
 		float scaleSize = 100.0f * MyScale;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 0.05, 0, 5 * MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 0.05, 0, MyScale * AreaSize);
 
 		int index2 = rotateArr[(i + 1) & 3];
 		target = FVector((index2 & 1) ? min.X : max.X, (index2 & 2) ? min.Y : max.Y, min.Z);
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 0.05, 0, 5 * MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 0.05, 0, MyScale * AreaSize);
 
 		base.Z = target.Z = max.Z;
 		//DrawDebugLine(GetWorld(), base, target, FColor::Cyan, false, 1, 0, 10);
-		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 0.05, 0, 5 * MyScale);
+		DrawDebugLine(GetWorld(), base * scaleSize + Center, target * scaleSize + Center, FColor::Cyan, false, 0.05, 0, MyScale * AreaSize);
 	}
 }
 
@@ -879,7 +891,7 @@ void ASceneManagerTest::UpdateStreamLine(bool isDynamic) {
 
 	streamLineParams = FStreamLineParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
 	streamLineParams.stepDivider = lineGenerator.stepDivider;
-	streamLineParams.lineThickness = lineGenerator.lineThickness;
+	streamLineParams.lineThickness = lineGenerator.lineThickness * AreaSize;
 	streamLineParams.maxMag = 0.033f / streamLineParams.stepDivider * _octree.GetMaxMagnitude();
 
 	streamLineParams.visibleLength = visibleLength;
@@ -1206,13 +1218,13 @@ void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScal
 	octreeLODList.push_back(32);
 	octreeLODList.push_back(64);
 
-	float leng = glm2FVec(_octree.GetMin() - _octree.GetMax()).Length() / 4;
+	AreaSize = glm2FVec(_octree.GetMin() - _octree.GetMax()).Length();
 	//UE_LOG(LogTemp, Log, TEXT("Area Length: %f"), glm2FVec(_octree.GetMin() - _octree.GetMax()).Length());
 
 	Center = InCenter;
-	MyScale = InScale * leng;
+	MyScale = InScale;
 
-	baseViewDistance = 2.5 * leng * InScale;
+	baseViewDistance = 2.5 * InScale * AreaSize;
 
 	drawing = true;
 }

@@ -114,6 +114,7 @@ public:
 	vector<ifstream*> fileIndexList;
 	vector<ifstream*> baseFileValueList;
 	vector<ifstream*> baseFileIndexList;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float baseViewDistance = 10.0f;
 
@@ -164,6 +165,8 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	float MyScale;
+
+	float AreaSize;
 
 	float QCritireaThreshold1 = 100;
 
