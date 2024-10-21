@@ -1,0 +1,12 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UnrealEditor-CityGISUtil.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"C:\graphic_work\CityGIS_UE5-measureTool\Intermediate\Build\Win64\UnrealEditor\Development\Engine\SharedPCH.Engine.RTTI.ShadowErrors.NoUndef.h.obj"
+"C:\graphic_work\CityGIS_UE5-measureTool\Plugins\CityGISUtil\Intermediate\Build\Win64\UnrealEditor\Development\CityGISUtil\Module.CityGISUtil.cpp.obj"
+"C:\graphic_work\CityGIS_UE5-measureTool\Plugins\CityGISUtil\Intermediate\Build\Win64\UnrealEditor\Development\CityGISUtil\Default.rc2.res"
+/OUT:"C:\graphic_work\CityGIS_UE5-measureTool\Plugins\CityGISUtil\Intermediate\Build\Win64\UnrealEditor\Development\CityGISUtil\UnrealEditor-CityGISUtil.lib"

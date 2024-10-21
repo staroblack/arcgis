@@ -1,0 +1,25 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\mapsystem\\module.mapsystem.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\graphic\\arcgistest\\arcgis\\intermediate\\build\\win64\\x64\\arcgistesteditor\\development\\engine\\sharedpch.engine.cpp17.inclorderunreal5_1.h.pch",
+        "Includes": [
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\mapsystem\\definitions.mapsystem.h",
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\unrealeditor\\inc\\mapsystem\\uht\\mapsystem.init.gen.cpp",
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\unrealeditor\\inc\\mapsystem\\uht\\mapsystembfl.gen.cpp",
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\public\\mapsystembfl.h",
+            "c:\\graphic_work\\citygis_ue5-measuretool\\thirdparty\\proj\\include\\proj_api.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.18362.0\\ucrt\\math.h",
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\unrealeditor\\inc\\mapsystem\\uht\\mapsystembfl.generated.h",
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\private\\mapsystem.cpp",
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\public\\mapsystem.h",
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\private\\mapsystembfl.cpp",
+            "d:\\ue\\ue_5.3\\engine\\source\\runtime\\jsonutilities\\public\\jsonobjectconverter.h",
+            "d:\\ue\\ue_5.3\\engine\\source\\runtime\\jsonutilities\\public\\jsonobjectwrapper.h",
+            "d:\\ue\\ue_5.3\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\jsonutilities\\uht\\jsonobjectwrapper.generated.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

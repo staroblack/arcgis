@@ -1,0 +1,11 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.MapSystem.cpp.obj": [
+			"MapSystem.init.gen.cpp.obj",
+			"MapSystemBFL.gen.cpp.obj",
+			"MapSystem.cpp.obj",
+			"MapSystemBFL.cpp.obj"
+		]
+	}
+}
