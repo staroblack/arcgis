@@ -165,13 +165,15 @@ void FMyShaders::GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<i
 	UDynamicStreamCS::Dispath(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, params);
 }
 
-void FMyShaders::GetIsosufacePos(std::vector<float>& isosurfacePointList, std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, FIsosurfaceParameters& params) {
+void FMyShaders::GetIsosufacePos(std::vector<float>& isosurfacePointList, std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& temp_tbo, FIsosurfaceParameters& params) {
 	TArray<int> index_tbo_data;
 	TArray<int> status_tbo_data;
 	TArray<FVector3f> vel_tbo_data;
+	TArray<float> temp_tbo_data;
 
 	AssignVectorToTArray(index_tbo, index_tbo_data);
 	AssignVectorToTArray(status_tbo, status_tbo_data);
+	AssignVectorToTArray(temp_tbo, temp_tbo_data);
 	for (int i = 0; i < vel_tbo.size(); i += 3) {
 		FVector3f data = FVector3f(vel_tbo[i], vel_tbo[i + 1], vel_tbo[i + 2]);
 		vel_tbo_data.Push(data);
@@ -182,7 +184,7 @@ void FMyShaders::GetIsosufacePos(std::vector<float>& isosurfacePointList, std::v
 		params.isosurfacePoint.Push(data);
 	}
 	
-	UIsosurfaceCS::Dispath(index_tbo_data, status_tbo_data, vel_tbo_data, params);
+	UIsosurfaceCS::Dispath(index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, params);
 }
 
 #undef LOCTEXT_NAMESPACE

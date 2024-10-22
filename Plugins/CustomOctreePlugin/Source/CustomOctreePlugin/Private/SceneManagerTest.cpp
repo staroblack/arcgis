@@ -235,6 +235,10 @@ void ASceneManagerTest::Tick(float DeltaTime)
 		UpdateIsosurface();
 		DrawQCritirea();
 		break;
+	case 6:
+		UpdateIsosurface();
+		DrawTemperature();
+		break;
 	default:
 		break;
 	}
@@ -295,42 +299,42 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 
 			size_t sizeVelValues;
 			size_t sizePreValues;
-			//size_t sizeTempValues;
+			size_t sizeTempValues;
 			
 			vector<glm::vec3> velValues;
 			vector<float> preValues;
-			//vector<float> tempValues;
+			vector<float> tempValues;
 
 			vector<unsigned char> velIndexes;
 			velIndexes.resize(_octree.GetChunkPointCount());
 			vector<unsigned char> preIndexes;
 			preIndexes.resize(_octree.GetChunkPointCount());
 			// temp
-			//vector<unsigned char> tempIndexes;
-			//tempIndexes.resize(_octree.GetChunkPointCount());
+			vector<unsigned char> tempIndexes;
+			tempIndexes.resize(_octree.GetChunkPointCount());
 					
 			fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
 			velValues.resize(sizeVelValues);
 			fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
 			preValues.resize(sizePreValues);
 			// temp
-			//fvl->read((char*)&sizeTempValues, sizeof(sizeTempValues));
-			//tempValues.resize(sizeTempValues);
+			fvl->read((char*)&sizeTempValues, sizeof(sizeTempValues));
+			tempValues.resize(sizeTempValues);
 
 			fvl->read((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
 			fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
 			// temp
-			//fvl->read((char*)tempValues.data(), sizeof(float) * sizeTempValues);
+			fvl->read((char*)tempValues.data(), sizeof(float) * sizeTempValues);
 
 			fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
 			fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
 			// temp
-			//fvl->read((char*)tempIndexes.data(), sizeof(unsigned char) * tempIndexes.size());
+			fvl->read((char*)tempIndexes.data(), sizeof(unsigned char) * tempIndexes.size());
 
 			for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
 				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetXYZVel(velValues[velIndexes[i]]);
 				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
-				//fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetTemperature(tempValues[tempIndexes[i]]);
+				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetTemperature(tempValues[tempIndexes[i]]);
 			}
 		}
 	}
@@ -453,6 +457,7 @@ void ASceneManagerTest::UpdateTexBuffer()
 	status_tbo_data.clear();
 	vel_tbo_data.clear();
 	pre_tbo_data.clear();
+	temp_tbo_data.clear();
 
 	Frame& fc = _octree.GetFrameCollection()[nowFrame - 1];
 	CustomChunk* _Chunk = _octree.GetRoot();
@@ -486,6 +491,7 @@ void ASceneManagerTest::UpdateTexBuffer()
 	int cpc = _octree.GetChunkPointCount();
 	vel_tbo_data.resize(chunkList.size() * 3 * cpc);
 	pre_tbo_data.resize(chunkList.size() * cpc);
+	temp_tbo_data.resize(chunkList.size() * cpc);
 	glm::vec3 vel;
 	for (int i = 0; i < chunkList.size(); i++) {
 		vector<CustomPointData>& cp = fc.levelFile[chunkList[i]->level].chunk[chunkList[i]->dataIndex].points;
@@ -495,6 +501,7 @@ void ASceneManagerTest::UpdateTexBuffer()
 			vel_tbo_data[(i * cpc + j) * 3 + 1] = vel.y;
 			vel_tbo_data[(i * cpc + j) * 3 + 2] = vel.z;
 			pre_tbo_data[(i * cpc + j)] = cp[j].GetPressure();
+			temp_tbo_data[(i * cpc + j)] = cp[j].GetTemperature();
 		}
 	}
 }
@@ -590,15 +597,18 @@ void ASceneManagerTest::CreateTextures() {
 	float StatusSizeSqrt = powf(status_tbo_data.size(), 0.5);
 	float VelSizeSqrt = powf(vel_tbo_data.size() / 3, 0.5);
 	float PreSizeSqrt = powf(pre_tbo_data.size(), 0.5);
+	float TempSizeSqrt = powf(temp_tbo_data.size(), 0.5);
 
 	int IndexSize = ceil(IndexSizeSqrt);
 	int StatusSize = ceil(StatusSizeSqrt);
 	int VelSize = ceil(VelSizeSqrt);
 	int PreSize = ceil(PreSizeSqrt);
+	int TempSize = ceil(TempSizeSqrt);
 	IndexTex = UTexture2D::CreateTransient(IndexSize, IndexSize, PF_FloatRGBA); // PF_B8G8R8A8
 	StatusTex = UTexture2D::CreateTransient(StatusSize, StatusSize, PF_FloatRGBA); // PF_B8G8R8A8
 	VelTex = UTexture2D::CreateTransient(VelSize, VelSize, PF_FloatRGBA); // PF_B8G8R8A8
 	PreTex = UTexture2D::CreateTransient(PreSize, PreSize, PF_FloatRGBA); // PF_B8G8R8A8
+	TempTex = UTexture2D::CreateTransient(TempSize, TempSize, PF_FloatRGBA); // PF_B8G8R8A8
 
 	// Editor Only
 	//TextureMipGenSettings IndexOldMipSetting, StatusOldMipSetting, VelOldMipSetting, PreOldMipSetting;
@@ -616,20 +626,23 @@ void ASceneManagerTest::CreateTextures() {
 	VelTex->UpdateResource();
 	PreTex->UpdateResource();*/
 
-	ETextureMipLoadOptions IndexOldMipLoadOptions, StatusOldMipLoadOptions, VelOldMipLoadOptions, PreOldMipLoadOptions;
+	ETextureMipLoadOptions IndexOldMipLoadOptions, StatusOldMipLoadOptions, VelOldMipLoadOptions, PreOldMipLoadOptions, TempOldMipLoadOptions;
 	IndexOldMipLoadOptions = IndexTex->MipLoadOptions;
 	StatusOldMipLoadOptions = StatusTex->MipLoadOptions;
 	VelOldMipLoadOptions = VelTex->MipLoadOptions;
 	PreOldMipLoadOptions = PreTex->MipLoadOptions;
+	TempOldMipLoadOptions = TempTex->MipLoadOptions;
 	IndexTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
 	StatusTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
 	VelTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
 	PreTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
+	TempTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
 
 	IndexTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
 	StatusTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
 	VelTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
 	PreTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
+	TempTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
 
 	// IndexTex write data
 	FFloat16* Ptr0 = (FFloat16*)IndexTex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE); // this can do read and write
@@ -738,6 +751,33 @@ void ASceneManagerTest::CreateTextures() {
 
 	PreTex->GetPlatformData()->Mips[0].BulkData.Unlock();
 
+	// TempTex write data
+	FFloat16* Ptr4 = (FFloat16*)TempTex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE); // this can do read and write
+
+	// run through every pixel
+	for (int i = 0; i < TempTex->GetSizeY(); i++) {
+		for (int j = 0; j < TempTex->GetSizeX(); j++) {
+			int32 index = j + i * TempTex->GetSizeX();
+			int32 Idx = 4 * index;
+			FFloat16 val;
+			if (index < temp_tbo_data.size()) {
+				val = FFloat16(temp_tbo_data[index]);
+				Ptr4[Idx + 0] = val; // real R
+				Ptr4[Idx + 1] = 0; // real G
+				Ptr4[Idx + 2] = 0; // real B
+				Ptr4[Idx + 3] = 1; // A
+			}
+			else {
+				Ptr4[Idx + 0] = 0; // real R
+				Ptr4[Idx + 1] = 0; // real G
+				Ptr4[Idx + 2] = 0; // real B
+				Ptr4[Idx + 3] = 0; // A
+			}
+		}
+	}
+
+	TempTex->GetPlatformData()->Mips[0].BulkData.Unlock();
+
 	//Editor Only
 	/*IndexTex->MipGenSettings = IndexOldMipSetting;
 	StatusTex->MipGenSettings = StatusOldMipSetting;
@@ -751,10 +791,12 @@ void ASceneManagerTest::CreateTextures() {
 	StatusTex->MipLoadOptions = StatusOldMipLoadOptions;
 	VelTex->MipLoadOptions = VelOldMipLoadOptions;
 	PreTex->MipLoadOptions = PreOldMipLoadOptions;
+	TempTex->MipLoadOptions = TempOldMipLoadOptions;
 	IndexTex->UpdateResource();
 	StatusTex->UpdateResource();
 	VelTex->UpdateResource();
 	PreTex->UpdateResource();
+	TempTex->UpdateResource();
 }
 
 void ASceneManagerTest::UpdatePlane() {
@@ -807,8 +849,6 @@ void ASceneManagerTest::UpdatePlane() {
 	TArray<int> indexs{
 		0,2,1,
 		0,3,2,
-		0,1,2,
-		0,2,3
 	};
 
 	TArray<FVector2D> UV0;
@@ -838,12 +878,13 @@ void ASceneManagerTest::DrawPlane() {
 	isosurfacePMC2->ClearAllMeshSections();
 
 	for (int32 j = 0; j < planePMC->GetNumSections(); j++) {
-		planePMC->SetMaterial(j, MaterialToApplyToClickedObject);
+		planePMC->SetMaterial(j, PlaneMaterial);
 		UMaterialInstanceDynamic* MID = planePMC->CreateAndSetMaterialInstanceDynamic(j);
 		MID->SetTextureParameterValue("IndexTex", (UTexture*)IndexTex);
 		MID->SetTextureParameterValue("StatusTex", (UTexture*)StatusTex);
 		MID->SetTextureParameterValue("VelTex", (UTexture*)VelTex);
 		MID->SetTextureParameterValue("PreTex", (UTexture*)PreTex);
+		MID->SetTextureParameterValue("TempTex", (UTexture*)TempTex);
 
 		MID->SetScalarParameterValue("index_tex_size", IndexTex->GetSizeX());
 		MID->SetScalarParameterValue("vel_tex_size", VelTex->GetSizeX());
@@ -877,6 +918,10 @@ void ASceneManagerTest::DrawPlane() {
 		else if (planeDrawType == 4) {
 			MID->SetScalarParameterValue("minValue", 0.0f);
 			MID->SetScalarParameterValue("maxValue", _octree.GetMaxMagnitude());
+		}
+		else if (planeDrawType == 5) {
+			MID->SetScalarParameterValue("minValue", _octree.GetMinTemperature());
+			MID->SetScalarParameterValue("maxValue", _octree.GetMaxTemperature());
 		}
 
 		MID->SetScalarParameterValue("scale", MyScale * 100.f);
@@ -984,8 +1029,6 @@ void ASceneManagerTest::DrawVorticity() {
 	planePMC->ClearAllMeshSections();
 	isosurfacePMC2->ClearAllMeshSections();
 
-	UpdateIsosurface();
-
 	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), vorticityThreshold, GetCameraViewProj(), _octree);
 	isosurfaceParams.minIsovalue = 0;
 	isosurfaceParams.maxIsovalue = 0;
@@ -993,7 +1036,7 @@ void ASceneManagerTest::DrawVorticity() {
 	isosurfaceParams.myScale = MyScale;
 	isosurfaceParams.center = Center;
 
-	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, isosurfaceParams);
+	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, isosurfaceParams);
 
 	FlushRenderingCommands();
 
@@ -1012,8 +1055,6 @@ void ASceneManagerTest::DrawVorticity() {
 }
 
 void ASceneManagerTest::DrawQCritirea() {
-	UpdateIsosurface();
-
 	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), QCritireaThreshold1, GetCameraViewProj(), _octree);
 	isosurfaceParams.minIsovalue = _octree.GetMinQCritirea();
 	isosurfaceParams.maxIsovalue = _octree.GetMaxQCritirea();
@@ -1021,7 +1062,7 @@ void ASceneManagerTest::DrawQCritirea() {
 	isosurfaceParams.myScale = MyScale;
 	isosurfaceParams.center = Center;
 
-	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, isosurfaceParams);
+	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, isosurfaceParams);
 
 	FlushRenderingCommands();
 
@@ -1040,7 +1081,7 @@ void ASceneManagerTest::DrawQCritirea() {
 
 	isosurfaceParams.isovalue = QCritireaThreshold2;
 
-	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, isosurfaceParams);
+	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, isosurfaceParams);
 
 	FlushRenderingCommands();
 
@@ -1052,6 +1093,45 @@ void ASceneManagerTest::DrawQCritirea() {
 	isosurfacePMC2->ClearAllMeshSections();
 	isosurfacePMC2->CreateMeshSection_LinearColor(0, isosurfaceParams.outputPos, isosurfaceParams.OutTris, Normals, UV0, Colors, Tangents, false);
 }
+
+void ASceneManagerTest::DrawTemperature() {
+	planePMC->ClearAllMeshSections();
+	isosurfacePMC2->ClearAllMeshSections();
+
+	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), tempThreshold, GetCameraViewProj(), _octree);
+	isosurfaceParams.minIsovalue = _octree.GetMinTemperature();
+	isosurfaceParams.maxIsovalue = _octree.GetMaxTemperature();
+	isosurfaceParams.isQCritirea = 2;
+	isosurfaceParams.myScale = MyScale;
+	isosurfaceParams.center = Center;
+
+	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, isosurfaceParams);
+
+	FlushRenderingCommands();
+
+	TArray<FVector2D> UV0;
+	TArray<FLinearColor> Colors;
+	TArray<FProcMeshTangent> Tangents;
+	TArray<FVector> Normals;
+
+	UV0.Init(FVector2D(0, 0), isosurfaceParams.outputPos.Num());
+	Colors.Init(FLinearColor(1, 0, 0, 1), isosurfaceParams.outputPos.Num());
+	Tangents.Init(FProcMeshTangent(1, 0, 0), isosurfaceParams.outputPos.Num());
+	Normals.Init(FVector(0, 0, 1), isosurfaceParams.outputPos.Num());
+
+	isosurfacePMC->ClearAllMeshSections();
+	isosurfacePMC->CreateMeshSection_LinearColor(0, isosurfaceParams.outputPos, isosurfaceParams.OutTris, Normals, UV0, Colors, Tangents, false);
+
+	for (int32 j = 0; j < isosurfacePMC->GetNumSections(); j++) {
+		isosurfacePMC->SetMaterial(j, IsosurfaceMaterial);
+		UMaterialInstanceDynamic* MID = isosurfacePMC->CreateAndSetMaterialInstanceDynamic(j);
+
+		MID->SetScalarParameterValue("isovalue", isosurfaceParams.isovalue);
+		MID->SetScalarParameterValue("minIsovalue", isosurfaceParams.minIsovalue);
+		MID->SetScalarParameterValue("maxIsovalue", isosurfaceParams.maxIsovalue);
+	}
+}
+
 
 void ASceneManagerTest::UpdateIsosurface() {
 	isosurfacePointList.clear();
@@ -1190,6 +1270,11 @@ void ASceneManagerTest::SetQCritirea1Value(float QCritirea1Value) {
 void ASceneManagerTest::SetQCritirea2Value(float QCritirea2Value) {
 	this->QCritireaThreshold2 = QCritirea2Value;
 }
+
+void ASceneManagerTest::SetTemperatureValue(float temperatureValue) {
+	this->tempThreshold = temperatureValue;
+}
+
 
 void ASceneManagerTest::Hack() {
 	hack = !hack;

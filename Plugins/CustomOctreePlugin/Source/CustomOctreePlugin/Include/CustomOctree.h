@@ -191,6 +191,8 @@ private:
 	float maxVorticity;
 	float minQCritirea;
 	float maxQCritirea;
+	float minTemperature;
+	float maxTemperature;
 
 	//Tree Structure,整個Complete樹的結構
 	CustomChunk _Root;
@@ -269,6 +271,8 @@ public:
 	float GetMaxVorticity();
 	float GetMinQCritirea();
 	float GetMaxQCritirea();
+	float GetMinTemperature();
+	float GetMaxTemperature();
 
 	bool GetVorticity(int& i,int& j,int& k,float& vorticity);
 	bool GetQCritirea(int& i, int& j, int& k, float& qcritirea);

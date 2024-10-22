@@ -10,6 +10,7 @@ float3 esNormal, esVertex;
 Buffer<int> index_tex;
 Buffer<int> status_tex;
 Buffer<float3> vel_tex;
+Buffer<float> temp_tex;
 Buffer<int> MC_Edge_Trigger_tex;
 Buffer<int> MC_Edge_Connect_tex;
 
@@ -31,6 +32,9 @@ int totalLevel;
 int isQCritirea;
 
 float isovalue;
+
+float scale;
+float3 center;
 
 static int level;
 static float3 finalMinPos;
@@ -195,6 +199,63 @@ float4 GetVelocity(float3 position, float3 _minPos, float3 _maxPos)
 
 }
 
+float GetTemperature(float3 position, float3 _minPos, float3 _maxPos)
+{
+    int chunkIndex = Get_Index(0, position, _minPos, _maxPos);
+    if (chunkIndex == -1 || chunkIndex > chunklist_length)
+    {
+        OutOfBound = 1;
+        return float4(0, 0, 0, 0);
+    }
+    else
+    {
+        int startIndex = chunkPointCount * chunkIndex;
+        int multiply = int(pow(2, totalLevel - level));
+        float3 spacingPerLevel = spacing * multiply;
+
+        float xPercent = position.x - finalMinPos.x;
+        float yPercent = position.y - finalMinPos.y;
+        float zPercent = position.z - finalMinPos.z;
+        int xIndex = int(xPercent / spacingPerLevel.x);
+        int yIndex = int(yPercent / spacingPerLevel.y);
+        int zIndex = int(zPercent / spacingPerLevel.z);
+        float A = 0;
+        float B = 0;
+
+
+        int xBias, yBias, zBias;
+        for (int p = 0; p < 8; p++)
+        {
+            xBias = yBias = zBias = 0;
+            if (p == 1 || p == 3 || p == 5 || p == 7)
+                xBias = 1;
+            if (p == 2 || p == 3 || p == 6 || p == 7)
+                yBias = 1;
+            if (p == 4 || p == 5 || p == 6 || p == 7)
+                zBias = 1;
+            int dataIndex = int(startIndex + (xIndex + xBias) + (chunkSize.x + 1) * ((yIndex + yBias) + (chunkSize.y + 1) * (zIndex + zBias)));
+            float3 cornerPos = float3((xIndex + xBias) * spacingPerLevel.x, (yIndex + yBias) * spacingPerLevel.y, (zIndex + zBias) * spacingPerLevel.z);
+
+            //float3 vel = texelFetch(vel_tex, dataIndex).rgb;
+            float temp = temp_tex.Load(dataIndex);
+
+            float dist = pow(distance(position, finalMinPos + cornerPos), 2);
+            if (dist == 0)
+            {
+                A = temp;
+                B = 1;
+                break;
+            }
+            A = A + temp / dist;
+            B = B + 1.f / dist;
+        }
+        if (B != 0)
+            A = A / B;
+        return A;
+    }
+
+}
+
 float GetCornerVorticity(float3 position, float3 _minPos, float3 _maxPos)
 {
     float3 spacingPerLevel = spacing * pow(2, totalLevel - level);
@@ -302,10 +363,16 @@ void render_isosurface(float4 position, uint3 threadID)
         {
             grid.vertex_val[i] = float4(cornerPos, GetCornerQCritirea(cornerPos, minPos, maxPos));
         }
+        else if (isQCritirea == 2)
+        {
+            grid.vertex_val[i] = float4(cornerPos, GetTemperature(cornerPos, minPos, maxPos));
+        }
     }
 
     if (OutOfBound == 1)
         return;
+    
+    // useless part
     int groundCount = 0;
     for (int j = 0; j < 8; ++j)
     {
@@ -393,13 +460,13 @@ void render_isosurface(float4 position, uint3 threadID)
             //gl_Position = proj * view * model * float4(vertex2, 1.0);
             
             float4 temp = mul(matrixModelView, float4(vertex0, 1.0));
-            outPos[threadID.x * 15 + (numOfTriangle - 1) * 3] = float4(temp.x, 2 * midPos.y - temp.y, temp.z, temp.w) * 100;
+            outPos[threadID.x * 15 + (numOfTriangle - 1) * 3] = float4(temp.x, 2 * midPos.y - temp.y, temp.z, temp.w) * 100 * scale + float4(center, 1.0);
             
             temp = mul(matrixModelView, float4(vertex1, 1.0));
-            outPos[threadID.x * 15 + (numOfTriangle - 1) * 3 + 1] = float4(temp.x, 2 * midPos.y - temp.y, temp.z, temp.w) * 100;
+            outPos[threadID.x * 15 + (numOfTriangle - 1) * 3 + 1] = float4(temp.x, 2 * midPos.y - temp.y, temp.z, temp.w) * 100 * scale + float4(center, 1.0);
             
             temp = mul(matrixModelView, float4(vertex2, 1.0));
-            outPos[threadID.x * 15 + (numOfTriangle - 1) * 3 + 2] = float4(temp.x, 2 * midPos.y - temp.y, temp.z, temp.w) * 100;
+            outPos[threadID.x * 15 + (numOfTriangle - 1) * 3 + 2] = float4(temp.x, 2 * midPos.y - temp.y, temp.z, temp.w) * 100 * scale + float4(center, 1.0);
             
             //EmitVertex();
             //EndPrimitive();

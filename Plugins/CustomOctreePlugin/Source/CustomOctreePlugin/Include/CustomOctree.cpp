@@ -459,6 +459,11 @@ void CustomOctree::SetupInfo(FString s, float scale) {
 		fs >> minPressure >> maxPressure;
 		fs >> minVorticity >> maxVorticity;
 		fs >> minQCritirea >> maxQCritirea;
+		if (hdr.temp != -1) {
+			fs >> minTemperature >> maxTemperature;
+			minTemperature = 0;
+		}
+
 		fs.close();
 
 		min *= scale;
@@ -565,6 +570,16 @@ float CustomOctree::GetMinQCritirea()
 float CustomOctree::GetMaxQCritirea()
 {
 	return maxQCritirea;
+}
+
+float CustomOctree::GetMaxTemperature()
+{
+	return maxTemperature;
+}
+
+float CustomOctree::GetMinTemperature()
+{
+	return minTemperature;
 }
 
 bool CustomOctree::GetVorticity(int& i, int& j, int& k, float& vorticity_)

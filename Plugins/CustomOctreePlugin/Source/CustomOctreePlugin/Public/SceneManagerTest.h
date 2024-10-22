@@ -124,6 +124,7 @@ public:
 	std::vector<int> status_tbo_data;
 	std::vector<float> vel_tbo_data;
 	std::vector<float> pre_tbo_data;
+	std::vector<float> temp_tbo_data;
 
 	FStreamLineParameters streamLineParams;
 	FIsosurfaceParameters isosurfaceParams;
@@ -133,6 +134,7 @@ public:
 	UTexture2D* StatusTex = NULL;
 	UTexture2D* VelTex = NULL;
 	UTexture2D* PreTex = NULL;
+	UTexture2D* TempTex = NULL;
 
 	ULineBatchComponent* lineComponent = NULL;
 	UProceduralMeshComponent* planePMC = NULL;
@@ -152,7 +154,10 @@ public:
 	USceneComponent* randomComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UMaterialInterface* MaterialToApplyToClickedObject;
+	UMaterialInterface* PlaneMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMaterialInterface* IsosurfaceMaterial;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	APawn* camera;
@@ -173,6 +178,10 @@ public:
 	float QCritireaThreshold2 = 100;
 
 	float vorticityThreshold = 30;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+
+	float tempThreshold = 290;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -198,6 +207,9 @@ public:
 	void DrawPlane();
 	void UpdateStreamLine(bool isDynamic);
 	void DrawStreamLines();
+	void DrawVorticity();
+	void DrawQCritirea();
+	void DrawTemperature();
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void SetData(FString FileName, FVector InCenter, float InScale);
@@ -210,10 +222,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void UpdateScale(float scale);
-
-	void DrawVorticity();
-
-	void DrawQCritirea();
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void SetDrawType(int DrawType);
@@ -277,6 +285,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void SetQCritirea2Value(float QCritirea2Value);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetTemperatureValue(float temperatureValue);
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void Hack();

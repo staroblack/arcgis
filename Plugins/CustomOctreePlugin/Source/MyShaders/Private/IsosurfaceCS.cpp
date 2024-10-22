@@ -37,6 +37,7 @@ public:
 		SHADER_PARAMETER_RDG_BUFFER_SRV(Buffer<int>, index_tex)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(Buffer<int>, status_tex)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(Buffer<float3>, vel_tex)
+		SHADER_PARAMETER_RDG_BUFFER_SRV(Buffer<float>, temp_tex)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(Buffer<int>, MC_Edge_Trigger_tex)
 		SHADER_PARAMETER_RDG_BUFFER_SRV(Buffer<int>, MC_Edge_Connect_tex)
 
@@ -44,7 +45,6 @@ public:
 		SHADER_PARAMETER(int, chunklist_length)
 
 		SHADER_PARAMETER(FMatrix44f, proj)
-		//SHADER_PARAMETER(FMatrix44f, view)
 		SHADER_PARAMETER(FMatrix44f, model)
 
 		SHADER_PARAMETER(FVector3f, chunkSize)
@@ -57,6 +57,9 @@ public:
 		SHADER_PARAMETER(int, isQCritirea)
 
 		SHADER_PARAMETER(float, isovalue)
+
+		SHADER_PARAMETER(FVector3f, center)
+		SHADER_PARAMETER(float, scale)
 
 		END_SHADER_PARAMETER_STRUCT()
 
@@ -75,7 +78,7 @@ public:
 		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), THREADGROUPSIZE_Z);
 	}
 
-	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, FIsosurfaceParameters& params)
+	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> temp_tbo_data, FIsosurfaceParameters& params)
 	{
 		if (vel_tbo_data.Num() == 0) return;
 
@@ -86,6 +89,7 @@ public:
 		FRDGBufferSRVRef Index = GenerateBufferSRV(GraphBuilder, index_tbo_data, TEXT("IndexBuffer"));
 		FRDGBufferSRVRef Status = GenerateBufferSRV(GraphBuilder, status_tbo_data, TEXT("StatusBuffer"));
 		FRDGBufferSRVRef Vel = GenerateBufferSRV(GraphBuilder, vel_tbo_data, TEXT("VelBuffer"));
+		FRDGBufferSRVRef Temp = GenerateBufferSRV(GraphBuilder, temp_tbo_data, TEXT("TempBuffer"));
 
 		TArray<int> MC_Edge_Trigger_tbo;
 		for (int i = 0; i < 256; i++)
@@ -120,33 +124,16 @@ public:
 			ERDGInitialDataFlags::None);
 		FRDGBufferUAVRef outPos = GraphBuilder.CreateUAV(outPosDesc);
 
-		/*TArray<FVector3f> OutNormal;
-		OutNormal.Init(FVector3f(0, 0, 0), NumPos);
-		FRDGBufferUAVRef outNormal = GenerateBufferUAV(GraphBuilder, OutNormal, TEXT("OutputNormals"));
-
-		TArray<int32> OutTris;
-		OutTris.Init(-1, NumTris);
-		const FRDGBufferRef OutTrisBuffer = CreateStructuredBuffer(
-			GraphBuilder,
-			TEXT("OutTris"),
-			sizeof(int32),
-			NumTris,
-			OutTris.GetData(),
-			NumTris * sizeof(int32)
-		);
-		const FRDGBufferUAVRef outTris = GraphBuilder.CreateUAV(OutTrisBuffer);*/
-
 		// set params
 		FParameters* PassParameters = GraphBuilder.AllocParameters<FParameters>();
 		PassParameters->inPos = inPos;
 
 		PassParameters->outPos = outPos;
-		//PassParameters->outNormal = outNormal;
-		//PassParameters->outTris = outTris;
 
 		PassParameters->index_tex = Index;
 		PassParameters->status_tex = Status;
 		PassParameters->vel_tex = Vel;
+		PassParameters->temp_tex = Temp;
 		PassParameters->MC_Edge_Trigger_tex = MCEdgeTrigger;
 		PassParameters->MC_Edge_Connect_tex = MCEdgeConnect;
 
@@ -164,11 +151,13 @@ public:
 
 		PassParameters->isQCritirea = params.isQCritirea;
 		PassParameters->isovalue = params.isovalue;
+		
+		PassParameters->center = FVector3f(params.center);
+		PassParameters->scale = params.myScale;
+
 
 		FVector3f threadCount = cbrt(params.chunkListLength) * params.chunkSize;
 		FIntVector GroupCounts = FComputeShaderUtils::GetGroupCount(FIntVector(threadCount.X * threadCount.Y * threadCount.Z, 1, 1), FIntVector(THREADGROUPSIZE_X, THREADGROUPSIZE_Y, THREADGROUPSIZE_Z));
-		/*UE_LOG(LogTemp, Log, TEXT("threadCount is %f, %f, %f"), threadCount.X, threadCount.Y, threadCount.Z);
-		UE_LOG(LogTemp, Log, TEXT("GroupCounts is %i, %i, %i"), GroupCounts.X, GroupCounts.Y, GroupCounts.Z);*/
 
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("IsosurfaceCS"), ERDGPassFlags::Compute, ComputeShader, PassParameters, GroupCounts);
 
@@ -192,27 +181,31 @@ public:
 		
 		GraphBuilder.Execute();
 
+		TArray<int> reverseTris;
 		params.outputPos.Empty();
 		params.OutTris.Empty();
+
+		int count = 0;
 		int offset[3] = { 0, 1, -1 };
 		for (int i = 0; i < OutPos.Num(); i++) {
 			if (OutPos[i] == FVector4f(-1, -1, -1, -1))
 				continue;
 
-			params.OutTris.Add(params.OutTris.Num());
-			params.outputPos.Add(FVector(OutPos[i]) * params.myScale + params.center);
+			params.OutTris.Add(count);
+			params.outputPos.Add(FVector(OutPos[i]));
+			count++;
 		}
 	}
 };
 
 IMPLEMENT_GLOBAL_SHADER(FIsosurfaceCS, "/ARShaders/Private/IsosurfaceCS.usf", "MainCS", SF_Compute);
 
-void UIsosurfaceCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, FIsosurfaceParameters& params)
+void UIsosurfaceCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> temp_tbo_data, FIsosurfaceParameters& params)
 {
 	ENQUEUE_RENDER_COMMAND(CommandList)(
-		[index_tbo_data, status_tbo_data, vel_tbo_data, &params](FRHICommandListImmediate& RHICmdList)
+		[index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, &params](FRHICommandListImmediate& RHICmdList)
 		{
-			FIsosurfaceCS::Execute(RHICmdList, index_tbo_data, status_tbo_data, vel_tbo_data, params);
+			FIsosurfaceCS::Execute(RHICmdList, index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, params);
 		}
 	);
 }
