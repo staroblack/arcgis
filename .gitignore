@@ -13,4 +13,5 @@ Plugins/TemaranShaderTutorial/Binaries/*
 Plugins/TemaranShaderTutorial/Intermediate/*
 Plugins/PakLoader/Binaries/*
 Plugins/PakLoader/Intermediate/*
-Plugins/CityGISUtil/*
+
+ThirdParty/*

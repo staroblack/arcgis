@@ -552,13 +552,13 @@ Aicon* ADLCLoader::findIcon(FString input) {
 	return nullptr;
 }
 
-bool ADLCLoader::compareString(FString input, FString compare) {
-	if (input == compare) {
-		return true;
+bool ADLCLoader::compareString(TArray<FString> input, FString compare) {
+	for (int i = 0; i < input.Num(); i++) {
+		if (input[i].Contains(compare)) {
+			return true;
+		}
 	}
-	else {
-		return false;
-	}
+	return false;
 }
 
 void ADLCLoader::flushline() {
@@ -598,4 +598,16 @@ void ADLCLoader::setIconsHttp() {
 	for (int i = 0; i < icons.Num(); i++) {
 		icons[i]->sendHttpRequest();
 	}
+}
+
+void ADLCLoader::addFilteredIcon(Aicon* icon) {
+	filteredIcons.Add(icon);
+}
+
+void ADLCLoader::clearFilteredIcon() {
+	filteredIcons.Empty();
+}
+
+TArray<Aicon*> ADLCLoader::getFilteredIcon() {
+	return filteredIcons;
 }
