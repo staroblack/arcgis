@@ -52,6 +52,7 @@ public:
 	//the data
 	FOutputStruct output;
 	int index;
+	TArray<FString> overlappedTown;
 
 
 	//modelinfo
@@ -59,6 +60,7 @@ public:
 	UStaticMeshComponent* meshComponent;
 	UStaticMeshComponent* hitboxCube;
 	TSharedPtr<FStreamableHandle> requestHandle;
+	
 
 	bool firstLoad = true;
 	ULineBatchComponent* lineComponent = NULL;
@@ -108,4 +110,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "xml")
 	FString getXmlString ();
 
+	UFUNCTION(BlueprintCallable, Category = "town")
+	void setTown(FString line);
+
+	UFUNCTION(BlueprintCallable, Category = "town")
+	TArray<FString> getTown();
 };

@@ -121,6 +121,7 @@ private:
 
 	UObjectLibrary* loadLibrary;
 	TArray<Aicon*> icons;
+	TArray<Aicon*> filteredIcons;
 	int iconsCount = 0;
 
 	FString xmlString;
@@ -184,7 +185,7 @@ public:
 	Aicon* findIcon(FString input);
 
 	UFUNCTION(BlueprintCallable, Category = "compare string")
-	bool compareString(FString input, FString compare);
+	bool compareString(TArray<FString> input, FString compare);
 
 	UFUNCTION(BlueprintCallable, Category = "compare string")
 	void printString(FString input);
@@ -201,6 +202,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "getting Http")
 	void setIconsHttp();
+
+	UFUNCTION(BlueprintCallable, Category = "icon filtering")
+	void addFilteredIcon(Aicon* icon);
+
+	UFUNCTION(BlueprintCallable, Category = "icon filtering")
+	void clearFilteredIcon();
+
+	UFUNCTION(BlueprintCallable, Category = "icon filtering")
+	TArray<Aicon*> getFilteredIcon();
 
 
 public:

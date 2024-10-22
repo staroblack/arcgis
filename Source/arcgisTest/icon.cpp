@@ -166,3 +166,11 @@ void Aicon::OnRespondseReceived(FHttpRequestPtr Request, FHttpResponsePtr Respon
 FString Aicon::getXmlString() {
 	return xmlString;
 }
+
+void Aicon::setTown(FString line) {
+	overlappedTown.Add(line);
+}
+
+TArray<FString> Aicon::getTown() {
+	return overlappedTown;
+}
