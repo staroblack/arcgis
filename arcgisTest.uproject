@@ -28,6 +28,14 @@
 			"SupportedTargetPlatforms": [
 				"Win64"
 			]
+		},
+		{
+			"Name": "ArcGISMapsSDK",
+			"Enabled": true
+		},
+		{
+			"Name": "CityGISUtil",
+			"Enabled": true
 		}
 	]
 }
