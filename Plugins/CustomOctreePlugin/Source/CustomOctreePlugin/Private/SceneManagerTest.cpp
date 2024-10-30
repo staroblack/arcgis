@@ -296,46 +296,77 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 		if (!skipReading) {
 			actuallyReadChunkCount++;
 			fvl->seekg(startIndex, ios::beg);
-
-			size_t sizeVelValues;
-			size_t sizePreValues;
-			size_t sizeTempValues;
 			
-			vector<glm::vec3> velValues;
-			vector<float> preValues;
-			vector<float> tempValues;
+			if (_octree.haveTemperatureData()) {
+				size_t sizeVelValues;
+				size_t sizePreValues;
+				size_t sizeTempValues;
 
-			vector<unsigned char> velIndexes;
-			velIndexes.resize(_octree.GetChunkPointCount());
-			vector<unsigned char> preIndexes;
-			preIndexes.resize(_octree.GetChunkPointCount());
-			// temp
-			vector<unsigned char> tempIndexes;
-			tempIndexes.resize(_octree.GetChunkPointCount());
-					
-			fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
-			velValues.resize(sizeVelValues);
-			fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
-			preValues.resize(sizePreValues);
-			// temp
-			fvl->read((char*)&sizeTempValues, sizeof(sizeTempValues));
-			tempValues.resize(sizeTempValues);
+				vector<glm::vec3> velValues;
+				vector<float> preValues;
+				vector<float> tempValues;
 
-			fvl->read((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
-			fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
-			// temp
-			fvl->read((char*)tempValues.data(), sizeof(float) * sizeTempValues);
+				vector<unsigned char> velIndexes;
+				velIndexes.resize(_octree.GetChunkPointCount());
+				vector<unsigned char> preIndexes;
+				preIndexes.resize(_octree.GetChunkPointCount());
+				// temp
+				vector<unsigned char> tempIndexes;
+				tempIndexes.resize(_octree.GetChunkPointCount());
 
-			fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
-			fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
-			// temp
-			fvl->read((char*)tempIndexes.data(), sizeof(unsigned char) * tempIndexes.size());
+				fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
+				velValues.resize(sizeVelValues);
+				fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
+				preValues.resize(sizePreValues);
+				// temp
+				fvl->read((char*)&sizeTempValues, sizeof(sizeTempValues));
+				tempValues.resize(sizeTempValues);
 
-			for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
-				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetXYZVel(velValues[velIndexes[i]]);
-				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
-				fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetTemperature(tempValues[tempIndexes[i]]);
+				fvl->read((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
+				fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
+				// temp
+				fvl->read((char*)tempValues.data(), sizeof(float) * sizeTempValues);
+
+				fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
+				fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
+				// temp
+				fvl->read((char*)tempIndexes.data(), sizeof(unsigned char) * tempIndexes.size());
+
+				for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
+					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetXYZVel(velValues[velIndexes[i]]);
+					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
+					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetTemperature(tempValues[tempIndexes[i]]);
+				}
 			}
+			else {
+				size_t sizeVelValues;
+				size_t sizePreValues;
+
+				vector<glm::vec3> velValues;
+				vector<float> preValues;
+
+				vector<unsigned char> velIndexes;
+				velIndexes.resize(_octree.GetChunkPointCount());
+				vector<unsigned char> preIndexes;
+				preIndexes.resize(_octree.GetChunkPointCount());
+
+				fvl->read((char*)&sizeVelValues, sizeof(sizeVelValues));
+				velValues.resize(sizeVelValues);
+				fvl->read((char*)&sizePreValues, sizeof(sizePreValues));
+				preValues.resize(sizePreValues);
+
+				fvl->read((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
+				fvl->read((char*)preValues.data(), sizeof(float) * sizePreValues);
+
+				fvl->read((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
+				fvl->read((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
+
+				for (int i = 0; i < _octree.GetChunkPointCount(); i++) {
+					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetXYZVel(velValues[velIndexes[i]]);
+					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
+				}
+			}
+
 		}
 	}
 	if (ENABLE_CACHE)

@@ -277,6 +277,7 @@ public:
 	bool GetVorticity(int& i,int& j,int& k,float& vorticity);
 	bool GetQCritirea(int& i, int& j, int& k, float& qcritirea);
 
+	bool haveTemperatureData();
 	//no one calls
 	//void InitMinMaxValue();
 	//void UpdateMinMaxValue();

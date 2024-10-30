@@ -1,3 +1,17 @@
 testpak/uniform_1f_collection/ filter=lfs diff=lfs merge=lfs -text
 testpak/grid11_collection/ filter=lfs diff=lfs merge=lfs -text
 testpak/grid11_collection/grid11/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid12_collection/grid12/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid18_collection/grid18/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid19_collection/grid19/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid21_collection/grid21/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid24_collection/grid24/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid25_collection/grid25/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid26_collection/grid26/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid30_collection/grid30/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid31_collection/grid31/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid32_collection/grid32/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid34_collection/grid34/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid38_collection/grid38/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid41_collection/grid41/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text
+testpak/grid45_collection/grid45/Level5_compressed.bin filter=lfs diff=lfs merge=lfs -text

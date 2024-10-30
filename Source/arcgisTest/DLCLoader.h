@@ -188,6 +188,9 @@ public:
 	bool compareString(TArray<FString> input, FString compare);
 
 	UFUNCTION(BlueprintCallable, Category = "compare string")
+	bool compareOneString(FString input, FString compare);
+
+	UFUNCTION(BlueprintCallable, Category = "compare string")
 	void printString(FString input);
 
 	UFUNCTION(BlueprintCallable, Category = "getting Http")

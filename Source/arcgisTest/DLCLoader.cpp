@@ -561,6 +561,15 @@ bool ADLCLoader::compareString(TArray<FString> input, FString compare) {
 	return false;
 }
 
+bool ADLCLoader::compareOneString(FString input, FString compare) {
+
+	if (input == compare) {
+		return true;
+	}
+
+	return false;
+}
+
 void ADLCLoader::flushline() {
 	lineComponent = this->GetWorld()->PersistentLineBatcher;
 	lineComponent->Flush();

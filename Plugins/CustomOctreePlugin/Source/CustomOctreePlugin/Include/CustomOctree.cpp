@@ -664,6 +664,12 @@ bool CustomOctree::GetQCritirea(int& i, int& j, int& k, float& qcritirea)
 	return false;
 }
 
+bool CustomOctree::haveTemperatureData() {
+	if (hdr.temp != -1)
+		return true;
+	return false;
+}
+
 void CustomOctree::TraceTree_Recursive(CustomChunk* _Chunk, vector<int>& count) {
 	count[_Chunk->level]++;
 	for (int i = 0; i < _Chunk->child.size(); i++) {
