@@ -140,6 +140,7 @@ public:
 	UProceduralMeshComponent* planePMC = NULL;
 	UProceduralMeshComponent* isosurfacePMC = NULL;
 	UProceduralMeshComponent* isosurfacePMC2 = NULL;
+	UProceduralMeshComponent* isosurfacePMC3 = NULL;
 
 	vector<float> isosurfacePointList;
 	vector<uint32> isosurfaceIndexList;
@@ -179,9 +180,10 @@ public:
 
 	float vorticityThreshold = 30;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-
 	float tempThreshold = 290;
+	float tempThreshold2 = 200;
+	float tempThreshold3 = 200;
+
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -288,6 +290,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void SetTemperatureValue(float temperatureValue);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetTemperature2Value(float temperatureValue);
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	void SetTemperature3Value(float temperatureValue);
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void Hack();

@@ -104,6 +104,7 @@ ASceneManagerTest::ASceneManagerTest()
 	planePMC = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("planePMC"), false);
 	isosurfacePMC = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("isosurfacePMC"), false);
 	isosurfacePMC2 = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("isosurfacePMC2"), false);
+	isosurfacePMC3 = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("isosurfacePMC3"), false);
 
 	isosurfaceParams = FIsosurfaceParameters();
 	streamLineParams = FStreamLineParameters();
@@ -214,6 +215,7 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	planePMC->ClearAllMeshSections();
 	isosurfacePMC->ClearAllMeshSections();
 	isosurfacePMC2->ClearAllMeshSections();
+	isosurfacePMC3->ClearAllMeshSections();
 	switch (drawType) {
 	case 1:
 		UpdateStreamLine(false);
@@ -366,7 +368,6 @@ void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkLis
 					fc.levelFile[_Chunk->level].chunk[_Chunk->dataIndex].points[i].SetPressure(preValues[preIndexes[i]]);
 				}
 			}
-
 		}
 	}
 	if (ENABLE_CACHE)
@@ -907,6 +908,7 @@ void ASceneManagerTest::DrawPlane() {
 
 	isosurfacePMC->ClearAllMeshSections();
 	isosurfacePMC2->ClearAllMeshSections();
+	isosurfacePMC3->ClearAllMeshSections();
 
 	for (int32 j = 0; j < planePMC->GetNumSections(); j++) {
 		planePMC->SetMaterial(j, PlaneMaterial);
@@ -1059,6 +1061,7 @@ void ASceneManagerTest::UpdateSpawnPointPositions(std::vector<glm::vec4>& points
 void ASceneManagerTest::DrawVorticity() {
 	planePMC->ClearAllMeshSections();
 	isosurfacePMC2->ClearAllMeshSections();
+	isosurfacePMC3->ClearAllMeshSections();
 
 	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), vorticityThreshold, GetCameraViewProj(), _octree);
 	isosurfaceParams.minIsovalue = 0;
@@ -1086,6 +1089,8 @@ void ASceneManagerTest::DrawVorticity() {
 }
 
 void ASceneManagerTest::DrawQCritirea() {
+	isosurfacePMC3->ClearAllMeshSections();
+
 	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), QCritireaThreshold1, GetCameraViewProj(), _octree);
 	isosurfaceParams.minIsovalue = _octree.GetMinQCritirea();
 	isosurfaceParams.maxIsovalue = _octree.GetMaxQCritirea();
@@ -1156,6 +1161,52 @@ void ASceneManagerTest::DrawTemperature() {
 	for (int32 j = 0; j < isosurfacePMC->GetNumSections(); j++) {
 		isosurfacePMC->SetMaterial(j, IsosurfaceMaterial);
 		UMaterialInstanceDynamic* MID = isosurfacePMC->CreateAndSetMaterialInstanceDynamic(j);
+
+		MID->SetScalarParameterValue("isovalue", isosurfaceParams.isovalue);
+		MID->SetScalarParameterValue("minIsovalue", isosurfaceParams.minIsovalue);
+		MID->SetScalarParameterValue("maxIsovalue", isosurfaceParams.maxIsovalue);
+	}
+
+	isosurfaceParams.isovalue = tempThreshold2;
+
+	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, isosurfaceParams);
+
+	FlushRenderingCommands();
+
+	UV0.Init(FVector2D(0, 0), isosurfaceParams.outputPos.Num());
+	Colors.Init(FLinearColor(1, 0, 0, 1), isosurfaceParams.outputPos.Num());
+	Tangents.Init(FProcMeshTangent(1, 0, 0), isosurfaceParams.outputPos.Num());
+	Normals.Init(FVector(0, 0, 1), isosurfaceParams.outputPos.Num());
+
+	isosurfacePMC2->ClearAllMeshSections();
+	isosurfacePMC2->CreateMeshSection_LinearColor(0, isosurfaceParams.outputPos, isosurfaceParams.OutTris, Normals, UV0, Colors, Tangents, false);
+
+	for (int32 j = 0; j < isosurfacePMC2->GetNumSections(); j++) {
+		isosurfacePMC2->SetMaterial(j, IsosurfaceMaterial);
+		UMaterialInstanceDynamic* MID = isosurfacePMC2->CreateAndSetMaterialInstanceDynamic(j);
+
+		MID->SetScalarParameterValue("isovalue", isosurfaceParams.isovalue);
+		MID->SetScalarParameterValue("minIsovalue", isosurfaceParams.minIsovalue);
+		MID->SetScalarParameterValue("maxIsovalue", isosurfaceParams.maxIsovalue);
+	}
+
+	isosurfaceParams.isovalue = tempThreshold3;
+
+	FMyShaders::GetIsosufacePos(isosurfacePointList, index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, isosurfaceParams);
+
+	FlushRenderingCommands();
+
+	UV0.Init(FVector2D(0, 0), isosurfaceParams.outputPos.Num());
+	Colors.Init(FLinearColor(1, 0, 0, 1), isosurfaceParams.outputPos.Num());
+	Tangents.Init(FProcMeshTangent(1, 0, 0), isosurfaceParams.outputPos.Num());
+	Normals.Init(FVector(0, 0, 1), isosurfaceParams.outputPos.Num());
+
+	isosurfacePMC3->ClearAllMeshSections();
+	isosurfacePMC3->CreateMeshSection_LinearColor(0, isosurfaceParams.outputPos, isosurfaceParams.OutTris, Normals, UV0, Colors, Tangents, false);
+
+	for (int32 j = 0; j < isosurfacePMC3->GetNumSections(); j++) {
+		isosurfacePMC3->SetMaterial(j, IsosurfaceMaterial);
+		UMaterialInstanceDynamic* MID = isosurfacePMC3->CreateAndSetMaterialInstanceDynamic(j);
 
 		MID->SetScalarParameterValue("isovalue", isosurfaceParams.isovalue);
 		MID->SetScalarParameterValue("minIsovalue", isosurfaceParams.minIsovalue);
@@ -1306,6 +1357,13 @@ void ASceneManagerTest::SetTemperatureValue(float temperatureValue) {
 	this->tempThreshold = temperatureValue;
 }
 
+void ASceneManagerTest::SetTemperature2Value(float temperatureValue) {
+	this->tempThreshold2 = temperatureValue;
+}
+
+void ASceneManagerTest::SetTemperature3Value(float temperatureValue) {
+	this->tempThreshold3 = temperatureValue;
+}
 
 void ASceneManagerTest::Hack() {
 	hack = !hack;
