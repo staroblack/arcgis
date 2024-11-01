@@ -1372,9 +1372,9 @@ void ASceneManagerTest::Hack() {
 void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScale) {
 	ClearData();
 	//FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/", FileName + "_collection/gridinfo.bin");
-	FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "testpak/", FileName + "_collection/gridinfo.bin");
+	FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "StreamDatas/", FileName + "_collection/gridinfo.bin");
 	wstring fileName = wstring((wchar_t*)TCHAR_TO_UTF16(*FileName));
-	this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectDir())) + L"testpak/" + fileName + L"_collection/" + fileName;
+	this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectDir())) + L"StreamDatas/" + fileName + L"_collection/" + fileName;
 	//FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "testpak/", FileName, "/gridinfo.bin");
 	_octree.SetupInfo(FilePath, 1);
 
