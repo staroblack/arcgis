@@ -131,7 +131,7 @@ void FMyShaders::ShutdownModule()
 {
 }
 
-void FMyShaders::GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FStreamLineParameters& params) {
+void FMyShaders::GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, ASceneManagerTest::FStreamLineParameters& params) {
 	TArray<int> index_tbo_data;
 	TArray<int> status_tbo_data;
 	TArray<FVector3f> vel_tbo_data;
@@ -148,7 +148,7 @@ void FMyShaders::GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<in
 	USteadyStreamCS::Dispath(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, params);
 }
 
-void FMyShaders::GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FStreamLineParameters& params) {
+void FMyShaders::GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, ASceneManagerTest::FStreamLineParameters& params) {
 	TArray<int> index_tbo_data;
 	TArray<int> status_tbo_data;
 	TArray<FVector3f> vel_tbo_data;
@@ -165,7 +165,7 @@ void FMyShaders::GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<i
 	UDynamicStreamCS::Dispath(index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, params);
 }
 
-void FMyShaders::GetIsosufacePos(std::vector<float>& isosurfacePointList, std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& temp_tbo, FIsosurfaceParameters& params) {
+void FMyShaders::GetIsosufacePos(std::vector<float>& isosurfacePointList, std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& temp_tbo, ASceneManagerTest::FIsosurfaceParameters& params) {
 	TArray<int> index_tbo_data;
 	TArray<int> status_tbo_data;
 	TArray<FVector3f> vel_tbo_data;

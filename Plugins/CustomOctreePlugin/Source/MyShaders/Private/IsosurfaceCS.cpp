@@ -78,7 +78,7 @@ public:
 		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), THREADGROUPSIZE_Z);
 	}
 
-	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> temp_tbo_data, FIsosurfaceParameters& params)
+	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> temp_tbo_data, ASceneManagerTest::FIsosurfaceParameters& params)
 	{
 		if (vel_tbo_data.Num() == 0) return;
 
@@ -200,7 +200,7 @@ public:
 
 IMPLEMENT_GLOBAL_SHADER(FIsosurfaceCS, "/ARShaders/Private/IsosurfaceCS.usf", "MainCS", SF_Compute);
 
-void UIsosurfaceCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> temp_tbo_data, FIsosurfaceParameters& params)
+void UIsosurfaceCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> temp_tbo_data, ASceneManagerTest::FIsosurfaceParameters& params)
 {
 	ENQUEUE_RENDER_COMMAND(CommandList)(
 		[index_tbo_data, status_tbo_data, vel_tbo_data, temp_tbo_data, &params](FRHICommandListImmediate& RHICmdList)

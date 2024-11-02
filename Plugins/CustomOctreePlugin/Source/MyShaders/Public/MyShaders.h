@@ -39,9 +39,9 @@ public:
 		return FModuleManager::Get().IsModuleLoaded("MyShaders");
 	}
 
-	static void GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FStreamLineParameters& params);
-	static void GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, FStreamLineParameters& params);
-	static void GetIsosufacePos(std::vector<float>& isosurfacePointList, std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& temp_tbo, FIsosurfaceParameters& params);
+	static void GetSteadyStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, ASceneManagerTest::FStreamLineParameters& params);
+	static void GetDynamicStreamLine(std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& pre_tbo, ASceneManagerTest::FStreamLineParameters& params);
+	static void GetIsosufacePos(std::vector<float>& isosurfacePointList, std::vector<int>& index_tbo, std::vector<int>& status_tbo, std::vector<float>& vel_tbo, std::vector<float>& temp_tbo, ASceneManagerTest::FIsosurfaceParameters& params);
 
 public:
 

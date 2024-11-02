@@ -13,5 +13,5 @@ class UIsosurfaceCS : public UObject
 	GENERATED_BODY()
 	
 public:	
-	static void Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> temp_tbo_data, FIsosurfaceParameters& params);
+	static void Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> temp_tbo_data, ASceneManagerTest::FIsosurfaceParameters& params);
 };

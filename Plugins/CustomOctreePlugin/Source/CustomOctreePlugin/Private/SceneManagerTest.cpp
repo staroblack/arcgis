@@ -16,7 +16,7 @@ inline FVector3f glm2FVec3f(const glm::vec3& p) {
 	return FVector3f(p.x, p.y, p.z);
 }
 
-LineGenerator::LineGenerator() {
+ASceneManagerTest::LineGenerator::LineGenerator() {
 	stepDivider = 60;
 	transform = glm::vec3(0.15f, 0.5f, 0.09f);
 	rotation = glm::vec3(0, 0, 0);
@@ -24,6 +24,7 @@ LineGenerator::LineGenerator() {
 	spawnCount = 20;
 	collideForce = 1;
 	lineThickness = 0.125;
+	dt = 0.033f;
 
 	spawnType = SpawnType::LINE;
 
@@ -36,58 +37,61 @@ LineGenerator::LineGenerator() {
 	}
 }
 
-FStreamLineParameters::FStreamLineParameters() {
+ASceneManagerTest::FStreamLineParameters::FStreamLineParameters() {
 	lines.Empty();
 }
 
-FStreamLineParameters::FStreamLineParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree) {
-	points.SetNum(point.size());
+ASceneManagerTest::FIsosurfaceParameters::FIsosurfaceParameters() {}
+
+void ASceneManagerTest::ResetLineGenerator() {
+	lineGenerator.lineThickness = 0.125 * AreaSize;
+	lineGenerator.dt = 0.01f * (_octree.GetMax() - _octree.GetMin()).x; //0.01f
+}
+
+void ASceneManagerTest::SetStreamLineParams(std::vector<glm::vec4>& point)
+{
+	streamLineParams.points.SetNum(point.size());
 
 	for (int32 i = 0; i < point.size(); ++i)
 	{
-		points[i] = FVector4f(point[i].x, point[i].y, point[i].z, point[i].w);
+		streamLineParams.points[i] = FVector4f(point[i].x, point[i].y, point[i].z, point[i].w);
 	}
-	pathLine.Empty();
-	lines.Empty();
+	streamLineParams.pathLine.Empty();
+	streamLineParams.lines.Empty();
 
-	collideForce = 1;
-	dt = 0.033f;
-	maxLength = 1000;
-	indexLength = index_length;
-	chunkListLength = chunklist_length;
-	chunkSize = glm2FVec3f(glm::vec3(octree.GetChunkSize()));
-	minPos = glm2FVec3f(octree.GetMin());
-	maxPos = glm2FVec3f(octree.GetMax());
-	spacing = glm2FVec3f(octree.GetSampledSpacing());
-	totalLevel = octree.GetTotalLevel();
-
-	visibleLength = 10.0f;
-	invisibleLength = 2.5f;
-	animateTime = 1;
+	streamLineParams.collideForce = 1;
+	streamLineParams.dt = lineGenerator.dt; // 0.033f
+	streamLineParams.maxLength = 1000;
+	streamLineParams.indexLength = index_tbo_data.size();
+	streamLineParams.chunkListLength = chunkList.size();
+	streamLineParams.chunkSize = glm2FVec3f(glm::vec3(_octree.GetChunkSize()));
+	streamLineParams.minPos = glm2FVec3f(_octree.GetMin());
+	streamLineParams.maxPos = glm2FVec3f(_octree.GetMax());
+	streamLineParams.spacing = glm2FVec3f(_octree.GetSampledSpacing());
+	streamLineParams.totalLevel = _octree.GetTotalLevel();
 
 	hack = false;
 }
 
-FIsosurfaceParameters::FIsosurfaceParameters() {}
+void ASceneManagerTest::SetIsosurfaceParams(float threshold, FMatrix camViewProj)
+{
+	isosurfaceParams.isosurfacePoint.Empty();
+	isosurfaceParams.outputPos.Empty();
 
-FIsosurfaceParameters::FIsosurfaceParameters(int index_length, int chunklist_length, float threshold, FMatrix camViewProj, CustomOctree& octree) {
-	isosurfacePoint.Empty();
-	outputPos.Empty();
+	isosurfaceParams.indexLength = index_tbo_data.size();
+	isosurfaceParams.chunkListLength = chunkList.size();
 
-	indexLength = index_length;
-	chunkListLength = chunklist_length;
+	isosurfaceParams.viewProj = FMatrix44f(camViewProj);
+	isosurfaceParams.model = FMatrix44f();
+	isosurfaceParams.model.SetIdentity();
 
-	viewProj = FMatrix44f(camViewProj);
-	model = FMatrix44f();
-	model.SetIdentity();
+	isosurfaceParams.chunkSize = glm2FVec3f(glm::vec3(_octree.GetChunkSize()));
+	isosurfaceParams.minPos = glm2FVec3f(_octree.GetMin());
+	isosurfaceParams.maxPos = glm2FVec3f(_octree.GetMax());
+	isosurfaceParams.spacing = glm2FVec3f(_octree.GetSampledSpacing());
+	isosurfaceParams.totalLevel = _octree.GetTotalLevel();
 
-	chunkSize = glm2FVec3f(glm::vec3(octree.GetChunkSize()));
-	minPos = glm2FVec3f(octree.GetMin());
-	maxPos = glm2FVec3f(octree.GetMax());
-	spacing = glm2FVec3f(octree.GetSampledSpacing());
-	totalLevel = octree.GetTotalLevel();
-
-	isovalue = threshold;
+	isosurfaceParams.isovalue = threshold;
 }
 
 // Sets default values
@@ -248,6 +252,7 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	ReleaseChunkData();
 }
 
+#pragma region Octree
 //Editing LoadChunkDataFromFile Function
 void ASceneManagerTest::LoadChunkDataFromFile(CustomChunk* _Chunk, int _chunkListIndex) {
 	if (DrawRedDot)
@@ -830,7 +835,9 @@ void ASceneManagerTest::CreateTextures() {
 	PreTex->UpdateResource();
 	TempTex->UpdateResource();
 }
+#pragma endregion
 
+#pragma region Visualization
 void ASceneManagerTest::UpdatePlane() {
 	//cout << "Chunk count: " << chunkList.size() << endl;
 
@@ -967,10 +974,11 @@ void ASceneManagerTest::UpdateStreamLine(bool isDynamic) {
 	points.resize(lineGenerator.spawnCount);
 	UpdateSpawnPointPositions(points);
 
-	streamLineParams = FStreamLineParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
+	//streamLineParams = FStreamLineParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
+	SetStreamLineParams(points);
 	streamLineParams.stepDivider = lineGenerator.stepDivider;
-	streamLineParams.lineThickness = lineGenerator.lineThickness * AreaSize;
-	streamLineParams.maxMag = 0.033f / streamLineParams.stepDivider * _octree.GetMaxMagnitude();
+	streamLineParams.lineThickness = lineGenerator.lineThickness;
+	streamLineParams.maxMag = lineGenerator.dt / streamLineParams.stepDivider * _octree.GetMaxMagnitude();
 
 	streamLineParams.visibleLength = visibleLength;
 	streamLineParams.invisibleLength = invisibleLength;
@@ -1040,17 +1048,14 @@ void ASceneManagerTest::UpdateSpawnPointPositions(std::vector<glm::vec4>& points
 		}
 		break;
 	case SpawnType::LINE:
-		unitPos = glm::vec3(0, -1, 0);
-		bias = 2.f / (float)(lineGenerator.spawnCount - 1);
+		glm::vec3 startPos = _octree.GetMin();
+		glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
+		unitPos = glm::vec3(0, -dist.y / 2, 0);
+		bias = dist.y / (float)(lineGenerator.spawnCount - 1);
 		for (int i = 0; i < lineGenerator.spawnCount; i++) {
-			glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
-			glm::vec3 startPos = _octree.GetMin();
-
 			glm::vec3 apply = glm::vec3(glm::vec4(unitPos * lineGenerator.scale, 1) * rotatemat);
-			glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform +
-				apply, 0);
-			/*glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform +
-				glm::vec3(glm::vec4(unitPos * lineGenerator.scale, 1) * rotatemat), 0);*/
+			glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform + apply, 0);
+
 			points[i] = pos;
 			unitPos[1] += bias;
 		}
@@ -1063,7 +1068,8 @@ void ASceneManagerTest::DrawVorticity() {
 	isosurfacePMC2->ClearAllMeshSections();
 	isosurfacePMC3->ClearAllMeshSections();
 
-	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), vorticityThreshold, GetCameraViewProj(), _octree);
+	//isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), vorticityThreshold, GetCameraViewProj(), _octree);
+	SetIsosurfaceParams(vorticityThreshold, GetCameraViewProj());
 	isosurfaceParams.minIsovalue = 0;
 	isosurfaceParams.maxIsovalue = 0;
 	isosurfaceParams.isQCritirea = 0;
@@ -1091,7 +1097,8 @@ void ASceneManagerTest::DrawVorticity() {
 void ASceneManagerTest::DrawQCritirea() {
 	isosurfacePMC3->ClearAllMeshSections();
 
-	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), QCritireaThreshold1, GetCameraViewProj(), _octree);
+	//isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), QCritireaThreshold1, GetCameraViewProj(), _octree);
+	SetIsosurfaceParams(QCritireaThreshold1, GetCameraViewProj());
 	isosurfaceParams.minIsovalue = _octree.GetMinQCritirea();
 	isosurfaceParams.maxIsovalue = _octree.GetMaxQCritirea();
 	isosurfaceParams.isQCritirea = 1;
@@ -1134,7 +1141,8 @@ void ASceneManagerTest::DrawTemperature() {
 	planePMC->ClearAllMeshSections();
 	isosurfacePMC2->ClearAllMeshSections();
 
-	isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), tempThreshold, GetCameraViewProj(), _octree);
+	//isosurfaceParams = FIsosurfaceParameters(index_tbo_data.size(), chunkList.size(), tempThreshold, GetCameraViewProj(), _octree);
+	SetIsosurfaceParams(tempThreshold, GetCameraViewProj());
 	isosurfaceParams.minIsovalue = _octree.GetMinTemperature();
 	isosurfaceParams.maxIsovalue = _octree.GetMaxTemperature();
 	isosurfaceParams.isQCritirea = 2;
@@ -1214,7 +1222,6 @@ void ASceneManagerTest::DrawTemperature() {
 	}
 }
 
-
 void ASceneManagerTest::UpdateIsosurface() {
 	isosurfacePointList.clear();
 	isosurfaceIndexList.clear();
@@ -1248,7 +1255,9 @@ void ASceneManagerTest::UpdateIsosurface() {
 		}
 	}
 }
+#pragma endregion
 
+#pragma region BPfunctions
 void ASceneManagerTest::UpdateCenter(FVector InCenter) {
 	Center = InCenter;
 }
@@ -1368,14 +1377,13 @@ void ASceneManagerTest::SetTemperature3Value(float temperatureValue) {
 void ASceneManagerTest::Hack() {
 	hack = !hack;
 }
+#pragma endregion
 
 void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScale) {
 	ClearData();
-	//FString FilePath = FPaths::Combine(FPaths::ProjectPluginsDir(), "CustomOctreePlugin/Source/CustomOctreePlugin/", FileName + "_collection/gridinfo.bin");
 	FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "StreamDatas/", FileName + "_collection/gridinfo.bin");
 	wstring fileName = wstring((wchar_t*)TCHAR_TO_UTF16(*FileName));
 	this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectDir())) + L"StreamDatas/" + fileName + L"_collection/" + fileName;
-	//FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "testpak/", FileName, "/gridinfo.bin");
 	_octree.SetupInfo(FilePath, 1);
 
 	fileValueList.clear();
@@ -1393,7 +1401,7 @@ void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScal
 	octreeLODList.push_back(64);
 
 	AreaSize = glm2FVec(_octree.GetMin() - _octree.GetMax()).Length();
-	//UE_LOG(LogTemp, Log, TEXT("Area Length: %f"), glm2FVec(_octree.GetMin() - _octree.GetMax()).Length());
+	ResetLineGenerator();
 
 	Center = InCenter;
 	MyScale = InScale;

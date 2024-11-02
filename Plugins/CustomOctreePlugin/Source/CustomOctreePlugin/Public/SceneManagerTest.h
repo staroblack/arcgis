@@ -17,89 +17,88 @@
 
 #define ENABLE_CACHE 0
 
-enum SpawnType { SPHERE, SQUARE, LINE };
-struct LineGenerator {
-	float stepDivider;
-	SpawnType spawnType;
-	glm::vec3 transform;
-	glm::vec3 rotation;
-	float scale;
-	int spawnCount;
-	float collideForce;
-	float lineThickness;
-
-	vector<glm::vec3> randomValue;
-
-	LineGenerator();
-};
-
-struct FStreamLineParameters {
-	TArray<FVector4f> points;
-	TArray<FVector4f> pathLine;
-	TArray<FBatchedLine> lines;
-
-	float collideForce;
-	float dt;
-	int maxLength;
-	float stepDivider;
-	int indexLength;
-	int chunkListLength;
-	FVector3f chunkSize;
-	FVector3f minPos;
-	FVector3f maxPos;
-	FVector3f spacing;
-	int totalLevel;
-	float animateTime;
-	float visibleLength;
-	float invisibleLength;
-	float maxMag;
-
-	bool hack;
-
-	FVector center;
-	float myScale;
-	float lineThickness;
-
-	FStreamLineParameters();
-	FStreamLineParameters(std::vector<glm::vec4>& point, int index_length, int chunklist_length, CustomOctree& octree);
-};
-
-struct FIsosurfaceParameters {
-	TArray<FVector4f> isosurfacePoint;
-	TArray<FVector> outputPos;
-	TArray<int> OutTris;
-
-	int indexLength;
-	int chunkListLength;
-
-	FMatrix44f viewProj;
-	FMatrix44f model;
-
-	FVector3f chunkSize;
-
-	FVector3f minPos;
-	FVector3f maxPos;
-	FVector3f spacing;
-	int totalLevel;
-
-	int isQCritirea;
-	float isovalue;
-	float minIsovalue;
-	float maxIsovalue;
-
-	FVector center;
-	float myScale;
-
-	FIsosurfaceParameters();
-	FIsosurfaceParameters(int index_length, int chunklist_length, float threshold, FMatrix camViewProj, CustomOctree& octree);
-};
-
 UCLASS()
 class CUSTOMOCTREEPLUGIN_API ASceneManagerTest : public AActor
 {
 	GENERATED_BODY()
-
 public:
+#pragma region Structs
+	enum SpawnType { SPHERE, SQUARE, LINE };
+	struct LineGenerator {
+		float stepDivider;
+		SpawnType spawnType;
+		glm::vec3 transform;
+		glm::vec3 rotation;
+		float scale;
+		int spawnCount;
+		float collideForce;
+		float lineThickness;
+		float dt;
+
+		vector<glm::vec3> randomValue;
+
+		LineGenerator();
+	};
+
+	struct FStreamLineParameters {
+		TArray<FVector4f> points;
+		TArray<FVector4f> pathLine;
+		TArray<FBatchedLine> lines;
+
+		float collideForce;
+		float dt;
+		int maxLength;
+		float stepDivider;
+		int indexLength;
+		int chunkListLength;
+		FVector3f chunkSize;
+		FVector3f minPos;
+		FVector3f maxPos;
+		FVector3f spacing;
+		int totalLevel;
+		float animateTime;
+		float visibleLength;
+		float invisibleLength;
+		float maxMag;
+
+		bool hack;
+
+		FVector center;
+		float myScale;
+		float lineThickness;
+
+		FStreamLineParameters();
+	};
+
+	struct FIsosurfaceParameters {
+		TArray<FVector4f> isosurfacePoint;
+		TArray<FVector> outputPos;
+		TArray<int> OutTris;
+
+		int indexLength;
+		int chunkListLength;
+
+		FMatrix44f viewProj;
+		FMatrix44f model;
+
+		FVector3f chunkSize;
+
+		FVector3f minPos;
+		FVector3f maxPos;
+		FVector3f spacing;
+		int totalLevel;
+
+		int isQCritirea;
+		float isovalue;
+		float minIsovalue;
+		float maxIsovalue;
+
+		FVector center;
+		float myScale;
+
+		FIsosurfaceParameters();
+	};
+#pragma endregion
 	// Sets default values for this actor's properties
 	ASceneManagerTest();
 	//Testing
@@ -115,7 +114,6 @@ public:
 	vector<ifstream*> baseFileValueList;
 	vector<ifstream*> baseFileIndexList;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float baseViewDistance = 10.0f;
 
 	int loadChunkCount = 0;
@@ -142,9 +140,6 @@ public:
 	UProceduralMeshComponent* isosurfacePMC2 = NULL;
 	UProceduralMeshComponent* isosurfacePMC3 = NULL;
 
-	vector<float> isosurfacePointList;
-	vector<uint32> isosurfaceIndexList;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -165,25 +160,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool DrawRedDot;
-
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	FVector Center;
-
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	float MyScale;
-
-	float AreaSize;
-
-	float QCritireaThreshold1 = 100;
-
-	float QCritireaThreshold2 = 100;
-
-	float vorticityThreshold = 30;
-
-	float tempThreshold = 290;
-	float tempThreshold2 = 200;
-	float tempThreshold3 = 200;
-
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -213,6 +189,7 @@ public:
 	void DrawQCritirea();
 	void DrawTemperature();
 
+#pragma region BPfunctions
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void SetData(FString FileName, FVector InCenter, float InScale);
 
@@ -299,6 +276,24 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void Hack();
+#pragma endregion
+
+#pragma region StreamParams
+	FVector Center;
+
+	float MyScale;
+	float AreaSize;
+
+	float QCritireaThreshold1 = 100;
+	float QCritireaThreshold2 = 100;
+	float vorticityThreshold = 30;
+
+	float tempThreshold = 290;
+	float tempThreshold2 = 200;
+	float tempThreshold3 = 200;
+
+	vector<float> isosurfacePointList;
+	vector<uint32> isosurfaceIndexList;
 
 	bool drawing = false;
 	int drawType = 0;
@@ -315,5 +310,8 @@ public:
 	float animateTime = 10;
 	bool hack = false;
 
-	bool once = false;
+	void SetStreamLineParams(std::vector<glm::vec4>& point);
+	void SetIsosurfaceParams(float threshold, FMatrix camViewProj);
+	void ResetLineGenerator();
+#pragma endregion
 };

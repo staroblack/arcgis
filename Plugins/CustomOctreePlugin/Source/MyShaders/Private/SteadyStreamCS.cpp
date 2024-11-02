@@ -64,11 +64,10 @@ public:
 		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), THREADGROUPSIZE_Z);
 	}
 
-	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FStreamLineParameters& params)
+	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, ASceneManagerTest::FStreamLineParameters& params)
 	{
 		FRDGBuilder GraphBuilder(RHICmdList);
 		const TShaderMapRef<FSteadyStreamCS> ComputeShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
-		if (vel_tbo_data.Num() == 0) return;
 
 		FRDGBufferSRVRef Index = GenerateBufferSRV(GraphBuilder, index_tbo_data, TEXT("IndexBuffer"));
 		FRDGBufferSRVRef Status = GenerateBufferSRV(GraphBuilder, status_tbo_data, TEXT("StatusBuffer"));
@@ -171,7 +170,7 @@ public:
 
 IMPLEMENT_GLOBAL_SHADER(FSteadyStreamCS, "/ARShaders/Private/SteadyStreamCS.usf", "MainCS", SF_Compute);
 
-void USteadyStreamCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FStreamLineParameters& params)
+void USteadyStreamCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, ASceneManagerTest::FStreamLineParameters& params)
 {
 	ENQUEUE_RENDER_COMMAND(CommandList)(
 		[index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, &params](FRHICommandListImmediate& RHICmdList)

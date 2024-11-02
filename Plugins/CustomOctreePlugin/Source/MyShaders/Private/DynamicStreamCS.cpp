@@ -74,7 +74,7 @@ public:
 		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), THREADGROUPSIZE_Z);
 	}
 
-	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FStreamLineParameters& params)
+	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, ASceneManagerTest::FStreamLineParameters& params)
 	{
 		if (vel_tbo_data.Num() == 0) return;
 
@@ -191,7 +191,7 @@ public:
 
 IMPLEMENT_GLOBAL_SHADER(FDynamicStreamCS, "/ARShaders/Private/DynamicStreamCS.usf", "MainCS", SF_Compute);
 
-void UDynamicStreamCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, FStreamLineParameters& params)
+void UDynamicStreamCS::Dispath(TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, ASceneManagerTest::FStreamLineParameters& params)
 {
 	ENQUEUE_RENDER_COMMAND(CommandList)(
 		[index_tbo_data, status_tbo_data, vel_tbo_data, pre_tbo_data, &params](FRHICommandListImmediate& RHICmdList)
