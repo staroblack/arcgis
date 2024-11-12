@@ -276,6 +276,7 @@
 /I "Developer\WidgetRegistration\Public"
 /I "Runtime\Windows"
 /I "D:\graphic\arcgisTest\arcgis\Plugins\CityGISUtil\Intermediate\Build\Win64\UnrealEditor\Inc\MapSystem\UHT"
+/I "D:\graphic\arcgisTest\arcgis\ThirdParty\PROJ\include"
 /I "D:\graphic\arcgisTest\arcgis\Plugins\CityGISUtil\Source"
 /I "D:\graphic\arcgisTest\arcgis\Plugins\CityGISUtil\Source\MapSystem\Public"
 /I "Runtime\MeshConversion\Public"

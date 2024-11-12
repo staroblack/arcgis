@@ -12,9 +12,9 @@ public class CustomOctreePlugin : ModuleRules
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
-				Path.Combine(PluginDirectory, "Source/CustomOctreePlugin/Include/"),
-				Path.Combine(PluginDirectory, "Source/CustomOctreePlugin/thirdparty/"),
-				Path.Combine(PluginDirectory, "Source/CustomOctreePlugin/thirdparty/glm/"),
+				Path.Combine(ModuleDirectory, "Include/"),
+				Path.Combine(ModuleDirectory, "thirdparty/"),
+				Path.Combine(ModuleDirectory, "thirdparty/glm/"),
 				//Path.Combine(PluginDirectory, "Source/CustomOctreePlugin/thirdparty/opencv2"),
 			}
 			);
@@ -23,15 +23,15 @@ public class CustomOctreePlugin : ModuleRules
 		PrivateIncludePaths.AddRange(
 			new string[] {
 				// ... add other private include paths required here ...
-				Path.Combine(PluginDirectory, "Source/CustomOctreePlugin/Include/"),
-				Path.Combine(PluginDirectory, "Source/CustomOctreePlugin/thirdparty/"),
-				Path.Combine(PluginDirectory, "Source/CustomOctreePlugin/thirdparty/glm/"),
+				Path.Combine(ModuleDirectory, "Include/"),
+                Path.Combine(ModuleDirectory, "thirdparty/"),
+                Path.Combine(ModuleDirectory, "thirdparty/glm/"),
 				//Path.Combine(PluginDirectory, "Source/CustomOctreePlugin/thirdparty/opencv2"),
 			}
-			);
-			
-		
-		PublicDependencyModuleNames.AddRange(
+            );
+
+
+        PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
                 "Core",
@@ -75,5 +75,12 @@ public class CustomOctreePlugin : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
-	}
+
+        if (Target.Platform == UnrealTargetPlatform.Win64)
+        {
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "thirdparty", "lib", "zfp.lib"));
+            PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "thirdparty", "lib", "assimp-vc141-mt.lib"));
+            //RuntimeDependencies.Add(Path.Combine(ModuleDirectory, "thirdparty", "dll", "assimp-vc141-mt.dll"));
+        }
+    }
 }
