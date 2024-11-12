@@ -1,23 +1,13 @@
 {
     "Version": "1.2",
     "Data": {
-        "Source": "d:\\ar\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\mapsystem\\module.mapsystem.cpp",
+        "Source": "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\mapsystem\\module.mapsystem.cpp",
         "ProvidedModule": "",
-        "PCH": "d:\\ar\\arcgis\\intermediate\\build\\win64\\x64\\arcgistesteditor\\development\\engine\\sharedpch.engine.cpp17.inclorderunreal5_1.h.pch",
+        "PCH": "d:\\graphic\\arcgistest\\arcgis\\intermediate\\build\\win64\\x64\\arcgistesteditor\\development\\engine\\sharedpch.engine.cpp17.inclorderunreal5_1.h.pch",
         "Includes": [
-            "d:\\ar\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\mapsystem\\definitions.mapsystem.h",
-            "d:\\ar\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\unrealeditor\\inc\\mapsystem\\uht\\mapsystem.init.gen.cpp",
-            "d:\\ar\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\unrealeditor\\inc\\mapsystem\\uht\\mapsystembfl.gen.cpp",
-            "d:\\ar\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\public\\mapsystembfl.h",
-            "d:\\ar\\arcgis\\thirdparty\\proj\\include\\proj_api.h",
-            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\ucrt\\math.h",
-            "d:\\ar\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\unrealeditor\\inc\\mapsystem\\uht\\mapsystembfl.generated.h",
-            "d:\\ar\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\private\\mapsystem.cpp",
-            "d:\\ar\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\public\\mapsystem.h",
-            "d:\\ar\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\private\\mapsystembfl.cpp",
-            "c:\\program files\\epic games\\ue_5.3\\engine\\source\\runtime\\jsonutilities\\public\\jsonobjectconverter.h",
-            "c:\\program files\\epic games\\ue_5.3\\engine\\source\\runtime\\jsonutilities\\public\\jsonobjectwrapper.h",
-            "c:\\program files\\epic games\\ue_5.3\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\jsonutilities\\uht\\jsonobjectwrapper.generated.h"
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\mapsystem\\definitions.mapsystem.h",
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\private\\mapsystem.cpp",
+            "d:\\graphic\\arcgistest\\arcgis\\plugins\\citygisutil\\source\\mapsystem\\public\\mapsystem.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []
