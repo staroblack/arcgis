@@ -10,6 +10,7 @@
 #include "ProceduralMeshComponent.h"
 #include "Components/LineBatchComponent.h"
 #include "Runtime/Engine/Classes/Engine/TextureRenderTarget2D.h"
+#include "Preprocessor.h"
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -139,6 +140,9 @@ public:
 	UProceduralMeshComponent* isosurfacePMC = NULL;
 	UProceduralMeshComponent* isosurfacePMC2 = NULL;
 	UProceduralMeshComponent* isosurfacePMC3 = NULL;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Preprocessor")
+	UPreprocessor* Preprocessor;
 
 protected:
 	// Called when the game starts or when spawned

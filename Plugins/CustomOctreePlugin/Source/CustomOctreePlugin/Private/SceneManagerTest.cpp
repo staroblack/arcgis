@@ -112,12 +112,19 @@ ASceneManagerTest::ASceneManagerTest()
 
 	isosurfaceParams = FIsosurfaceParameters();
 	streamLineParams = FStreamLineParameters();
+
+	Preprocessor = NewObject<UPreprocessor>();
 }
 
 // Called when the game starts or when spawned
 void ASceneManagerTest::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!Preprocessor)
+	{
+		Preprocessor = NewObject<UPreprocessor>();
+	}
 }
 
 void ASceneManagerTest::BeginDestroy()

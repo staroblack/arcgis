@@ -3,21 +3,33 @@
 
 #include "Preprocessor.h"
 
-Preprocessor::Preprocessor()
-{
+#include "Misc/Paths.h"
+
+UPreprocessor::UPreprocessor() {
+	totalLevel = "5";
+	quantizationThreshold = "0.1";
+	motionIndexFrameNum = "5";
+	inputFolderPath = "";
+
+	FString FullPath = FPaths::Combine(*FPaths::ProjectDir(), TEXT("StreamDatas"));
+	flowfieldDatabaseFolderPath = std::string(TCHAR_TO_UTF8(*FullPath));
+
+	filePostfixInput = ".dat";
+	modelInputChoice = "-----";
+	frameCountInput = "1";
+	organizedInput = false;
+	motionIndexOutput = false;
+	laplacianPyramidOutput = false;
+	binaryInput = false;
 }
 
-Preprocessor::~Preprocessor()
-{
-}
-
-bool Preprocessor::VerifyInputValue_MainProcess() {
+bool UPreprocessor::VerifyInputValue_MainProcess() {
 	frameCount = stoi(frameCountInput);
-	string ifPath = inputFolderpath;
+	string ifPath = inputFolderPath;
 	string _streamdataFilename = ifPath.substr(ifPath.find_last_of('\\') + 1);
 
 	string modelInput = modelInputChoice;
-	if (inputFolderpath == "") {
+	if (inputFolderPath == "") {
 		//fl_message("請選擇流場資料夾!");
 		//cout << "請選擇流場資料夾!" << endl;
 		return false;
@@ -41,7 +53,7 @@ bool Preprocessor::VerifyInputValue_MainProcess() {
 
 }
 
-bool Preprocessor::ReadModel() {
+bool UPreprocessor::ReadModel() {
 	//string _modelName = modelInputChoice;
 	//string objname;
 	//bool momFound = false;
@@ -75,7 +87,7 @@ bool Preprocessor::ReadModel() {
 	return true;
 }
 
-void Preprocessor::StartProcessing() {
+void UPreprocessor::StartProcessing() {
 	//cout << "Verifying Input..." << endl;
 	if (VerifyInputValue_MainProcess()) {
 		//cout << "Reading Model..." << endl;
@@ -135,7 +147,7 @@ void Preprocessor::StartProcessing() {
 			//totalLevel->value(originalLevel.c_str());
 			//quantizationThreshold->value(originalThreshold.c_str());
 			//motionIndexFrameNum->value(originalMotionIndexFrame.c_str());
-			
+
 			//if (ok) {
 			//	fl_message("處理完成!");
 			//}
@@ -143,8 +155,8 @@ void Preprocessor::StartProcessing() {
 	}
 }
 
-bool Preprocessor::MainProcess() {
-	string ifPath = inputFolderpath;
+bool UPreprocessor::MainProcess() {
+	string ifPath = inputFolderPath;
 	string compressedStr;
 	switch (compressionMethodChoice) {
 	case 0:
@@ -177,7 +189,7 @@ bool Preprocessor::MainProcess() {
 	string thresholdStr = "_" + string(quantizationThreshold);
 	string motionIndexStr = motionIndexOutput ? "_mo" + to_string(stoi(motionIndexFrameNum)) : "";
 
-	string inputFolder = string(inputFolderpath) + "\\";
+	string inputFolder = string(inputFolderPath) + "\\";
 	//string outputFolder = flowfieldDatabaseFolderPath + "\\" + streamdataFilename + levelStr + compressedStr + thresholdStr + motionIndexStr + "_collection/";
 	string outputFolder = flowfieldDatabaseFolderPath + "\\" + streamdataFilename + "_collection/";
 	outputFolder = simplifiedPath(outputFolder);
@@ -260,7 +272,7 @@ bool Preprocessor::MainProcess() {
 	return true;
 }
 
-string Preprocessor::simplifiedPath(string input) {
+string UPreprocessor::simplifiedPath(string input) {
 
 	vector<string> parts;
 	{
@@ -293,7 +305,7 @@ string Preprocessor::simplifiedPath(string input) {
 	return output;
 }
 
-void Preprocessor::InitialOctree(string filename, string outputfilename, string streamDataFilename)
+void UPreprocessor::InitialOctree(string filename, string outputfilename, string streamDataFilename)
 {
 	// init file header
 	_octree.hdr.fileName = streamDataFilename;
@@ -322,4 +334,56 @@ void Preprocessor::InitialOctree(string filename, string outputfilename, string 
 
 	//if (!organizedInput)
 		//_OctreeSearch.initialize(_points);
+}
+
+void UPreprocessor::SetTotalLevel(FString TotalLevel) {
+	this->totalLevel = TCHAR_TO_UTF8(*TotalLevel);
+}
+
+void UPreprocessor::SetQuantizationThreshold(FString QuantizationThresh) {
+	this->quantizationThreshold = TCHAR_TO_UTF8(*QuantizationThresh);
+}
+
+void UPreprocessor::SetMotionIndexFrameNum(FString MotionIndexFrameNum) {
+	this->motionIndexFrameNum = TCHAR_TO_UTF8(*MotionIndexFrameNum);
+}
+
+void UPreprocessor::SetInputFolderPath(FString InputFolderPath) {
+	this->inputFolderPath = TCHAR_TO_UTF8(*InputFolderPath);
+}
+
+void UPreprocessor::SetDataFolderPath(FString DataFolderPath) {
+	this->flowfieldDatabaseFolderPath = TCHAR_TO_UTF8(*DataFolderPath);
+}
+
+void UPreprocessor::SetFilePostfixInput(FString FilePostfixInput) {
+	this->filePostfixInput = TCHAR_TO_UTF8(*FilePostfixInput);
+}
+
+void UPreprocessor::SetModelInputChoice(FString ModelInputChoice) {
+	this->modelInputChoice = TCHAR_TO_UTF8(*ModelInputChoice);
+}
+
+void UPreprocessor::SetFrameCountInput(FString FrameCountInput) {
+	this->frameCountInput = TCHAR_TO_UTF8(*FrameCountInput);
+}
+
+void UPreprocessor::SetBinaryInput(bool BinaryInput) {
+	this->binaryInput = BinaryInput;
+}
+
+void UPreprocessor::SetOrganizedInput(bool OrganizedInput) {
+	this->organizedInput = OrganizedInput;
+}
+
+void UPreprocessor::SetLaplacianPyramidOutput(bool LaplacianPyramidOutput) {
+	this->laplacianPyramidOutput = LaplacianPyramidOutput;
+}
+
+void UPreprocessor::SetMotionIndexOutput(bool MotionIndexOutput) {
+	this->motionIndexOutput = MotionIndexOutput;
+}
+
+void UPreprocessor::SetCmpressionMethodChoice(int choice) {
+	this->compressionMethodChoice = choice;
 }

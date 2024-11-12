@@ -2,9 +2,12 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "../Include/CustomOctree.h"
-#include <string.h>
+//#include <string.h>
+
+#include "CoreMinimal.h"
+#include "UObject/NoExportTypes.h"
+#include "Preprocessor.generated.h"
 using namespace std;
 using namespace tdogl;
 
@@ -13,15 +16,55 @@ using namespace tdogl;
 /**
  * 
  */
-class CUSTOMOCTREEPLUGIN_API Preprocessor
+UCLASS()
+class CUSTOMOCTREEPLUGIN_API UPreprocessor : public UObject
 {
-public:
-	Preprocessor();
-	~Preprocessor();
+	GENERATED_BODY()
 
-	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+public:
+	UPreprocessor();
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
 	void StartProcessing();
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetTotalLevel(FString TotalLevel);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetQuantizationThreshold(FString QuantizationThresh);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetMotionIndexFrameNum(FString MotionIndexFrameNum);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetInputFolderPath(FString InputFolderPath);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetDataFolderPath(FString DataFolderPath);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetFilePostfixInput(FString FilePostfixInput);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetModelInputChoice(FString ModelInputChoice);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetFrameCountInput(FString FrameCountInput);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetBinaryInput(bool BinaryInput);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetOrganizedInput(bool OrganizedInput);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetLaplacianPyramidOutput(bool LaplacianPyramidOutput);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetMotionIndexOutput(bool MotionIndexOutput);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	void SetCmpressionMethodChoice(int choice);
 private:
 	bool MainProcess();
 	void InitialOctree(string filename, string outputfilename, string streamDataFilename);
@@ -29,8 +72,8 @@ private:
 	bool VerifyInputValue_MainProcess();
 	bool ReadModel();
 
-	string totalLevel, quantizationThreshold, motionIndexFrameNum, 
-		inputFolderpath, flowfieldDatabaseFolderPath, filePostfixInput, 
+	string totalLevel, quantizationThreshold, motionIndexFrameNum,
+		inputFolderPath, flowfieldDatabaseFolderPath, filePostfixInput,
 		modelInputChoice, frameCountInput;
 	bool organizedInput, motionIndexOutput, laplacianPyramidOutput, binaryInput;
 	int compressionMethodChoice;
