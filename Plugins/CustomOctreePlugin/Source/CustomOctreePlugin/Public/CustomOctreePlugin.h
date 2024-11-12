@@ -5,8 +5,6 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-#include "../Include/CustomOctree.h"
-
 class CUSTOMOCTREEPLUGIN_API FCustomOctreePluginModule : public IModuleInterface
 {
 public:

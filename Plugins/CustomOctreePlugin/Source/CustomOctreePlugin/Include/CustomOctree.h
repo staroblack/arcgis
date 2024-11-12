@@ -8,19 +8,41 @@
 //#include <chrono>
 //#include <opencv.hpp>
 
+#include "octree_search/Octree.hpp"
+#include "tdogl/Model.h"
+#include "acc/bvh_tree.h"
+
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <set>
+#include <random>
 #include <glm/glm.hpp>
 //#include <core.hpp>
+namespace tdogl {
+	class Model;
+}
 
 using namespace std;
+
+#define OUTPUT_BINARY true
 
 #define FOR_3 for (int i = 0; i < 3; i++)
 
 //glm::vec3 Toglm(cv::Vec3f in);
 //cv::Vec3f Tocv(glm::vec3 in);
+enum class CompressionMethod {
+	NoCompression,
+	SimilarEliminateOriginal,
+	SimilarEliminateAdaptive,
+	SimilarEliminateKmeans,
+	SimilarEliminateMedianCut,
+	ZFP,
+	JPEG,
+	LagrangianMethod,
+	DUMMY
+};
 
 class LagrangianVelSource {
 public:
@@ -51,14 +73,14 @@ public:
 	float GetYVel() const;
 	float GetZVel() const;
 	//cv::Vec3f GetVel();
-	glm::vec3 GetVel();
+	glm::vec3 GetVel() const;
 	void SetXVel(float xVel);
 	void SetYVel(float yVel);
 	void SetZVel(float zVel);
 	void SetXYZVel(float x, float y, float z);
 	//void SetXYZVel(cv::Vec3f vel);
 	void SetXYZVel(glm::vec3 vel);
-	float GetPressure();
+	float GetPressure() const;
 	void SetPressure(float pre);
 	float GetTemperature() const;
 	void SetTemperature(float temp);
@@ -146,7 +168,26 @@ public:
 	vector<Level> levelFile;
 };
 
-
+class ObjMarkerData {//???w???c???
+public:
+	ObjMarkerData();
+	ObjMarkerData(string _objName, string _markerMapName, glm::vec3 _translation, glm::vec3 _rotation, glm::vec3 _scale);
+	void SetData(string _objName, string _markerMapName, glm::vec3 _translation, glm::vec3 _rotation, glm::vec3 _scale);
+	void SetFileName(string _objName, string _markerMapName);
+	void SetTransform(glm::vec3 _translation, glm::vec3 _rotation, glm::vec3 _scale);
+	string GetObjName();
+	string GetMarkerMapName();
+	glm::vec3 GetTranslation();
+	glm::vec3 GetRotation();
+	glm::vec3 GetScale();
+	friend ostream& operator<<(ostream& os, const ObjMarkerData& omd);
+private:
+	string objName;
+	string markerMapName;
+	glm::vec3 translation;
+	glm::vec3 rotation;
+	glm::vec3 scale;
+};
 
 class CustomOctree {
 private:
@@ -162,6 +203,7 @@ private:
 	glm::ivec3 originalDim;
 	//cv::Vec3f sampledSpacing;
 	glm::vec3 sampledSpacing;
+	set<float> pcCoordSet[3];
 
 	long pointCount;
 	vector<CustomPoint> points;//no one uses
@@ -175,7 +217,7 @@ private:
 	//cv::Vec3i chunkSize;
 	glm::ivec3 chunkSize;
 
-	int totalLevel;
+	//int totalLevel;
 	//cv::Vec3i sampledDim;
 	glm::ivec3 sampledDim;
 	int totalFrame;
@@ -194,6 +236,11 @@ private:
 	float minTemperature;
 	float maxTemperature;
 
+	bool isInputOrganized;
+	CompressionMethod compressionMethod = CompressionMethod::SimilarEliminateOriginal;
+	bool withLaplacianPyramid = false;
+	bool withMotionIndex = false;
+
 	//Tree Structure,整個Complete樹的結構
 	CustomChunk _Root;
 
@@ -208,8 +255,6 @@ private:
 
 	vector<vector<vector<CustomPointData>>> basePointCacheList;
 
-	fileHeader hdr;
-
 	CustomPoint* GetPointRef(vector<CustomPoint>& points,int i,int j,int k);
 
 	void FillPointDataByValueIndex(CustomPoint& _point, int& valueIndex, string& value);
@@ -217,10 +262,27 @@ private:
 	//void FillTreeStructureFromInfo_Recursive(CustomChunk* _Chunk, int nowLevel, int totalLevel, cv::Vec3i chunkIndex);
 	void FillTreeStructureFromInfo_Recursive(CustomChunk* _Chunk, int nowLevel, int totalLevel, glm::ivec3 chunkIndex);
 	void CleanUpChunkStructure_Recursive(CustomChunk* _Chunk);
+	template<typename T1, typename T2>
+	pair<uint64_t, float> CompressToValueIndex(const vector<T1>& target,
+		vector<T2>& value, vector<unsigned char>& valueIndex,
+		float subtract(const T2& a, const T2& b),
+		T2 access(const T1& x),
+		float threshold = 0,
+		const vector<int>& targetIndex = vector<int>(),
+		CompressionMethod method = CompressionMethod::DUMMY);
 
 public:
 	CustomOctree();
 	~CustomOctree();
+
+	string name;
+
+	int totalLevel;
+	float magThreshold;
+	float preThreshold;
+	float tempThreshold;
+
+	fileHeader hdr;
 
 	CustomChunk* GetRoot();
 	vector<Frame>& GetFrameCollection();
@@ -237,23 +299,27 @@ public:
 	float GetMaxSampledSpacing();
 	glm::vec3 GetSampledSpacing();
 
-	//no one calls
-	//vector<CustomPoint>& GetPointsRef();
+	vector<CustomPoint>& GetPointsRef();
 
 	glm::vec3 GetMin();
 	glm::vec3 GetMax();
 
 	//no one calls
-	//void InputPointDataFromTextFile(string s);
-	//void InputPointDataFromBinaryFile(string s);
+	void InputPointDataFromTextFile(string s);
+	void InputPointDataFromBinaryFile(string s);
 	//void OutputPointDataToBinaryFile(string s);
-	//void CalculatePreprocess();
+	void CalculatePreprocess();
 	//void ResampleStructuredGrid(unibn::Octree<CustomPoint>& _OctreeSearch, tdogl::Mesh* modelMesh);
-	//void OutputGridInfoToBinaryFile(string outFolder,string s, int _totalFrame, bool outputSampledGrid);
+	void OutputGridInfoToBinaryFile(string outFolder,string s, int _totalFrame, bool outputSampledGrid);
 	//void CustomCalculate(string path);
-	//void InputGridInfo(string outFolder);
-	//void InputResampledGrid(string resampledGridFilename);
-	//void SequentialReadStructuredGridAndMergeToFile(string outFolder,string filename,bool isBaseFile);
+	void InputGridInfo(string outFolder);
+	void InputResampledGrid(string resampledGridFilename);
+	void SequentialReadStructuredGridAndMergeToFile(string outFolder,string filename,bool isBaseFile);
+
+	void SetCompressionMethod(CompressionMethod newUsingCompressed);
+	void SetWithLaplacianPyramidOutput(bool w);
+	void SetWithMotionIndexOutput(bool w);
+	void SetIsInputOrganized(bool newIsInputOrganized);
 
 	void CleanUpChunkStructure();
 	void TraceTree();
@@ -276,12 +342,14 @@ public:
 
 	bool GetVorticity(int& i,int& j,int& k,float& vorticity);
 	bool GetQCritirea(int& i, int& j, int& k, float& qcritirea);
+	bool GetVorticity(vector<CustomPoint>& targetPoints, int& i, int& j, int& k, float& vorticity);
+	bool GetQCritirea(vector<CustomPoint>& targetPoints, int& i, int& j, int& k, float& qcritirea);
 
 	bool haveTemperatureData();
-	//no one calls
-	//void InitMinMaxValue();
-	//void UpdateMinMaxValue();
-	//void SaveMinMaxValue(string outFolder);
+
+	void InitMinMaxValue();
+	void UpdateMinMaxValue();
+	void SaveMinMaxValue(string outFolder);
 
 }; 
 
