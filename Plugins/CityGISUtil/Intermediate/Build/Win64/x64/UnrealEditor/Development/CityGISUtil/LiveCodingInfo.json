@@ -2,10 +2,10 @@
 	"RemapUnityFiles": 
 	{
 		"Module.CityGISUtil.cpp.obj": [
-			"CityGISUtil.cpp.obj",
-			"LineDrawGraphics.cpp.obj",
 			"CityGISUtil.init.gen.cpp.obj",
-			"LineDrawGraphics.gen.cpp.obj"
+			"LineDrawGraphics.gen.cpp.obj",
+			"CityGISUtil.cpp.obj",
+			"LineDrawGraphics.cpp.obj"
 		]
 	}
 }

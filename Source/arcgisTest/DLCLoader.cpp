@@ -63,7 +63,8 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 	for (auto& file : files) {
 		count++;
 		file = absFolderPath + "/" + file;
-		paths.Add(file);
+		paths.Add(file); 
+		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, file);
 		LoadPak(file, 1, bOutSuccess, OutInfoMessage);
 	}
 

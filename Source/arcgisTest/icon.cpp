@@ -79,14 +79,14 @@ void Aicon::complete()
 	meshComponent->OnComponentCreated();
 	meshComponent->RegisterComponent();
 	meshComponent->SetWorldLocation(FVector(0, 0, 0));
-	meshComponent->SetWorldScale3D(FVector(0.4, 0.4, 0.4));
+	meshComponent->SetWorldScale3D(FVector(0.01, 0.01, 0.01));
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	UStaticMesh* obj = Cast<UStaticMesh>(this->requestHandle->GetLoadedAsset());
 	//GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, "debug");
 	if (obj) {
 		meshComponent->SetStaticMesh(obj);
-		meshComponent->SetWorldScale3D(FVector(0.4, 0.4, 0.4));
+		meshComponent->SetWorldScale3D(FVector(0.01, 0.01, 0.01));
 		meshComponent->SetVisibility(true, true);
 	}
 	else {
