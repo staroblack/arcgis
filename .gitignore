@@ -14,6 +14,7 @@ Plugins/TemaranShaderTutorial/Intermediate/*
 Plugins/PakLoader/Binaries/*
 Plugins/PakLoader/Intermediate/*
 Plugins/CityGISUtil/*
+Plugins/UE_CaptureSubsystem-master/*
 ThirdParty/*
 StreamDatas/grid11_collection/*
 StreamDatas/grid12_collection/*
