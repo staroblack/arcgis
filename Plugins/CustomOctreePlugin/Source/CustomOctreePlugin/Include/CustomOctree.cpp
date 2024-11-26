@@ -305,6 +305,34 @@ void CustomOctree::FillPointDataByValueIndex(CustomPoint& _point, int& valueInde
 		_point.SetPressure(stof(value));
 		break;
 	}
+
+	/*switch (valueIndex)
+	{
+	case 0:
+		_point.SetX(stof(value));
+		break;
+	case 1:
+		_point.SetY(stof(value));
+		break;
+	case 2:
+		_point.SetZ(stof(value));
+		break;
+	case 3:
+		_point.SetTemperature(stof(value));
+		break;
+	case 4:
+		_point.SetPressure(stof(value));
+		break;
+	case 5:
+		_point.SetXVel(stof(value));
+		break;
+	case 6:
+		_point.SetYVel(stof(value));
+		break;
+	case 7:
+		_point.SetZVel(stof(value));
+		break;
+	}*/
 }
 
 CustomChunk* CustomOctree::GetRoot()
@@ -526,7 +554,7 @@ void CustomOctree::CalculatePreprocess() {
 
 	preprocessed = true;
 }
-/*
+
 void CustomOctree::ResampleStructuredGrid(unibn::Octree<CustomPoint>& _OctreeSearch, tdogl::Mesh* modelMesh) {
 	if (preprocessed) {
 		sampledPoints.clear();
@@ -594,9 +622,13 @@ void CustomOctree::ResampleStructuredGrid(unibn::Octree<CustomPoint>& _OctreeSea
 						result.reserve(27);
 						distance.reserve(27);
 						glm::ivec3 start;
-						FOR_3{
+						/*FOR_3{ // i conflict
 							vector<float>::iterator it = lower_bound(orderedCoords[i].begin(), orderedCoords[i].end(), startPoint.GetXYZ()[i] - searchRadius);
 							start[i] = it - orderedCoords[i].begin();
+						}*/
+						for (int ii = 0; ii < 3; ii++) {
+							vector<float>::iterator it = lower_bound(orderedCoords[ii].begin(), orderedCoords[ii].end(), startPoint.GetXYZ()[ii] - searchRadius);
+							start[ii] = it - orderedCoords[ii].begin();
 						}
 						for (uint64_t nowz = start.z; nowz < orderedCoords[2].size() && orderedCoords[2][nowz] <= startPoint.GetZ() + searchRadius; ++nowz) {
 							for (uint64_t nowy = start.y; nowy < orderedCoords[1].size() && orderedCoords[1][nowy] <= startPoint.GetY() + searchRadius; ++nowy) {
@@ -694,9 +726,13 @@ void CustomOctree::ResampleStructuredGrid(unibn::Octree<CustomPoint>& _OctreeSea
 
 						result.reserve(27);
 						glm::ivec3 start;
-						FOR_3{
+						/*FOR_3{
 							vector<float>::iterator it = lower_bound(orderedCoords[i].begin(), orderedCoords[i].end(), startPoint.GetXYZ()[i] - searchRadius);
 							start[i] = it - orderedCoords[i].begin();
+						}*/
+						for (int ii = 0; ii < 3; ii++) {
+							vector<float>::iterator it = lower_bound(orderedCoords[ii].begin(), orderedCoords[ii].end(), startPoint.GetXYZ()[ii] - searchRadius);
+							start[ii] = it - orderedCoords[ii].begin();
 						}
 
 						for (uint64_t nowz = start.z; nowz < orderedCoords[2].size(); ++nowz) {
@@ -757,7 +793,7 @@ void CustomOctree::ResampleStructuredGrid(unibn::Octree<CustomPoint>& _OctreeSea
 		//cout << "DATA NOT PREPROCESSED,SKIP RESAMPLING!" << endl;
 	}
 }
-*/
+
 void CustomOctree::OutputGridInfoToBinaryFile(string outFolder, string resampledGridFilename, int _totalFrame, bool outputGridInfo) {
 	//if (!fs::exists(outFolder))
 		//fs::create_directory(outFolder);

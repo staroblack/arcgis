@@ -21,9 +21,16 @@ UPreprocessor::UPreprocessor() {
 	motionIndexOutput = false;
 	laplacianPyramidOutput = false;
 	binaryInput = false;
+
+	compressionMethodChoice = 1;
 }
 
 bool UPreprocessor::VerifyInputValue_MainProcess() {
+	// change slashes
+	std::replace(inputFolderPath.begin(), inputFolderPath.end(), '/', '\\');
+	std::replace(flowfieldDatabaseFolderPath.begin(), flowfieldDatabaseFolderPath.end(), '/', '\\');
+	std::replace(modelInputChoice.begin(), modelInputChoice.end(), '/', '\\');
+
 	frameCount = stoi(frameCountInput);
 	string ifPath = inputFolderPath;
 	string _streamdataFilename = ifPath.substr(ifPath.find_last_of('\\') + 1);
@@ -53,36 +60,87 @@ bool UPreprocessor::VerifyInputValue_MainProcess() {
 
 }
 
+Mesh UPreprocessor::processMesh(aiMesh* mesh, const aiScene* scene)
+{
+	// Data to fill
+	vector<Vertex> vertices;
+	vector<unsigned int> indices;
+	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+	{
+		mesh->mVertices[i] = mesh->mVertices[i];
+
+		Vertex vertex;
+		glm::vec3 vector;
+
+		// Positions
+		vector.x = mesh->mVertices[i].x;
+		vector.y = mesh->mVertices[i].y;
+		vector.z = mesh->mVertices[i].z;
+		vector *= 0.001f;
+		vertex.Position = vector;
+
+		// Normals
+		vector.x = mesh->mNormals[i].x;
+		vector.y = mesh->mNormals[i].y;
+		vector.z = mesh->mNormals[i].z;
+		vertex.Normal = vector;
+
+		vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+
+		vertices.push_back(vertex);
+	}
+
+	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+	{
+		aiFace face = mesh->mFaces[i];
+		for (unsigned int j = 0; j < face.mNumIndices; j++)
+			indices.push_back(face.mIndices[j]);
+	}
+
+	return Mesh(vertices, indices);
+}
+
+void UPreprocessor::processNode(aiNode* node, const aiScene* scene)
+{
+	for (unsigned int i = 0; i < node->mNumMeshes; i++)
+		meshes.push_back(processMesh(scene->mMeshes[node->mMeshes[i]], scene));
+
+	for (unsigned int i = 0; i < node->mNumChildren; i++)
+		processNode(node->mChildren[i], scene);
+
+}
+
 bool UPreprocessor::ReadModel() {
-	//string _modelName = modelInputChoice;
-	//string objname;
-	//bool momFound = false;
-	//for (auto& modelObjMarker : listModelObjMarker)
+	string _modelName = modelInputChoice;
+	string objname;
+	bool momFound = false;
+	//for (auto& modelObjMarker : listModelObjMarker) {
 	//	if (_modelName == modelObjMarker.first) {
 	//		objname = RootPathPreprocessor("..\\Server\\AssetsStorage\\" + modelObjMarker.second.GetObjName());
 	//		momFound = true;
 	//		break;
 	//	}
-	//if (!momFound) {
-	//	//fl_message("未知錯誤，找不到模型");
-	//	return false;
 	//}
+	if (!momFound) {
+		//fl_message("未知錯誤，找不到模型");
+		//return false;
+	}
 
-	//Assimp::Importer importer;
+	Assimp::Importer importer;
 
-	//const aiScene* scene = importer.ReadFile(objname, aiProcess_Triangulate | aiProcess_GenBoundingBoxes |
-	//	aiProcess_JoinIdenticalVertices | aiProcess_OptimizeGraph | aiProcess_OptimizeMeshes);
+	const aiScene* scene = importer.ReadFile(_modelName, aiProcess_Triangulate | aiProcess_GenBoundingBoxes |
+		aiProcess_JoinIdenticalVertices | aiProcess_OptimizeGraph | aiProcess_OptimizeMeshes);
 
-	//// Check for errors
-	//if (!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
-	//{
-	//	//fl_message((string("ERROR::ASSIMP:: ") + string(importer.GetErrorString())).c_str());
-	//	//cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << endl;
-	//	return false;
-	//}
+	// Check for errors
+	if (!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
+	{
+		//fl_message((string("ERROR::ASSIMP:: ") + string(importer.GetErrorString())).c_str());
+		//cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << endl;
+		return false;
+	}
 
-	//// Process ASSIMP's root node recursively
-	//processNode(scene->mRootNode, scene);
+	// Process ASSIMP's root node recursively
+	processNode(scene->mRootNode, scene);
 
 	return true;
 }
@@ -228,7 +286,7 @@ bool UPreprocessor::MainProcess() {
 		if (!INPUT_SAMPLED_GRID) {
 			InitialOctree(path, outputFolder + filenameIndex + "/", streamdataFilename);
 			_octree.CalculatePreprocess();
-			//_octree.ResampleStructuredGrid(_OctreeSearch, &meshes[0]);
+			_octree.ResampleStructuredGrid(_OctreeSearch, &meshes[0]);
 			bool outputSampledGrid = false;
 			_octree.OutputGridInfoToBinaryFile(outputFolder, inputFolder + filenameIndex + "_resampled", frameCount, outputSampledGrid);
 		}
@@ -332,8 +390,8 @@ void UPreprocessor::InitialOctree(string filename, string outputfilename, string
 		//std::cerr << "Empty point cloud." << std::endl;
 	}
 
-	//if (!organizedInput)
-		//_OctreeSearch.initialize(_points);
+	if (!organizedInput)
+		_OctreeSearch.initialize(_points);
 }
 
 void UPreprocessor::SetTotalLevel(FString TotalLevel) {

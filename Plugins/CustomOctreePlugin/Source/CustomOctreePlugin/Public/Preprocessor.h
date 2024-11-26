@@ -71,6 +71,8 @@ private:
 	string simplifiedPath(string input);
 	bool VerifyInputValue_MainProcess();
 	bool ReadModel();
+	void processNode(aiNode* node, const aiScene* scene);
+	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
 
 	string totalLevel, quantizationThreshold, motionIndexFrameNum,
 		inputFolderPath, flowfieldDatabaseFolderPath, filePostfixInput,
@@ -81,12 +83,11 @@ private:
 	int frameCount;
 
 	CustomOctree _octree;
-	//unibn::Octree<CustomPoint> _OctreeSearch;
-	//vector<Mesh> meshes;
+	unibn::Octree<CustomPoint> _OctreeSearch;
+	vector<Mesh> meshes;
 
 	vector<pair<string, ObjMarkerData>> listModelObjMarker;
 	vector<pair<string, string>> listModelStreamData;
 	//string flowfieldDatabaseFolderPath = RootPathPreprocessor("../Server/FlowfieldDatabase/");
 	//string assetsStorageFolderPath = RootPathPreprocessor("../Server/AssetsStorage/");
-
 };

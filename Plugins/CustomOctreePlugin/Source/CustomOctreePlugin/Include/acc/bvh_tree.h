@@ -17,6 +17,7 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <array>
 
 #include "primitives.h"
 
@@ -71,6 +72,10 @@ namespace acc {
 		BVHTree(std::vector<uint32_t> const & faces,
 			std::vector<tdogl::Vertex> const & vertices,
 			int max_threads = 2 * std::thread::hardware_concurrency());
+
+		//BVHTree(std::vector<uint32_t> const & faces,
+		//	std::vector<tdogl::Vertex> const & vertices,
+		//	int max_threads = 2 * FPlatformMisc::NumberOfCores());
 
 		bool intersect(Ray ray, Hit * hit_ptr) const;
 	};

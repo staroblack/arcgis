@@ -309,7 +309,7 @@ public:
 	void InputPointDataFromBinaryFile(string s);
 	//void OutputPointDataToBinaryFile(string s);
 	void CalculatePreprocess();
-	//void ResampleStructuredGrid(unibn::Octree<CustomPoint>& _OctreeSearch, tdogl::Mesh* modelMesh);
+	void ResampleStructuredGrid(unibn::Octree<CustomPoint>& _OctreeSearch, tdogl::Mesh* modelMesh);
 	void OutputGridInfoToBinaryFile(string outFolder,string s, int _totalFrame, bool outputSampledGrid);
 	//void CustomCalculate(string path);
 	void InputGridInfo(string outFolder);

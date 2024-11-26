@@ -55,7 +55,7 @@ struct access<PointT, 0>
 {
   static float get(const PointT& p)
   {
-    return p.x;
+    return p.GetX();
   }
 };
 
@@ -64,7 +64,7 @@ struct access<PointT, 1>
 {
   static float get(const PointT& p)
   {
-    return p.y;
+    return p.GetY();
   }
 };
 
@@ -73,7 +73,7 @@ struct access<PointT, 2>
 {
   static float get(const PointT& p)
   {
-    return p.z;
+    return p.GetZ();
   }
 };
 }
