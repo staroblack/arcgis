@@ -1,5 +1,6 @@
 #include "CustomOctree.h"
 #include "zfp/include/zfp.h"
+#include "HAL/PlatformFilemanager.h"
 
 //glm::vec3 Toglm(cv::Vec3f in) {
 //	return glm::vec3(in[0], in[1], in[2]);
@@ -797,6 +798,9 @@ void CustomOctree::ResampleStructuredGrid(unibn::Octree<CustomPoint>& _OctreeSea
 void CustomOctree::OutputGridInfoToBinaryFile(string outFolder, string resampledGridFilename, int _totalFrame, bool outputGridInfo) {
 	//if (!fs::exists(outFolder))
 		//fs::create_directory(outFolder);
+	FString FolderPath = FString(outFolder.c_str());
+	if (!FPaths::DirectoryExists(FolderPath))
+		FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*FolderPath);
 
 	fstream writeInfo(outFolder + "gridinfo.bin", std::ios_base::out);
 
@@ -1040,6 +1044,10 @@ void CustomOctree::SequentialReadStructuredGridAndMergeToFile(string outFolder, 
 	//	if (!fs::exists(folder_filename))
 	//		fs::create_directory(folder_filename);
 	//}
+	FString FolderPath = FString(folder_filename.c_str());
+	if (!FPaths::DirectoryExists(FolderPath))
+		FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*FolderPath);
+
 	//catch (exception& e) {
 	//	cout << e.what() << endl;
 	//}

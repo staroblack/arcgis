@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 
 #include "Preprocessor.h"
 
@@ -11,7 +9,8 @@ UPreprocessor::UPreprocessor() {
 	motionIndexFrameNum = "5";
 	inputFolderPath = "";
 
-	FString FullPath = FPaths::Combine(*FPaths::ProjectDir(), TEXT("StreamDatas"));
+	FString RelPath = FPaths::Combine(*FPaths::ProjectDir(), TEXT("StreamDatas"));
+	const FString& FullPath = FPaths::ConvertRelativePathToFull(RelPath);
 	flowfieldDatabaseFolderPath = std::string(TCHAR_TO_UTF8(*FullPath));
 
 	filePostfixInput = ".dat";
