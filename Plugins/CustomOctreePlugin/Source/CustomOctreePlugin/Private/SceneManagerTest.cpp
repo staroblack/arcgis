@@ -3,6 +3,7 @@
 #include "SceneManagerTest.h"
 #include "RenderGraphBuilder.h"
 #include "Interfaces/IPluginManager.h"
+#include "UObject/ConstructorHelpers.h"
 #include "MyShaders/Public/MyShaders.h"
 
 #include "glm/glm.hpp"
@@ -114,6 +115,17 @@ ASceneManagerTest::ASceneManagerTest()
 	streamLineParams = FStreamLineParameters();
 
 	Preprocessor = NewObject<UPreprocessor>();
+
+	// Initialize the instanced static mesh component
+	InstancedMeshComponent = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("InstancedMeshComponent"));
+	InstancedMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Load the sphere static mesh
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMeshFinder(TEXT("/Engine/BasicShapes/Sphere"));
+	if (SphereMeshFinder.Succeeded())
+	{
+		InstancedMeshComponent->SetStaticMesh(SphereMeshFinder.Object);
+	}
 }
 
 // Called when the game starts or when spawned
@@ -125,6 +137,8 @@ void ASceneManagerTest::BeginPlay()
 	{
 		Preprocessor = NewObject<UPreprocessor>();
 	}
+
+	InstancedMeshComponent->SetMaterial(0, SphereMaterial);
 }
 
 void ASceneManagerTest::BeginDestroy()
@@ -227,6 +241,8 @@ void ASceneManagerTest::Tick(float DeltaTime)
 	isosurfacePMC->ClearAllMeshSections();
 	isosurfacePMC2->ClearAllMeshSections();
 	isosurfacePMC3->ClearAllMeshSections();
+	InstancedMeshComponent->ClearInstances();
+
 	switch (drawType) {
 	case 1:
 		UpdateStreamLine(false);
@@ -870,7 +886,7 @@ void ASceneManagerTest::UpdatePlane() {
 
 	glm::vec3 lb, rb, lt, rt;
 	glm::vec3 startPos = _octree.GetMin();
-	startPos[offsetAxis] = startPos[offsetAxis] + dist[offsetAxis] * this->planeOffset;
+	startPos[offsetAxis] = startPos[offsetAxis] + this->planeOffset;
 
 	lb = rb = lt = rt = startPos;
 	rb[planeA] = startPos[planeA] + dist[planeA];
@@ -981,6 +997,8 @@ void ASceneManagerTest::UpdateStreamLine(bool isDynamic) {
 	points.resize(lineGenerator.spawnCount);
 	UpdateSpawnPointPositions(points);
 
+	DrawSphere(points);
+
 	//streamLineParams = FStreamLineParameters(points, index_tbo_data.size(), chunkList.size(), _octree);
 	SetStreamLineParams(points);
 	streamLineParams.stepDivider = lineGenerator.stepDivider;
@@ -1023,48 +1041,52 @@ void ASceneManagerTest::UpdateSpawnPointPositions(std::vector<glm::vec4>& points
 
 	int sideCount = sqrt(lineGenerator.spawnCount);
 	glm::vec3 unitPos(0, -1, -1);
-	float bias = 2.f / (float)(sideCount - 1);
+	//float bias = 2.f / (float)(sideCount - 1);
+	glm::vec3 bias(0, 2.f / (float)(sideCount - 1), 0);
+
+	glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
+	glm::vec3 startPos = _octree.GetMin();
+	float radius = dist.z / 2.f;
 
 	switch (lineGenerator.spawnType)
 	{
 	case SpawnType::SPHERE:
 		for (int i = 0; i < lineGenerator.spawnCount; i++)
 		{
-			glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
-			glm::vec3 startPos = _octree.GetMin();
+			//glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
+			//glm::vec3 startPos = _octree.GetMin();
 
-			glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform +
-				glm::vec3(glm::vec4(lineGenerator.randomValue[i] * lineGenerator.scale, 1) * rotatemat), 0);
+			glm::vec3 apply = glm::vec3(glm::vec4(lineGenerator.randomValue[i] * radius * lineGenerator.scale, 1) * rotatemat);
+			glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform + apply, 0);
 			points[i] = pos;
 		}
 		break;
 	case SpawnType::SQUARE:
+		unitPos = glm::vec3(0, -dist.z / 2, -dist.z / 2);
+		bias[1] = dist.z / (float)(sideCount - 1);
+		bias[2] = dist.z / (float)(sideCount - 1);
+
 		for (int i = 0; i < sideCount; i++)
 		{
 			for (int j = 0; j < sideCount; j++) {
-				glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
-				glm::vec3 startPos = _octree.GetMin();
-
-				glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform +
-					glm::vec3(glm::vec4(unitPos * lineGenerator.scale, 1) * rotatemat), 0);
+				glm::vec3 apply = glm::vec3(glm::vec4(unitPos * lineGenerator.scale, 1) * rotatemat);
+				glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform + apply, 0);
 				points[i * sideCount + j] = pos;
-				unitPos[1] += bias;
+				unitPos[1] += bias[1];
 			}
-			unitPos[2] += bias;
-			unitPos[1] = -1;
+			unitPos[2] += bias[2];
+			unitPos[1] = -dist.z / 2;
 		}
 		break;
 	case SpawnType::LINE:
-		glm::vec3 startPos = _octree.GetMin();
-		glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
 		unitPos = glm::vec3(0, -dist.y / 2, 0);
-		bias = dist.y / (float)(lineGenerator.spawnCount - 1);
+		bias[1] = dist.y / (float)(lineGenerator.spawnCount - 1);
 		for (int i = 0; i < lineGenerator.spawnCount; i++) {
 			glm::vec3 apply = glm::vec3(glm::vec4(unitPos * lineGenerator.scale, 1) * rotatemat);
 			glm::vec4 pos = glm::vec4(startPos + dist * lineGenerator.transform + apply, 0);
 
 			points[i] = pos;
-			unitPos[1] += bias;
+			unitPos[1] += bias[1];
 		}
 		break;
 	}
@@ -1262,6 +1284,34 @@ void ASceneManagerTest::UpdateIsosurface() {
 		}
 	}
 }
+
+void ASceneManagerTest::DrawSphere(std::vector<glm::vec4> NewPositions) {
+
+	if (!InstancedMeshComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Sphere mesh or InstancedMeshComponent is not set up!"));
+		return;
+	}
+
+	// Clear existing instances to update the positions
+	InstancedMeshComponent->ClearInstances();
+
+	const glm::vec3& min = _octree.GetMin();
+	const glm::vec3& max = _octree.GetMax();
+	// Add instances for the new positions
+	for (const glm::vec4& Position : NewPositions)
+	{
+		if (Position.x < min.x || Position.x > max.x ||
+			Position.y < min.y || Position.y > max.y ||
+			Position.z < min.z || Position.z > max.z)
+			continue;
+
+		FTransform InstanceTransform;
+		InstanceTransform.SetLocation(glm2FVec(Position) + Center);
+		InstanceTransform.SetScale3D(FVector(SphereScale * MyScale)); // Scale down the sphere
+		InstancedMeshComponent->AddInstance(InstanceTransform);
+	}
+}
 #pragma endregion
 
 #pragma region BPfunctions
@@ -1432,4 +1482,11 @@ void ASceneManagerTest::ClearData() {
 	MyScale = 0.f;
 
 	drawing = false;
+}
+
+FVector ASceneManagerTest::GetDist() {
+	if (drawing)
+		return glm2FVec(_octree.GetMax() - _octree.GetMin());
+	else
+		return FVector(1, 1, 1);
 }

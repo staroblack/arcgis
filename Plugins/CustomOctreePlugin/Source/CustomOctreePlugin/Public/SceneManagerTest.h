@@ -10,6 +10,7 @@
 #include "ProceduralMeshComponent.h"
 #include "Components/LineBatchComponent.h"
 #include "Runtime/Engine/Classes/Engine/TextureRenderTarget2D.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Preprocessor.h"
 
 #include "CoreMinimal.h"
@@ -141,7 +142,6 @@ public:
 	UProceduralMeshComponent* isosurfacePMC2 = NULL;
 	UProceduralMeshComponent* isosurfacePMC3 = NULL;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Preprocessor")
 	UPreprocessor* Preprocessor;
 
 protected:
@@ -160,10 +160,18 @@ public:
 	UMaterialInterface* IsosurfaceMaterial;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMaterialInterface* SphereMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	APawn* camera;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool DrawRedDot;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SphereScale = 50;
+
+	UInstancedStaticMeshComponent* InstancedMeshComponent;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -192,6 +200,7 @@ public:
 	void DrawVorticity();
 	void DrawQCritirea();
 	void DrawTemperature();
+	void DrawSphere(std::vector<glm::vec4> NewPositions);
 
 #pragma region BPfunctions
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
@@ -280,6 +289,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
 	void Hack();
+
+	UFUNCTION(BlueprintCallable, Category = "OctreePlugin")
+	FVector GetDist();
+
 #pragma endregion
 
 #pragma region StreamParams
