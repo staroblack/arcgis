@@ -191,6 +191,10 @@ private:
 
 class CustomOctree {
 private:
+	//struct fileHeader {
+	//	string fileMagic = "ARdata2";
+	//	int vers
+	//};
 	struct fileHeader {
 		string fileMagic = "ARdata";
 		string fileName;
