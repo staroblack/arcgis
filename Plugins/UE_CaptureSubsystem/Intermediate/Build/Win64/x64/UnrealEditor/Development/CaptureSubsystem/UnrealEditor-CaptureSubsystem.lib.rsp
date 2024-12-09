@@ -1,0 +1,12 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UnrealEditor-CaptureSubsystem.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"D:\AR\arcgis\Intermediate\Build\Win64\x64\arcgisTestEditor\Development\UnrealEd\SharedPCH.UnrealEd.NonOptimized.Cpp17.InclOrderUnreal5_1.h.obj"
+"D:\AR\arcgis\Plugins\UE_CaptureSubsystem\Intermediate\Build\Win64\x64\UnrealEditor\Development\CaptureSubsystem\Module.CaptureSubsystem.cpp.obj"
+"D:\AR\arcgis\Plugins\UE_CaptureSubsystem\Intermediate\Build\Win64\x64\UnrealEditor\Development\CaptureSubsystem\Default.rc2.res"
+/OUT:"D:\AR\arcgis\Plugins\UE_CaptureSubsystem\Intermediate\Build\Win64\x64\UnrealEditor\Development\CaptureSubsystem\UnrealEditor-CaptureSubsystem.lib"

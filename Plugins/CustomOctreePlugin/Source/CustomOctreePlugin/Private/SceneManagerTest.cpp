@@ -865,8 +865,8 @@ void ASceneManagerTest::UpdatePlane() {
 	//cout << "Chunk count: " << chunkList.size() << endl;
 
 	glm::vec3 dist = _octree.GetMax() - _octree.GetMin();
-	int offsetAxis;
-	int planeA, planeB;
+	int offsetAxis = 2;
+	int planeA = 0, planeB = 1;
 	if (this->selectedAxis == 0) {
 		offsetAxis = 0;
 		planeA = 1;

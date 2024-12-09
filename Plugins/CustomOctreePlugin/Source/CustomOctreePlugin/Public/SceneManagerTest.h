@@ -142,6 +142,7 @@ public:
 	UProceduralMeshComponent* isosurfacePMC2 = NULL;
 	UProceduralMeshComponent* isosurfacePMC3 = NULL;
 
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "OctreePlugin")
 	UPreprocessor* Preprocessor;
 
 protected:

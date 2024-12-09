@@ -1,0 +1,16 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.CaptureSubsystem.cpp.obj": [
+			"CaptureGameViewportClient.gen.cpp.obj",
+			"CaptureSubsystem.init.gen.cpp.obj",
+			"CaptureSubsystemDirector.gen.cpp.obj",
+			"VideoCaptureSubsystem.gen.cpp.obj",
+			"CaptureGameViewportClient.cpp.obj",
+			"CaptureSubsystem.cpp.obj",
+			"CaptureSubsystemDirector.cpp.obj",
+			"EncoderThread.cpp.obj",
+			"VideoCaptureSubsystem.cpp.obj"
+		]
+	}
+}

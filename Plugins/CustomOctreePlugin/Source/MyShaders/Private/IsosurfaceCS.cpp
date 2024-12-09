@@ -13,9 +13,9 @@
 #include "RHIDefinitions.h"
 
 
-#define THREADGROUPSIZE_X 1024
-#define THREADGROUPSIZE_Y 1
-#define THREADGROUPSIZE_Z 1
+//#define THREADGROUPSIZE_X 1024
+//#define THREADGROUPSIZE_Y 1
+//#define THREADGROUPSIZE_Z 1
 
 BEGIN_SHADER_PARAMETER_STRUCT(FExtractBufferParameters, )
 	RDG_BUFFER_ACCESS(Source, ERHIAccess::CopySrc)
@@ -73,9 +73,9 @@ public:
 	{
 		FGlobalShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
 
-		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_X"), THREADGROUPSIZE_X);
-		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Y"), THREADGROUPSIZE_Y);
-		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), THREADGROUPSIZE_Z);
+		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_X"), 1024);
+		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Y"), 1);
+		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), 1);
 	}
 
 	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> temp_tbo_data, ASceneManagerTest::FIsosurfaceParameters& params)
@@ -157,7 +157,7 @@ public:
 
 
 		FVector3f threadCount = cbrt(params.chunkListLength) * params.chunkSize;
-		FIntVector GroupCounts = FComputeShaderUtils::GetGroupCount(FIntVector(threadCount.X * threadCount.Y * threadCount.Z, 1, 1), FIntVector(THREADGROUPSIZE_X, THREADGROUPSIZE_Y, THREADGROUPSIZE_Z));
+		FIntVector GroupCounts = FComputeShaderUtils::GetGroupCount(FIntVector(threadCount.X * threadCount.Y * threadCount.Z, 1, 1), FIntVector(1024, 1, 1));
 
 		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("IsosurfaceCS"), ERDGPassFlags::Compute, ComputeShader, PassParameters, GroupCounts);
 
