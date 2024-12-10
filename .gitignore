@@ -16,6 +16,7 @@ Plugins/PakLoader/Intermediate/*
 Plugins/CityGISUtil/*
 Plugins/UE_CaptureSubsystem-master/*
 ThirdParty/*
+unrealPak/*
 StreamDatas/grid11_collection/*
 StreamDatas/grid12_collection/*
 StreamDatas/grid18_collection/*

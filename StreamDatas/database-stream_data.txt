@@ -1,2 +1,2 @@
 //Model Name,StreamData Name
-D:\AR\ARFlow-NoCompressionReading\ARFlow-NoCompressionReading\Server\AssetsStorage\MODEL_Subsurfaced_level3.obj uniform_1f_COT5_compressed_0.1
+C:\Users\User\Desktop\testorigin\MODEL_Subsurfaced_level3.obj testorigin_COT5_compressed_0.1

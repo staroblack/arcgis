@@ -1,0 +1,14 @@
+{
+	"caseName": "testing",
+	"madeUnit": "made unit",
+	"madePerson": "made person",
+	"uploadDate": "made date",
+	"modelCity": "city",
+	"lat": 25.049455642700195,
+	"lon": 121.54165649414062,
+	"quote": "quote",
+	"simArea": "400x400",
+	"loadInData": "C:/Users/User/Desktop/MODEL_Subsurfaced_level3.obj",
+	"simTime": "simulation_time",
+	"loadModelPath": "C:/Users/User/Desktop/MODEL_Subsurfaced_level3.obj"
+}

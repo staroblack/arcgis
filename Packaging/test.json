@@ -1,0 +1,14 @@
+{
+	"caseName": "test",
+	"madeUnit": "made unit",
+	"madePerson": "made person",
+	"uploadDate": "made date",
+	"modelCity": "city",
+	"lat": 0,
+	"lon": 0,
+	"quote": "quote",
+	"simArea": "sim area",
+	"loadInData": "route",
+	"simTime": "simulation_time",
+	"loadModelPath": "route"
+}
