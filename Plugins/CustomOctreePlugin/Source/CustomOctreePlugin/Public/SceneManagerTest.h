@@ -169,7 +169,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool DrawRedDot;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float SphereScale = 50;
 
 	UInstancedStaticMeshComponent* InstancedMeshComponent;

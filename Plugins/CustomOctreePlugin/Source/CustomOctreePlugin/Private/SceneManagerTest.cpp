@@ -121,7 +121,7 @@ ASceneManagerTest::ASceneManagerTest()
 	InstancedMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Load the sphere static mesh
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMeshFinder(TEXT("/Engine/BasicShapes/Sphere"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMeshFinder(TEXT("/Game/Sphere.Sphere"));
 	if (SphereMeshFinder.Succeeded())
 	{
 		InstancedMeshComponent->SetStaticMesh(SphereMeshFinder.Object);

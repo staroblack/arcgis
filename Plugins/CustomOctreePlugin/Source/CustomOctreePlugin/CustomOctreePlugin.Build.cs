@@ -50,7 +50,6 @@ public class CustomOctreePlugin : ModuleRules
 			}
 			);
 			
-		
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -69,19 +68,13 @@ public class CustomOctreePlugin : ModuleRules
 			}
 			);
 		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
-			}
-			);
-
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "thirdparty", "lib", "zfp.lib"));
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "thirdparty", "lib", "assimp-vc141-mt.lib"));
             //RuntimeDependencies.Add(Path.Combine(ModuleDirectory, "thirdparty", "dll", "assimp-vc141-mt.dll"));
+            RuntimeDependencies.Add(Path.Combine(ModuleDirectory, "thirdparty", "dll", "assimp-vc141-mt.dll"));
+            RuntimeDependencies.Add(Path.Combine(ModuleDirectory, "thirdparty", "dll", "zfp.dll"));
         }
     }
 }
