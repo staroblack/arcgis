@@ -21,13 +21,29 @@ Aicon::Aicon()
 
 void Aicon::hitboxInit()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "inside hitbox init");
+
 	//FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'"))
 #if WITH_EDITOR
-	this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'")), FStreamableDelegate::CreateLambda(&Aicon::hitboxComplete, this), 0, true);
+	//this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'")), FStreamableDelegate::CreateLambda(&Aicon::hitboxComplete, this), 0, true);
+	this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		FSoftObjectPath(TEXT("StaticMesh'/Game/Cube.Cube'")),
+		FStreamableDelegate::CreateLambda(&Aicon::hitboxComplete, this),
+		0,
+		true
+	);
 	//this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(assetData.ToSoftObjectPath(), FStreamableDelegate::CreateLambda(&Aicon::complete, this), 0, true);
 #else
-	this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'")), FStreamableDelegate::CreateLambda(&Aicon::hitboxComplete, this), 0, true);
+	//this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(FSoftObjectPath(TEXT("StaticMesh\'/Engine/BasicShapes/Cube.Cube\'")), FStreamableDelegate::CreateLambda(&Aicon::hitboxComplete, this), 0, true);
+	this->requestHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		FSoftObjectPath(TEXT("StaticMesh'/Game/Cube.Cube'")),
+		FStreamableDelegate::CreateLambda(&Aicon::hitboxComplete, this),
+		0,
+		true
+	);
+
 #endif
+	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "get out of hitbox init");
 }
 
 void Aicon::hitboxComplete()

@@ -98,7 +98,6 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		// FPlatformFileManager::Get().SetPlatformFile(*ADLCLoader::oldPlatform);
 	}
 	UE_LOG(LogTemp, Warning, TEXT("pak file: %s founded"), *pakFilePath);
-	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
 
 	// prepare mount point
 	FPakFile* pakFile = new FPakFile(pakPlatform, *pakFilePath, false);
@@ -127,9 +126,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 	UE_LOG(LogTemp, Warning, TEXT("project dir: %s"), *ProjectPath);
 	UE_LOG(LogTemp, Warning, TEXT("ori mount point: %s"), *oriMountingPoint);
 	UE_LOG(LogTemp, Warning, TEXT("new mount point: %s"), *mountPoint);
-	//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
-		
-
+	
 	// mount pak
 	if (pakPlatform->Mount(*pakFilePath, 1, *pakFile->GetMountPoint())) {
 		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount Pak Success : " + pakFilePath);
@@ -585,7 +582,6 @@ void  ADLCLoader::printString(FString input) {
 
 TArray<Aicon*> ADLCLoader::getIcons() {
 	printString("getIcons");
-	printString(std::to_string(icons.Num()).c_str());
 	return icons;
 }
 
