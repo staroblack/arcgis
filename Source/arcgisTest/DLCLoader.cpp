@@ -11,6 +11,7 @@
 #include "HAL/FileManager.h"
 #include "Serialization/JsonSerializer.h"
 
+#include <string> 
 
 
 
@@ -64,7 +65,7 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 		count++;
 		file = absFolderPath + "/" + file;
 		paths.Add(file); 
-		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, file);
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, file);
 		LoadPak(file, 1, bOutSuccess, OutInfoMessage);
 	}
 
@@ -88,25 +89,25 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 	this->m_pakPlatformFile = pakPlatform;
 	FinputStruct output;
 	// load pak file
-		// check file exist
-		if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*pakFilePath)) {
-			UE_LOG(LogTemp, Warning, TEXT("pak file: %s not found"), *pakFilePath);
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "pak file not find : " + pakFilePath);
+	// check file exist
+	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*pakFilePath)) {
+		UE_LOG(LogTemp, Warning, TEXT("pak file: %s not found"), *pakFilePath);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "pak file not find : " + pakFilePath);
 
-			// return to old platform file
-			// FPlatformFileManager::Get().SetPlatformFile(*ADLCLoader::oldPlatform);
-		}
-		UE_LOG(LogTemp, Warning, TEXT("pak file: %s founded"), *pakFilePath);
-		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
+		// return to old platform file
+		// FPlatformFileManager::Get().SetPlatformFile(*ADLCLoader::oldPlatform);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("pak file: %s founded"), *pakFilePath);
+	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
 
-		// prepare mount point
-		FPakFile* pakFile = new FPakFile(pakPlatform, *pakFilePath, false);
-		FString oriMountingPoint = pakFile->GetMountPoint();
-		FString ProjectPath = FPaths::ProjectDir();
-		FString ProjectContentPath = FPaths::ProjectContentDir();
-		FString PakFilename = FPaths::GetBaseFilename(pakFilePath);
-		FString mountPoint = ProjectContentPath + "DLC/" + PakFilename + "/";
-		// mounting point conversion
+	// prepare mount point
+	FPakFile* pakFile = new FPakFile(pakPlatform, *pakFilePath, false);
+	FString oriMountingPoint = pakFile->GetMountPoint();
+	FString ProjectPath = FPaths::ProjectDir();
+	FString ProjectContentPath = FPaths::ProjectContentDir();
+	FString PakFilename = FPaths::GetBaseFilename(pakFilePath);
+	FString mountPoint = ProjectContentPath + "DLC/" + PakFilename + "/";
+	// mounting point conversion
 
 //#if WITH_EDITOR
 //		pakFile->SetMountPoint(*FPaths::ConvertRelativePathToFull(mountPoint));
@@ -119,121 +120,119 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 //		ProjectContentPath = FPaths::ConvertRelativePathToFull(ProjectContentPath);
 //#endif
 		
-		pakFile->SetMountPoint(*FPaths::ConvertRelativePathToFull(mountPoint));
-		mountPoint = FPaths::ConvertRelativePathToFull(mountPoint);
-		ProjectContentPath = FPaths::ConvertRelativePathToFull(ProjectContentPath);
+	pakFile->SetMountPoint(*FPaths::ConvertRelativePathToFull(mountPoint));
+	mountPoint = FPaths::ConvertRelativePathToFull(mountPoint);
+	ProjectContentPath = FPaths::ConvertRelativePathToFull(ProjectContentPath);
 
-		UE_LOG(LogTemp, Warning, TEXT("project dir: %s"), *ProjectPath);
-		UE_LOG(LogTemp, Warning, TEXT("ori mount point: %s"), *oriMountingPoint);
-		UE_LOG(LogTemp, Warning, TEXT("new mount point: %s"), *mountPoint);
-		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
+	UE_LOG(LogTemp, Warning, TEXT("project dir: %s"), *ProjectPath);
+	UE_LOG(LogTemp, Warning, TEXT("ori mount point: %s"), *oriMountingPoint);
+	UE_LOG(LogTemp, Warning, TEXT("new mount point: %s"), *mountPoint);
+	//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount point : " + mountPoint);
 		
 
-		// mount pak
-		if (pakPlatform->Mount(*pakFilePath, 1, *pakFile->GetMountPoint())) {
-			//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount Pak Success : " + pakFilePath);
+	// mount pak
+	if (pakPlatform->Mount(*pakFilePath, 1, *pakFile->GetMountPoint())) {
+		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "Mount Pak Success : " + pakFilePath);
 
-			FAssetRegistryModule& assetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-			IAssetRegistry& assetRegistry = assetRegistryModule.Get();
+		FAssetRegistryModule& assetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+		IAssetRegistry& assetRegistry = assetRegistryModule.Get();
+			
+		// rescan registry
+		assetRegistry.ScanPathsSynchronous({ pakFile->GetMountPoint() }, true);
+		assetRegistry.ScanPathsSynchronous({ "/Game/" }, true);
 
+		// get all file names in the pak
+		TArray<FString> filenames;
+		pakFile->FindPrunedFilesAtPath(filenames, *mountPoint, true, false, true);
+
+		// load asset datas
+		TMap<FString, FAssetData*> assetDataMap;
+		FString path = mountPoint.Replace(*ProjectContentPath, TEXT("/Game/"));
 			
 			
-			// rescan registry
-			assetRegistry.ScanPathsSynchronous({ pakFile->GetMountPoint() }, true);
-			assetRegistry.ScanPathsSynchronous({ "/Game/" }, true);
+		//this->m_objectLibrary->LoadAssetsFromAssetData();
+		//loadLibrary->ClearLoaded();
 
-			// get all file names in the pak
-			TArray<FString> filenames;
-			pakFile->FindPrunedFilesAtPath(filenames, *mountPoint, true, false, true);
+		if (loading == 1) {
+			loadLibrary->LoadAssetDataFromPath(path);
+			loadLibrary->GetAssetDataList(this->assetDatas);
 
-			// load asset datas
-			TMap<FString, FAssetData*> assetDataMap;
-			FString path = mountPoint.Replace(*ProjectContentPath, TEXT("/Game/"));
-			
-			
-			//this->m_objectLibrary->LoadAssetsFromAssetData();
-			//loadLibrary->ClearLoaded();
+			//test spawninfo
+			FActorSpawnParameters spawnInfo;
+			Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
+			tempActor->index = iconsCount;
+			icons.Add(tempActor);
+			//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "spawn");
 
-			if (loading == 1) {
-				loadLibrary->LoadAssetDataFromPath(path);
-				loadLibrary->GetAssetDataList(this->assetDatas);
+			for (auto& assetData : assetDatas) {
 
-				//test spawninfo
-				FActorSpawnParameters spawnInfo;
-				Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
-				tempActor->index = iconsCount;
-				icons.Add(tempActor);
-				//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "spawn");
-
-				for (auto& assetData : assetDatas) {
-
-					assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
-					//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
-					FAssetData* tempAsset = new(FAssetData);
-					*tempAsset = assetData;
-					tempActor->assets.Add(tempAsset);
-					// GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "load in  : " + tempActor->assets[0]->AssetName.ToString());
-					if (loading == 1) {
-						/*ModelInfo* model = new ModelInfo();
-						model->Init(this, &assetData, pakPlatform);
-						model->Load();
-						this->models.Add(model);*/
-					}
-				}
-
-				// scan filenames for descriptor
-				for (FString& filename : filenames) {
-
-					// load descriptor from json
-					if (filename.Contains(".json")) {
-						bOutSuccess = true;
-						output = ReadStructFromJsonFile(filename, bOutSuccess, OutInfoMessage);
-
-
-						tempActor->output.caseName = output.caseName;
-						tempActor->output.madeUnit = output.madeUnit;
-						tempActor->output.madePerson = output.madePerson;
-						tempActor->output.uploadDate = output.uploadDate;
-						tempActor->output.modelCity = output.modelCity;
-						tempActor->output.quote = output.quote;
-						tempActor->output.simArea = output.simArea;
-						tempActor->output.simTime = output.simTime;
-						tempActor->output.lat = output.lat;
-						tempActor->output.lon = output.lon;
-
-						//FString fileDir = filename;
-						//FString json;
-						//FFileHelper::LoadFileToString(json, *fileDir);
-						//FJsonDescriptor desc;
-						//FJsonObjectConverter::JsonObjectStringToUStruct<FJsonDescriptor>(json, &desc);
-
-
-						//this->descriptor.Append(this, &desc, &assetDataMap, pakPlatform);
-
-						//this->m_status = m_E_STATUS::READY;
-						break;
-					}
-					else {
-						UE_LOG(LogTemp, Warning, TEXT("no json"));
-						bOutSuccess = false;
-					}
-				}
-			}
-			
-
-			for (int i = 0; i < icons.Num(); i++) {
-				for (int k = 0; k < icons[i]->assets.Num(); k++) {
-					//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "all  : "+ icons[i]->assets[k]->AssetName.ToString());
+				assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
+				//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
+				FAssetData* tempAsset = new(FAssetData);
+				*tempAsset = assetData;
+				tempActor->assets.Add(tempAsset);
+				// GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "load in  : " + tempActor->assets[0]->AssetName.ToString());
+				if (loading == 1) {
+					/*ModelInfo* model = new ModelInfo();
+					model->Init(this, &assetData, pakPlatform);
+					model->Load();
+					this->models.Add(model);*/
 				}
 			}
 
-			
-			
+			// scan filenames for descriptor
+			for (FString& filename : filenames) {
+
+				// load descriptor from json
+				if (filename.Contains(".json")) {
+					bOutSuccess = true;
+					output = ReadStructFromJsonFile(filename, bOutSuccess, OutInfoMessage);
+
+
+					tempActor->output.caseName = output.caseName;
+					tempActor->output.madeUnit = output.madeUnit;
+					tempActor->output.madePerson = output.madePerson;
+					tempActor->output.uploadDate = output.uploadDate;
+					tempActor->output.modelCity = output.modelCity;
+					tempActor->output.quote = output.quote;
+					tempActor->output.simArea = output.simArea;
+					tempActor->output.simTime = output.simTime;
+					tempActor->output.lat = output.lat;
+					tempActor->output.lon = output.lon;
+
+					//FString fileDir = filename;
+					//FString json;
+					//FFileHelper::LoadFileToString(json, *fileDir);
+					//FJsonDescriptor desc;
+					//FJsonObjectConverter::JsonObjectStringToUStruct<FJsonDescriptor>(json, &desc);
+
+
+					//this->descriptor.Append(this, &desc, &assetDataMap, pakPlatform);
+
+					//this->m_status = m_E_STATUS::READY;
+					break;
+				}
+				else {
+					UE_LOG(LogTemp, Warning, TEXT("no json"));
+					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "no json");
+
+					bOutSuccess = false;
+				}
+			}
 		}
-		else {
-			UE_LOG(LogTemp, Warning, TEXT("failed to mount pak file"));
+			
+
+		for (int i = 0; i < icons.Num(); i++) {
+			for (int k = 0; k < icons[i]->assets.Num(); k++) {
+				//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "all  : "+ icons[i]->assets[k]->AssetName.ToString());
+			}
 		}
-		iconsCount++;
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("failed to mount pak file"));
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "failed to mount pak file");
+	}
+	iconsCount++;
 	return output;
 }
 
@@ -510,6 +509,7 @@ void ADLCLoader::WriteStringToFile(FString filepath, FString inputString, bool& 
 }
 
 void ADLCLoader::initIconsHitbox() {
+	printString("initIconsHitbox");
 	for (int i = 0; i < icons.Num(); i++) {
 		icons[i]->hitboxInit();
 	}
@@ -518,7 +518,7 @@ void ADLCLoader::initIconsHitbox() {
 void ADLCLoader::drawHitbox(TArray<FVector> points, FLinearColor color, float thickness) {
 	lineComponent = this->GetWorld()->PersistentLineBatcher;
 	float lifetime = 10000000;
-
+	printString("drawing");
 	TArray<FBatchedLine> lines;
 	for (int i = 0; i < 4; i++) {
 		FBatchedLine line;
@@ -534,6 +534,7 @@ void ADLCLoader::drawHitbox(TArray<FVector> points, FLinearColor color, float th
 }
 
 TArray<FVector> ADLCLoader::getCorners(FVector center, FVector Extent) {
+	printString("getCorners");
 	TArray<FVector> corners;
 
 	corners.Add(center + FVector(Extent.X, Extent.Y, Extent.Z));
@@ -583,6 +584,8 @@ void  ADLCLoader::printString(FString input) {
 }
 
 TArray<Aicon*> ADLCLoader::getIcons() {
+	printString("getIcons");
+	printString(std::to_string(icons.Num()).c_str());
 	return icons;
 }
 
@@ -611,6 +614,7 @@ void ADLCLoader::setIconsHttp() {
 }
 
 void ADLCLoader::addFilteredIcon(Aicon* icon) {
+	printString("addFilteredIcon");
 	filteredIcons.Add(icon);
 }
 

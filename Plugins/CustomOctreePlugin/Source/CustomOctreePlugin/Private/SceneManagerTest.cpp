@@ -1307,8 +1307,8 @@ void ASceneManagerTest::DrawSphere(std::vector<glm::vec4> NewPositions) {
 			continue;
 
 		FTransform InstanceTransform;
-		InstanceTransform.SetLocation(glm2FVec(Position) + Center);
-		InstanceTransform.SetScale3D(FVector(SphereScale * MyScale)); // Scale down the sphere
+		InstanceTransform.SetLocation(glm2FVec(Position) * 100.f * MyScale + Center);
+		InstanceTransform.SetScale3D(FVector(SphereScale * MyScale));
 		InstancedMeshComponent->AddInstance(InstanceTransform);
 	}
 }
