@@ -19,9 +19,9 @@ public class arcgisTest : ModuleRules
 			"Json", 
 			"JsonUtilities" ,
 			"HTTP",
-			"XmlParser", 
-			"AssetTools", 
-			"UnrealEd"
+			"XmlParser",
+			//"AssetTools", 
+			//"UnrealEd"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

@@ -81,7 +81,8 @@ public class CustomOctreePlugin : ModuleRules
         {
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "thirdparty", "lib", "zfp.lib"));
             PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "thirdparty", "lib", "assimp-vc141-mt.lib"));
-            //RuntimeDependencies.Add(Path.Combine(ModuleDirectory, "thirdparty", "dll", "assimp-vc141-mt.dll"));
-        }
-    }
+			RuntimeDependencies.Add(Path.Combine(ModuleDirectory, "thirdparty", "dll", "assimp-vc141-mt.dll"));
+			RuntimeDependencies.Add(Path.Combine(ModuleDirectory, "thirdparty", "dll", "zfp.dll"));
+		}
+	}
 }

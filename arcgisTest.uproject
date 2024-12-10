@@ -34,7 +34,7 @@
 			"Enabled": true
 		},
 		{
-			"Name": "CityGISUtil",
+			"Name": "CaptureSubsystem",
 			"Enabled": true
 		},
 		{

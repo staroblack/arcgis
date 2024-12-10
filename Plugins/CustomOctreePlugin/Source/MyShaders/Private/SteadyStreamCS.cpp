@@ -11,9 +11,9 @@
 #include "RenderGraphBuilder.h"
 #include "RHIDefinitions.h"
 
-#define THREADGROUPSIZE_X 16
-#define THREADGROUPSIZE_Y 1
-#define THREADGROUPSIZE_Z 1
+//#define THREADGROUPSIZE_X 16
+//#define THREADGROUPSIZE_Y 1
+//#define THREADGROUPSIZE_Z 1
 
 class FSteadyStreamCS : public FGlobalShader
 {
@@ -59,9 +59,9 @@ public:
 	{
 		FGlobalShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
 
-		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_X"), THREADGROUPSIZE_X);
-		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Y"), THREADGROUPSIZE_Y);
-		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), THREADGROUPSIZE_Z);
+		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_X"), 16);
+		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Y"), 1);
+		OutEnvironment.SetDefine(TEXT("THREADGROUPSIZE_Z"), 1);
 	}
 
 	static void Execute(FRHICommandListImmediate& RHICmdList, TArray<int> index_tbo_data, TArray<int> status_tbo_data, TArray<FVector3f> vel_tbo_data, TArray<float> pre_tbo_data, ASceneManagerTest::FStreamLineParameters& params)
