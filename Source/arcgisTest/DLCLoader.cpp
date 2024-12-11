@@ -177,11 +177,13 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 				}
 			}
 
+			bool check_json = false;
 			// scan filenames for descriptor
 			for (FString& filename : filenames) {
-
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, filename);
 				// load descriptor from json
 				if (filename.Contains(".json")) {
+					check_json = true;
 					bOutSuccess = true;
 					output = ReadStructFromJsonFile(filename, bOutSuccess, OutInfoMessage);
 
@@ -209,12 +211,12 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 					//this->m_status = m_E_STATUS::READY;
 					break;
 				}
-				else {
-					UE_LOG(LogTemp, Warning, TEXT("no json"));
-					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "no json");
+			}
+			if (!check_json) {
+				UE_LOG(LogTemp, Warning, TEXT("no json"));
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "no json");
 
-					bOutSuccess = false;
-				}
+				bOutSuccess = false;
 			}
 		}
 			
@@ -510,6 +512,7 @@ void ADLCLoader::initIconsHitbox() {
 	for (int i = 0; i < icons.Num(); i++) {
 		icons[i]->hitboxInit();
 	}
+	printString("OverIconsHitbox");
 }
 
 void ADLCLoader::drawHitbox(TArray<FVector> points, FLinearColor color, float thickness) {
