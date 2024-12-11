@@ -1,8 +1,10 @@
 @echo off
 REM Define source and destination directories
-SET source_testpak="D:\AR\arcgis\testpak"
-SET source_grid="D:\AR\arcgis\StreamDatas\grid11_collection"
-SET destination="D:\AR\Windows\arcgisTest"
+SET source_testpak="D:\graphic\arcgisTest\arcgis\testpak"
+SET source_grid="D:\graphic\arcgisTest\arcgis\StreamDatas\grid11_collection"
+SET destination="C:\Users\User\Desktop\Windows\arcgisTest"
+SET source_dll="D:\graphic\arcgisTest\arcgis\Plugins\CustomOctreePlugin\Source\CustomOctreePlugin\thirdparty\dll"
+SET destination_dll="C:\Users\User\Desktop\Windows\arcgisTest\Binaries\Win64"
 
 REM Check and copy the 'testpak' folder
 IF NOT EXIST %source_testpak% (
@@ -30,6 +32,18 @@ IF NOT EXIST %source_grid% (
         echo 'grid11_collection' copied successfully to 'StreamDatas'.
     ) ELSE (
         echo Failed to copy 'grid11_collection'.
+    )
+)
+
+REM Check and move DLL files to the specified directory
+IF NOT EXIST %source_dll% (
+    echo Source DLL folder does not exist.
+) ELSE (
+    move "%source_dll%\*" %destination_dll%
+    IF %ERRORLEVEL% EQU 0 (
+        echo DLL files moved successfully to '%destination_dll%'.
+    ) ELSE (
+        echo Failed to move DLL files.
     )
 )
 

@@ -64,10 +64,10 @@ void Aicon::hitboxComplete()
 		hitboxCube->SetVisibility(true, true);
 		hitboxCube->SetCollisionObjectType(ECC_GameTraceChannel12);
 
-		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Success!");
+		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Success!");
 	}
 	else {
-		//GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Failed!");
+		GEngine->AddOnScreenDebugMessage(-1, 150.0f, FColor::Green, "[ModelInfo::Complete] Failed!");
 	}
 }
 
@@ -146,12 +146,16 @@ TArray<float> Aicon::getSimArea(FString line) {
 	TArray<float> result;
 	size_t pos = 0;
 	std::string token;
-	while ((pos = stringLine.find(delimiter)) != std::string::npos) {
-		token = stringLine.substr(0, pos);
-		result.Add(std::stof(token));
-		stringLine.erase(0, pos + delimiter.length());
-	}
-	result.Add(std::stof(stringLine));
+
+
+	//while ((pos = stringLine.find(delimiter)) != std::string::npos) {
+	//	token = stringLine.substr(0, pos);
+	//	result.Add(std::stof(token));
+	//	stringLine.erase(0, pos + delimiter.length());
+	//}
+	//result.Add(std::stof(stringLine));
+	result.Add(100);
+	result.Add(100);
 	return result;
 }
 
