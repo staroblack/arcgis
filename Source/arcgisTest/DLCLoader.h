@@ -145,7 +145,7 @@ public:
 	TArray<FString> LoadAllPak(FString pakFolder, bool& bOutSuccess, FString& OutInfoMessage);
 
 	UFUNCTION(BlueprintCallable)
-	FinputStruct LoadPak(FString pakFilePath, bool loading  ,bool& bOutSuccess, FString& OutInfoMessage);
+	FinputStruct LoadPak(FString pakFilePath, FString pakname, bool loading  ,bool& bOutSuccess, FString& OutInfoMessage);
 
 	static TSharedPtr<FJsonObject> ReadJson(FString JsonFilePath, bool& bOutSuccess, FString& OutInfoMessage);
 

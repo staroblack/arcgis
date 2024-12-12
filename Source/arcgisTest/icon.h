@@ -66,6 +66,7 @@ public:
 	ULineBatchComponent* lineComponent = NULL;
 
 	FString xmlString;
+	FString pakname;
 
 protected:
 
@@ -104,6 +105,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "pakloading")
 	TArray<float> getSimArea(FString line);
 
+	UFUNCTION(BlueprintCallable, Category = "pakloading")
+	FString getPakname();
+
 	void sendHttpRequest();
 	void OnRespondseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bConnectedSuccessfully);
 
@@ -115,4 +119,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "town")
 	TArray<FString> getTown();
+
+
 };

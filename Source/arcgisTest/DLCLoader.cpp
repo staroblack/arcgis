@@ -63,10 +63,17 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 
 	for (auto& file : files) {
 		count++;
+		FString pakname = file;
+		std::string subname = std::string(TCHAR_TO_UTF8(*pakname));
+		for (int i = 0; i < 4; i++) {
+			subname.pop_back();
+		}
+		pakname = UTF8_TO_TCHAR(subname.c_str());
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, pakname);
 		file = absFolderPath + "/" + file;
 		paths.Add(file); 
-		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, file);
-		LoadPak(file, 1, bOutSuccess, OutInfoMessage);
+		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, file);
+		LoadPak(file, pakname, 1, bOutSuccess, OutInfoMessage);
 	}
 
 	if (count == 0) {
@@ -75,7 +82,7 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 	return files;
 }
 
-FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSuccess, FString& OutInfoMessage)
+FinputStruct ADLCLoader::LoadPak(FString pakFilePath, FString pakname, bool loading, bool& bOutSuccess, FString& OutInfoMessage)
 {
 	//UObjectLibrary* tempLibrary = UObjectLibrary::CreateLibrary(nullptr, false, GIsEditor);
 	//tempLibrary->bRecursivePaths = true;
@@ -98,7 +105,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 		// FPlatformFileManager::Get().SetPlatformFile(*ADLCLoader::oldPlatform);
 	}
 	UE_LOG(LogTemp, Warning, TEXT("pak file: %s founded"), *pakFilePath);
-	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
+	//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "pak file find : " + pakFilePath);
 
 	// prepare mount point
 	FPakFile* pakFile = new FPakFile(pakPlatform, *pakFilePath, false);
@@ -160,6 +167,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 			//test spawninfo
 			FActorSpawnParameters spawnInfo;
 			Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
+			tempActor->pakname = pakname;
 			tempActor->index = iconsCount;
 			icons.Add(tempActor);
 			//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "spawn");
@@ -214,7 +222,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 				}
 				else {
 					UE_LOG(LogTemp, Warning, TEXT("no json"));
-					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "no json");
+					//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "no json");
 
 					bOutSuccess = false;
 				}
@@ -509,7 +517,7 @@ void ADLCLoader::WriteStringToFile(FString filepath, FString inputString, bool& 
 }
 
 void ADLCLoader::initIconsHitbox() {
-	printString("initIconsHitbox");
+	//printString("initIconsHitbox");
 	for (int i = 0; i < icons.Num(); i++) {
 		icons[i]->hitboxInit();
 	}
@@ -518,7 +526,7 @@ void ADLCLoader::initIconsHitbox() {
 void ADLCLoader::drawHitbox(TArray<FVector> points, FLinearColor color, float thickness) {
 	lineComponent = this->GetWorld()->PersistentLineBatcher;
 	float lifetime = 10000000;
-	printString("drawing");
+	//printString("drawing");
 	TArray<FBatchedLine> lines;
 	for (int i = 0; i < 4; i++) {
 		FBatchedLine line;
@@ -534,7 +542,7 @@ void ADLCLoader::drawHitbox(TArray<FVector> points, FLinearColor color, float th
 }
 
 TArray<FVector> ADLCLoader::getCorners(FVector center, FVector Extent) {
-	printString("getCorners");
+	//printString("getCorners");
 	TArray<FVector> corners;
 
 	corners.Add(center + FVector(Extent.X, Extent.Y, Extent.Z));
@@ -584,8 +592,8 @@ void  ADLCLoader::printString(FString input) {
 }
 
 TArray<Aicon*> ADLCLoader::getIcons() {
-	printString("getIcons");
-	printString(std::to_string(icons.Num()).c_str());
+	//printString("getIcons");
+	//printString(std::to_string(icons.Num()).c_str());
 	return icons;
 }
 
@@ -614,7 +622,7 @@ void ADLCLoader::setIconsHttp() {
 }
 
 void ADLCLoader::addFilteredIcon(Aicon* icon) {
-	printString("addFilteredIcon");
+	//printString("addFilteredIcon");
 	filteredIcons.Add(icon);
 }
 

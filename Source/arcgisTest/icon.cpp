@@ -174,3 +174,7 @@ void Aicon::setTown(FString line) {
 TArray<FString> Aicon::getTown() {
 	return overlappedTown;
 }
+
+FString Aicon::getPakname() {
+	return pakname;
+}
