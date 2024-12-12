@@ -147,6 +147,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FinputStruct LoadPak(FString pakFilePath, bool loading  ,bool& bOutSuccess, FString& OutInfoMessage);
 
+	UFUNCTION(BlueprintCallable)
+	FinputStruct LoadFolder(FString folderFilePath, FString gameFolder, bool loading, bool& bOutSuccess, FString& OutInfoMessage);
+
 	static TSharedPtr<FJsonObject> ReadJson(FString JsonFilePath, bool& bOutSuccess, FString& OutInfoMessage);
 
 	static void WriteJson(FString JsonFilePath, TSharedPtr<FJsonObject> JsonObject, bool& bOutSuccess, FString& OutInfoMessage);

@@ -50,7 +50,7 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 {
 	int count = 0;
 
-	FString pakPath = FPaths::Combine(FPaths::ProjectDir(), "testpak");
+	FString pakPath = FPaths::Combine(FPaths::ProjectDir(), "Content/testCase");
 	//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, pakPath);
 	UObjectLibrary* tempLibrary = UObjectLibrary::CreateLibrary(nullptr, false, GIsEditor);
 	tempLibrary->bRecursivePaths = true;
@@ -59,15 +59,33 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 	TArray<FString> files;
 	IFileManager& fileManager = IFileManager::Get();
 	FString absFolderPath = fileManager.ConvertToAbsolutePathForExternalAppForRead(*pakPath);
-	fileManager.FindFiles(files, *pakPath, TEXT("pak"));
+	FString allFolderPath = absFolderPath;
 
-	for (auto& file : files) {
+
+	FPaths::NormalizeDirectoryName(absFolderPath);
+	IFileManager& FileManager = IFileManager::Get();
+	FJsonSerializableArray Folders;
+	allFolderPath = absFolderPath / "*";
+	FileManager.FindFiles(Folders, *allFolderPath, false, true);
+
+
+	for (int i = 0; i < Folders.Num(); i++)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, Folders[i]);
+		FString file = absFolderPath + "/" + Folders[i];
+		FString gamefile = "/Game/testCase/";
+		gamefile = gamefile + Folders[i];
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, gamefile);
+		LoadFolder(file, gamefile, 1, bOutSuccess, OutInfoMessage);
+	}
+
+	/*for (auto& file : files) {
 		count++;
 		file = absFolderPath + "/" + file;
 		paths.Add(file); 
 		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, file);
 		LoadPak(file, 1, bOutSuccess, OutInfoMessage);
-	}
+	}*/
 
 	if (count == 0) {
 		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "no pak found at : " + pakPath);
@@ -235,6 +253,104 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 	return output;
 }
 
+FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString gameFolder, bool loading, bool& bOutSuccess, FString& OutInfoMessage) {
+	FinputStruct output;
+	TMap<FString, FAssetData*> assetDataMap;
+	TArray<FString> files, jsonfiles;
+	IFileManager& fileManager = IFileManager::Get();
+	FString absFolderPath = fileManager.ConvertToAbsolutePathForExternalAppForRead(*folderFilePath);
+	fileManager.FindFiles(files, *folderFilePath, TEXT("uasset"));
+	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, files[0]);
+
+
+	FString name = FPaths::ProjectContentDir();
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, name);
+
+	if (loading == 1) {
+		loadLibrary->LoadAssetDataFromPath(gameFolder);
+		loadLibrary->GetAssetDataList(this->assetDatas);
+		int assetcount = 0;
+		for (auto& assetData : assetDatas) {
+			FString tempname = assetData.GetFullName();
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, tempname);
+			assetcount++;
+		}
+		if (assetcount == 0) {
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "noasset");
+		}
+		//test spawninfo
+		FActorSpawnParameters spawnInfo;
+		Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
+		tempActor->index = iconsCount;
+		icons.Add(tempActor);
+		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "spawn");
+
+		for (auto& assetData : assetDatas) {
+			GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "in");
+			assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
+			//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
+			FAssetData* tempAsset = new(FAssetData);
+			*tempAsset = assetData;
+			tempActor->assets.Add(tempAsset);
+			// GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "load in  : " + tempActor->assets[0]->AssetName.ToString());
+			if (loading == 1) {
+				/*ModelInfo* model = new ModelInfo();
+				model->Init(this, &assetData, pakPlatform);
+				model->Load();
+				this->models.Add(model);*/
+			}
+		}
+
+		bool check_json = false;
+		// scan filenames for descriptor
+		fileManager.FindFiles(jsonfiles, *folderFilePath, TEXT("json"));
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, jsonfiles[0]);
+		for (auto filename : jsonfiles) {
+			check_json = true;
+			bOutSuccess = true;
+			output = ReadStructFromJsonFile(folderFilePath + "/" + filename, bOutSuccess, OutInfoMessage);
+
+
+			tempActor->output.caseName = output.caseName;
+			tempActor->output.madeUnit = output.madeUnit;
+			tempActor->output.madePerson = output.madePerson;
+			tempActor->output.uploadDate = output.uploadDate;
+			tempActor->output.modelCity = output.modelCity;
+			tempActor->output.quote = output.quote;
+			tempActor->output.simArea = output.simArea;
+			tempActor->output.simTime = output.simTime;
+			tempActor->output.lat = output.lat;
+			tempActor->output.lon = output.lon;
+
+			//FString fileDir = filename;
+			//FString json;
+			//FFileHelper::LoadFileToString(json, *fileDir);
+			//FJsonDescriptor desc;
+			//FJsonObjectConverter::JsonObjectStringToUStruct<FJsonDescriptor>(json, &desc);
+
+
+			//this->descriptor.Append(this, &desc, &assetDataMap, pakPlatform);
+
+			//this->m_status = m_E_STATUS::READY;
+		}
+		if (!check_json) {
+			UE_LOG(LogTemp, Warning, TEXT("no json"));
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "no json");
+
+			bOutSuccess = false;
+		}
+	}
+
+
+	for (int i = 0; i < icons.Num(); i++) {
+		for (int k = 0; k < icons[i]->assets.Num(); k++) {
+			//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "all  : "+ icons[i]->assets[k]->AssetName.ToString());
+		}
+	}
+	
+	iconsCount++;
+	return output;
+}
 
 TArray<FString> ADLCLoader::getPaths() {
 	return paths;
