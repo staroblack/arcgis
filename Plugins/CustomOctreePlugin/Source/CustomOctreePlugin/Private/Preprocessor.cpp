@@ -210,6 +210,7 @@ void UPreprocessor::StartProcessing() {
 			//}
 		}
 	}
+	UE_LOG(LogTemp, Log, TEXT("Preprocess done"));
 }
 
 bool UPreprocessor::MainProcess() {
@@ -364,13 +365,7 @@ string UPreprocessor::simplifiedPath(string input) {
 
 void UPreprocessor::InitialOctree(string filename, string outputfilename, string streamDataFilename)
 {
-	// init file header
-	_octree.hdr.fileName = streamDataFilename;
-	_octree.hdr.vel = 1;
-	_octree.hdr.pre = 2;
-	_octree.hdr.temp = -1;
-	_octree.hdr.rad = -1;
-
+	UE_LOG(LogTemp, Log, TEXT("InitialOctree"));
 	//if (INPUT_BINARY_FILE)
 	if (binaryInput)
 		_octree.InputPointDataFromBinaryFile(filename);

@@ -355,6 +355,7 @@ public:
 	void UpdateMinMaxValue();
 	void SaveMinMaxValue(string outFolder);
 
+	void ProcessHeader(const string& fileName, fstream& file);
 }; 
 
 #endif // !CUSTOMOCTREEHEADER

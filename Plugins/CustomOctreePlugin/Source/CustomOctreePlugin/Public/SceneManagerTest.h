@@ -142,6 +142,7 @@ public:
 	UProceduralMeshComponent* isosurfacePMC2 = NULL;
 	UProceduralMeshComponent* isosurfacePMC3 = NULL;
 
+	UPROPERTY(BlueprintReadOnly)
 	UPreprocessor* Preprocessor;
 
 protected:

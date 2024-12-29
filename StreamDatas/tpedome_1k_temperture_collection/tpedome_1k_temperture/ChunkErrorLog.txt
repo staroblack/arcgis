@@ -1,60 +1,60 @@
 Level: 0
 Total chunk Count: 1
 Total Vel Count: 89
-Total Pre Count: 115
+Total Pre Count: 116
 Compressed Chunk Count: 1
 No Compressed Chunk Count: 0
 Average bad quantized points count: 0
 Max bad quantized points points count: 0
-Average chunk error: 0.036428
-Max chunk error: 0.036428
+Average chunk error: 0.034839
+Max chunk error: 0.034839
 Level: 1
 Total chunk Count: 8
-Total Vel Count: 480
-Total Pre Count: 1082
+Total Vel Count: 489
+Total Pre Count: 1090
 Compressed Chunk Count: 8
 No Compressed Chunk Count: 0
 Average bad quantized points count: 0
 Max bad quantized points points count: 0
-Average chunk error: 0.0405547
-Max chunk error: 0.0495014
+Average chunk error: 0.0332925
+Max chunk error: 0.0388868
 Level: 2
 Total chunk Count: 64
-Total Vel Count: 2564
-Total Pre Count: 8073
+Total Vel Count: 2566
+Total Pre Count: 8036
 Compressed Chunk Count: 64
 No Compressed Chunk Count: 0
 Average bad quantized points count: 0
 Max bad quantized points points count: 0
-Average chunk error: 0.0372596
-Max chunk error: 0.0549456
+Average chunk error: 0.0334237
+Max chunk error: 0.0437362
 Level: 3
 Total chunk Count: 512
-Total Vel Count: 12427
-Total Pre Count: 63599
+Total Vel Count: 12366
+Total Pre Count: 63692
 Compressed Chunk Count: 512
 No Compressed Chunk Count: 0
 Average bad quantized points count: 0
 Max bad quantized points points count: 0
-Average chunk error: 0.0335416
-Max chunk error: 0.0534494
+Average chunk error: 0.0381021
+Max chunk error: 0.0683542
 Level: 4
 Total chunk Count: 4096
-Total Vel Count: 62259
-Total Pre Count: 486515
+Total Vel Count: 63456
+Total Pre Count: 485904
 Compressed Chunk Count: 4096
 No Compressed Chunk Count: 0
 Average bad quantized points count: 0
 Max bad quantized points points count: 0
-Average chunk error: 0.0328587
-Max chunk error: 0.0618029
+Average chunk error: 0.0382212
+Max chunk error: 0.0768252
 Level: 5
 Total chunk Count: 32768
-Total Vel Count: 294232
-Total Pre Count: 3265743
+Total Vel Count: 285120
+Total Pre Count: 3263421
 Compressed Chunk Count: 32768
 No Compressed Chunk Count: 0
-Average bad quantized points count: 0.00314331
+Average bad quantized points count: 0.00311279
 Max bad quantized points points count: 29
-Average chunk error: 0.0349652
-Max chunk error: 0.0842055
+Average chunk error: 0.027489
+Max chunk error: 0.0683249

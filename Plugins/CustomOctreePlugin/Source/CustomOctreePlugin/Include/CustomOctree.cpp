@@ -282,58 +282,62 @@ CustomPoint* CustomOctree::GetPointRef(vector<CustomPoint>& cpoints, int i, int 
 }
 
 void CustomOctree::FillPointDataByValueIndex(CustomPoint& _point, int& valueIndex, string& value) {
-	switch (valueIndex)
-	{
-	case 0:
-		_point.SetX(stof(value));
-		break;
-	case 1:
-		_point.SetY(stof(value));
-		break;
-	case 2:
-		_point.SetZ(stof(value));
-		break;
-	case 3:
-		_point.SetXVel(stof(value));
-		break;
-	case 4:
-		_point.SetYVel(stof(value));
-		break;
-	case 5:
-		_point.SetZVel(stof(value));
-		break;
-	case 6:
-		_point.SetPressure(stof(value));
-		break;
+	if (hdr.temp == -1) {
+		switch (valueIndex)
+		{
+		case 0:
+			_point.SetX(stof(value));
+			break;
+		case 1:
+			_point.SetY(stof(value));
+			break;
+		case 2:
+			_point.SetZ(stof(value));
+			break;
+		case 3:
+			_point.SetXVel(stof(value));
+			break;
+		case 4:
+			_point.SetYVel(stof(value));
+			break;
+		case 5:
+			_point.SetZVel(stof(value));
+			break;
+		case 6:
+			_point.SetPressure(stof(value));
+			break;
+		}
 	}
+	else {
+		switch (valueIndex)
+		{
+		case 0:
+			_point.SetX(stof(value));
+			break;
+		case 1:
+			_point.SetY(stof(value));
+			break;
+		case 2:
+			_point.SetZ(stof(value));
+			break;
+		case 3:
+			_point.SetTemperature(stof(value));
+			break;
+		case 4:
+			_point.SetXVel(stof(value));
+			break;
+		case 5:
+			_point.SetYVel(stof(value));
+			break;
+		case 6:
+			_point.SetZVel(stof(value));
+			break;
+		case 7:
+			_point.SetPressure(stof(value));
+			break;
 
-	/*switch (valueIndex)
-	{
-	case 0:
-		_point.SetX(stof(value));
-		break;
-	case 1:
-		_point.SetY(stof(value));
-		break;
-	case 2:
-		_point.SetZ(stof(value));
-		break;
-	case 3:
-		_point.SetTemperature(stof(value));
-		break;
-	case 4:
-		_point.SetPressure(stof(value));
-		break;
-	case 5:
-		_point.SetXVel(stof(value));
-		break;
-	case 6:
-		_point.SetYVel(stof(value));
-		break;
-	case 7:
-		_point.SetZVel(stof(value));
-		break;
-	}*/
+		}
+	}
 }
 
 CustomChunk* CustomOctree::GetRoot()
@@ -410,6 +414,94 @@ glm::vec3 CustomOctree::GetMax()
 	return max;
 }
 
+void CustomOctree::ProcessHeader(const string& filePath, fstream& file) {
+	size_t lastBackslash = filePath.find_last_of("\\");
+	std::string fileNameWithExtension = filePath.substr(lastBackslash + 1);
+	size_t lastDot = fileNameWithExtension.find_last_of(".");
+	std::string fileName = fileNameWithExtension.substr(0, lastDot);
+
+	// init file header
+	hdr.fileName = fileName;
+	hdr.vel = -1;
+	hdr.pre = -1;
+	hdr.temp = -1;
+	hdr.rad = -1;
+
+	// process data header
+	std::vector<std::string> variables;
+	std::string line;
+	bool titleFound = false;
+	bool readingVariables = false;
+	int lineCount = 0;
+
+	// Save the initial position of the file pointer
+	std::streampos initialPosition = file.tellg();
+
+	while (std::getline(file, line)) {
+		lineCount++;
+
+		// Check for TITLE within the first 10 lines
+		if (!titleFound && line.find("TITLE") != std::string::npos) {
+			titleFound = true;
+		}
+
+		if (lineCount > 10 && !titleFound) {
+			file.seekg(initialPosition, std::ios::beg); // Reset file pointer to the beginning
+			break;
+		}
+
+		// Trim whitespace from the line (optional for cleaner processing)
+		line.erase(0, line.find_first_not_of(" \t"));
+		line.erase(line.find_last_not_of(" \t") + 1);
+
+		// Check if the line starts with "VARIABLES"
+		if (line.find("VARIABLES") != std::string::npos) {
+			readingVariables = true;
+		}
+
+		// Collect VARIABLE names
+		if (readingVariables) {
+			if (line.find("ZONE") != std::string::npos) {
+				readingVariables = false; // Stop collecting variables when "ZONE" is encountered
+			}
+			else {
+				// Parse and store variable names
+				std::istringstream iss(line);
+				std::string variable;
+				while (std::getline(iss, variable, '"')) {
+					if (!variable.empty() && variable != " " && variable != "\n") {
+						variables.push_back(variable);
+					}
+				}
+				continue;
+			}
+		}
+
+		// Stop processing when encountering "DT="
+		if (line.find("DT=") != std::string::npos) {
+			break;
+		}
+	}
+
+	if (!titleFound) {
+		//std::cerr << "Error: TITLE was not found in the file.\n";
+		UE_LOG(LogTemp, Log, TEXT("Error: TITLE was not found in the file."));
+
+		hdr.vel = 1;
+		hdr.pre = 2;
+		return;
+	}
+
+	for (int i = 0; i < variables.size(); i++) {
+		if (variables[i] == "Pressure")
+			hdr.pre = 2;
+		else if (variables[i] == "U")
+			hdr.vel = 1;
+		else if (variables[i] == "Temperature")
+			hdr.temp = 3;
+	}
+}
+
 void CustomOctree::InputPointDataFromBinaryFile(string s) {
 	//SimpleTimer timer;
 	//timer.start();
@@ -459,9 +551,8 @@ void CustomOctree::InputPointDataFromTextFile(string s) {
 	int valueIndex = 0;
 	CustomPoint _point;
 
-	/*for (int i = 0; i < 14; i++) {
-		getline(file, line);
-	}*/
+	// process header
+	ProcessHeader(s, file);
 
 	while (getline(file, line))
 	{
@@ -496,6 +587,8 @@ void CustomOctree::InputPointDataFromTextFile(string s) {
 }
 
 void CustomOctree::CalculatePreprocess() {
+	//UE_LOG(LogTemp, Log, TEXT("CalculatePreprocess"));
+
 	//spacing min max
 	FOR_3 pcCoordSet[i].clear();
 	for (int i = 0; i < points.size(); i++)
@@ -557,6 +650,8 @@ void CustomOctree::CalculatePreprocess() {
 }
 
 void CustomOctree::ResampleStructuredGrid(unibn::Octree<CustomPoint>& _OctreeSearch, tdogl::Mesh* modelMesh) {
+	//UE_LOG(LogTemp, Log, TEXT("ResampleStructuredGrid"));
+
 	if (preprocessed) {
 		sampledPoints.clear();
 		vector<bool> invalidPoint;
@@ -1032,6 +1127,8 @@ pair<uint64_t, float> CustomOctree::CompressToValueIndex(const vector<T1>& targe
 }
 
 void CustomOctree::SequentialReadStructuredGridAndMergeToFile(string outFolder, string filename, bool isBaseFile) {
+	//UE_LOG(LogTemp, Log, TEXT("SequentialReadStructuredGridAndMergeToFile"));
+
 	//SimpleTimer timer;
 
 	size_t pos = filename.find("COT");
