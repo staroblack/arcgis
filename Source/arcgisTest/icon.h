@@ -66,6 +66,7 @@ public:
 	ULineBatchComponent* lineComponent = NULL;
 
 	FString xmlString;
+	FString modelPath;
 
 protected:
 
@@ -115,4 +116,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "town")
 	TArray<FString> getTown();
+
+	UFUNCTION(BlueprintCallable, Category = "model loading")
+	UStaticMeshComponent* createMeshComponent();
+
+	UFUNCTION(BlueprintCallable, Category = "model loading")
+	FString getModelPath();
 };

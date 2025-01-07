@@ -4,6 +4,9 @@
 #include "DLCLoader.h"
 #include "IPlatformFilePak.h"
 #include "Runtime/Core/Public/HAL/PlatformFileManager.h"
+#include "MeshDescription.h"
+#include <ProceduralMeshConversion.h>
+#include "StaticMeshDescription.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "JsonObjectConverter.h"
 #include "Engine/EngineTypes.h"
@@ -256,7 +259,7 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString gameFolder, bool loading, bool& bOutSuccess, FString& OutInfoMessage) {
 	FinputStruct output;
 	TMap<FString, FAssetData*> assetDataMap;
-	TArray<FString> files, jsonfiles;
+	TArray<FString> files, jsonfiles, objfiles;
 	IFileManager& fileManager = IFileManager::Get();
 	FString absFolderPath = fileManager.ConvertToAbsolutePathForExternalAppForRead(*folderFilePath);
 	fileManager.FindFiles(files, *folderFilePath, TEXT("uasset"));
@@ -301,10 +304,11 @@ FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString gameFolder, 
 			}
 		}
 
+		//尋找json檔並讀取檔案
 		bool check_json = false;
 		// scan filenames for descriptor
 		fileManager.FindFiles(jsonfiles, *folderFilePath, TEXT("json"));
-		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, jsonfiles[0]);
+		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, jsonfiles[0]);
 		for (auto filename : jsonfiles) {
 			check_json = true;
 			bOutSuccess = true;
@@ -333,15 +337,33 @@ FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString gameFolder, 
 
 			//this->m_status = m_E_STATUS::READY;
 		}
-		if (!check_json) {
-			UE_LOG(LogTemp, Warning, TEXT("no json"));
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "no json");
 
-			bOutSuccess = false;
+		//尋找obj檔並記錄檔名
+		bool check_obj = false;
+		fileManager.FindFiles(objfiles, *folderFilePath, TEXT("obj"));
+		for (auto filename : objfiles) {
+			check_obj = true;
+			bOutSuccess = true;
+			output = ReadStructFromJsonFile(folderFilePath + "/" + filename, bOutSuccess, OutInfoMessage);
+
+			tempActor->modelPath = folderFilePath + "/" + filename;
+		}
+
+		//若其中一項沒有就失敗
+		if (!check_obj || !check_json) {
+			if (!check_obj) {
+				UE_LOG(LogTemp, Warning, TEXT("no obj"));
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "no obj");
+				bOutSuccess = false;
+			}
+			if(!check_json) {
+				UE_LOG(LogTemp, Warning, TEXT("no json"));
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "no json");
+				bOutSuccess = false;
+			}
+			
 		}
 	}
-
-
 	for (int i = 0; i < icons.Num(); i++) {
 		for (int k = 0; k < icons[i]->assets.Num(); k++) {
 			//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "all  : "+ icons[i]->assets[k]->AssetName.ToString());
@@ -739,4 +761,55 @@ void ADLCLoader::clearFilteredIcon() {
 
 TArray<Aicon*> ADLCLoader::getFilteredIcon() {
 	return filteredIcons;
+}
+
+void ADLCLoader::PopulateStaticMeshFromPMC(UProceduralMeshComponent* ProceduralMesh, UStaticMeshComponent* StaticMeshComponentToPopulate)
+{
+	if (IsValid(ProceduralMesh) && IsValid(StaticMeshComponentToPopulate))
+	{
+		UProceduralMeshComponent* procmesh = ProceduralMesh;
+
+		FName procmeshname = FName(procmesh->GetName() + "_Static");
+
+		UStaticMesh* NewStaticMesh = NewObject<UStaticMesh>(GetTransientPackage(), procmeshname, EObjectFlags::RF_Transient);
+		NewStaticMesh->bAllowCPUAccess = true;
+		NewStaticMesh->NeverStream = true;
+		NewStaticMesh->InitResources();
+		NewStaticMesh->SetLightingGuid();
+
+		FMeshDescription PMC_Description = BuildMeshDescription(procmesh);
+		UStaticMeshDescription* SM_Description = NewStaticMesh->CreateStaticMeshDescription();
+		SM_Description->SetMeshDescription(PMC_Description);
+		NewStaticMesh->BuildFromStaticMeshDescriptions({ SM_Description }, false);
+
+		// Collision
+		NewStaticMesh->CalculateExtendedBounds();
+		NewStaticMesh->SetBodySetup(procmesh->ProcMeshBodySetup);
+
+
+#if WITH_EDITOR
+
+		NewStaticMesh->PostEditChange();
+
+#endif
+		NewStaticMesh->MarkPackageDirty();
+
+		if (IsValid(NewStaticMesh))
+		{
+			StaticMeshComponentToPopulate->SetStaticMesh(NewStaticMesh);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("RuntimeStaticMeshImporter -> CreateStaticMeshFromData -> New static mesh invalid!"));
+		}
+	}
+	else if (!IsValid(ProceduralMesh))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RuntimeStaticMeshImporter -> CreateStaticMeshFromData -> Need valid PMC reference!"));
+	}
+	else if (!IsValid(StaticMeshComponentToPopulate))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RuntimeStaticMeshImporter -> CreateStaticMeshFromData -> Need valid static mesh reference!"));
+	}
+	return;
 }

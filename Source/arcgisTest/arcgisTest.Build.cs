@@ -20,6 +20,12 @@ public class arcgisTest : ModuleRules
 			"JsonUtilities" ,
 			"HTTP",
 			"XmlParser",
+            "ProceduralMeshComponent",
+            "RHI",
+            "RenderCore",
+			"UMG",
+            "StaticMeshDescription",
+            "MeshDescription",
 			//"AssetTools", 
 			//"UnrealEd"
         });

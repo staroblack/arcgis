@@ -112,6 +112,19 @@ void Aicon::complete()
 
 }
 
+UStaticMeshComponent* Aicon::createMeshComponent() {
+	AActor* actor = Cast<AActor>(this);
+	meshComponent = NewObject<UStaticMeshComponent>(this);
+	actor->AddInstanceComponent(meshComponent);
+	meshComponent->OnComponentCreated();
+	meshComponent->RegisterComponent();
+	meshComponent->SetWorldLocation(FVector(0, 0, 0));
+	meshComponent->SetWorldScale3D(FVector(0.01658, 0.01658, 0.01658));
+	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	return meshComponent;
+}
+
 void Aicon::unloadModel() {
 	 meshComponent = NewObject<UStaticMeshComponent>(this);
 }
@@ -193,4 +206,8 @@ void Aicon::setTown(FString line) {
 
 TArray<FString> Aicon::getTown() {
 	return overlappedTown;
+}
+
+FString Aicon::getModelPath() {
+	return modelPath;
 }

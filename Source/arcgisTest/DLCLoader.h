@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "D:\ue\UE_5.3\Engine\Plugins\Runtime\ProceduralMeshComponent\Source\ProceduralMeshComponent\Public\ProceduralMeshComponent.h"
 #include "Runtime/Engine/Classes/Engine/AssetManager.h"
 #include "Engine/ObjectLibrary.h"
 #include "Engine/StreamableManager.h"
@@ -218,6 +219,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "icon filtering")
 	TArray<Aicon*> getFilteredIcon();
 
+	UFUNCTION(BlueprintCallable, Category = "Runtime Static Mesh importer")
+	static void PopulateStaticMeshFromPMC(UProceduralMeshComponent* ProceduralMesh, UStaticMeshComponent* StaticMeshComponentToPopulate);
 
 public:
 	static IPlatformFile* oldPlatform;

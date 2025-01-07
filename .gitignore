@@ -15,6 +15,7 @@ Plugins/PakLoader/Binaries/*
 Plugins/PakLoader/Intermediate/*
 Plugins/CityGISUtil/*
 Plugins/UE_CaptureSubsystem-master/*
+Plugins/RuntimeMeshLoader-main/*
 ThirdParty/*
 unrealPak/*
 StreamDatas/grid11_collection/*
