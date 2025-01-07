@@ -119,7 +119,8 @@ UStaticMeshComponent* Aicon::createMeshComponent() {
 	meshComponent->OnComponentCreated();
 	meshComponent->RegisterComponent();
 	meshComponent->SetWorldLocation(FVector(0, 0, 0));
-	meshComponent->SetWorldScale3D(FVector(0.01658, 0.01658, 0.01658));
+	meshComponent->SetWorldRotation(FQuat(180, 0, 0, 0));
+	meshComponent->SetWorldScale3D(FVector(1.65, 1.65, 1.65));
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	return meshComponent;

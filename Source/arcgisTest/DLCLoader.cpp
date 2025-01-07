@@ -73,13 +73,17 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 
 
 	for (int i = 0; i < Folders.Num(); i++)
-	{
+	{	
+		count++;
+		FString folderName;
 		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, Folders[i]);
 		FString file = absFolderPath + "/" + Folders[i];
+		FString folderName;
 		FString gamefile = "/Game/testCase/";
 		gamefile = gamefile + Folders[i];
 		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, gamefile);
 		LoadFolder(file, gamefile, 1, bOutSuccess, OutInfoMessage);
+		
 	}
 
 	/*for (auto& file : files) {
@@ -91,7 +95,7 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 	}*/
 
 	if (count == 0) {
-		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "no pak found at : " + pakPath);
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "no file found at : " + pakPath);
 	}
 	return files;
 }
@@ -256,53 +260,23 @@ FinputStruct ADLCLoader::LoadPak(FString pakFilePath, bool loading, bool& bOutSu
 	return output;
 }
 
-FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString gameFolder, bool loading, bool& bOutSuccess, FString& OutInfoMessage) {
+FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString folderName, bool loading, bool& bOutSuccess, FString& OutInfoMessage) {
 	FinputStruct output;
 	TMap<FString, FAssetData*> assetDataMap;
 	TArray<FString> files, jsonfiles, objfiles;
 	IFileManager& fileManager = IFileManager::Get();
 	FString absFolderPath = fileManager.ConvertToAbsolutePathForExternalAppForRead(*folderFilePath);
-	fileManager.FindFiles(files, *folderFilePath, TEXT("uasset"));
-	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, files[0]);
+	//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, files[0]);
 
 
 	FString name = FPaths::ProjectContentDir();
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, name);
+	//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, name);
 
 	if (loading == 1) {
-		loadLibrary->LoadAssetDataFromPath(gameFolder);
-		loadLibrary->GetAssetDataList(this->assetDatas);
-		int assetcount = 0;
-		for (auto& assetData : assetDatas) {
-			FString tempname = assetData.GetFullName();
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, tempname);
-			assetcount++;
-		}
-		if (assetcount == 0) {
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "noasset");
-		}
-		//test spawninfo
 		FActorSpawnParameters spawnInfo;
 		Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
 		tempActor->index = iconsCount;
 		icons.Add(tempActor);
-		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "spawn");
-
-		for (auto& assetData : assetDatas) {
-			GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, "in");
-			assetDataMap.Add(assetData.AssetName.ToString(), &assetData);
-			//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, "assetData.AssetName : " + assetData.AssetName.ToString());
-			FAssetData* tempAsset = new(FAssetData);
-			*tempAsset = assetData;
-			tempActor->assets.Add(tempAsset);
-			// GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, "load in  : " + tempActor->assets[0]->AssetName.ToString());
-			if (loading == 1) {
-				/*ModelInfo* model = new ModelInfo();
-				model->Init(this, &assetData, pakPlatform);
-				model->Load();
-				this->models.Add(model);*/
-			}
-		}
 
 		//´M§äjsonÀÉ¨ÃÅª¨úÀÉ®×
 		bool check_json = false;
