@@ -3099,7 +3099,6 @@ void CustomOctree::SetupInfo(FString s, float scale) {
 		fs >> minQCritirea >> maxQCritirea;
 		if (hdr.temp != -1) {
 			fs >> minTemperature >> maxTemperature;
-			minTemperature = 0;
 		}
 
 		fs.close();

@@ -306,9 +306,9 @@ public:
 	float QCritireaThreshold2 = 100;
 	float vorticityThreshold = 30;
 
-	float tempThreshold = 290;
-	float tempThreshold2 = 200;
-	float tempThreshold3 = 200;
+	float tempThreshold = 200;
+	float tempThreshold2 = 0;
+	float tempThreshold3 = 0;
 
 	vector<float> isosurfacePointList;
 	vector<uint32> isosurfaceIndexList;
