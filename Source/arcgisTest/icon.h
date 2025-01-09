@@ -66,6 +66,7 @@ public:
 	ULineBatchComponent* lineComponent = NULL;
 
 	FString xmlString;
+	FString folderName;
 	FString modelPath;
 
 protected:
@@ -121,5 +122,11 @@ public:
 	UStaticMeshComponent* createMeshComponent();
 
 	UFUNCTION(BlueprintCallable, Category = "model loading")
+	UStaticMeshComponent* createHitbox();
+
+	UFUNCTION(BlueprintCallable, Category = "model loading")
 	FString getModelPath();
+
+	UFUNCTION(BlueprintCallable, Category = "model loading")
+	FString getFolderName();
 };

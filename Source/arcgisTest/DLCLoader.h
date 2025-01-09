@@ -130,6 +130,8 @@ private:
 	ULineBatchComponent* lineComponent = NULL;
 	TArray<FString> paths;
 
+	UStaticMeshComponent* cube;
+
 public:	
 	// Sets default values for this actor's properties
 	ADLCLoader();
@@ -149,7 +151,7 @@ public:
 	FinputStruct LoadPak(FString pakFilePath, bool loading  ,bool& bOutSuccess, FString& OutInfoMessage);
 
 	UFUNCTION(BlueprintCallable)
-	FinputStruct LoadFolder(FString folderFilePath, FString gameFolder, bool loading, bool& bOutSuccess, FString& OutInfoMessage);
+	FinputStruct LoadFolder(FString folderFilePath, FString folderName, bool loading, bool& bOutSuccess, FString& OutInfoMessage);
 
 	static TSharedPtr<FJsonObject> ReadJson(FString JsonFilePath, bool& bOutSuccess, FString& OutInfoMessage);
 
@@ -221,6 +223,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Runtime Static Mesh importer")
 	static void PopulateStaticMeshFromPMC(UProceduralMeshComponent* ProceduralMesh, UStaticMeshComponent* StaticMeshComponentToPopulate);
+
+	UFUNCTION(BlueprintCallable, Category = "cube")
+	UStaticMeshComponent* getCube();
+
+	UFUNCTION(BlueprintCallable, Category = "cube")
+	FString getCubePath();
 
 public:
 	static IPlatformFile* oldPlatform;

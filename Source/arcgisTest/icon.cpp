@@ -112,6 +112,20 @@ void Aicon::complete()
 
 }
 
+UStaticMeshComponent* Aicon::createHitbox() {
+	AActor* actor = Cast<AActor>(this);
+	hitboxCube = NewObject<UStaticMeshComponent>(this);
+	actor->AddInstanceComponent(hitboxCube);
+	hitboxCube->OnComponentCreated();
+	hitboxCube->RegisterComponent();
+	hitboxCube->SetWorldLocation(FVector(0, 0, 0));
+	hitboxCube->SetWorldScale3D(FVector(1, 1, 1));
+	hitboxCube->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	hitboxCube->SetCollisionObjectType(ECC_GameTraceChannel12);
+
+	return hitboxCube;
+}
+
 UStaticMeshComponent* Aicon::createMeshComponent() {
 	AActor* actor = Cast<AActor>(this);
 	meshComponent = NewObject<UStaticMeshComponent>(this);
@@ -162,14 +176,14 @@ TArray<float> Aicon::getSimArea(FString line) {
 	std::string token;
 
 
-	//while ((pos = stringLine.find(delimiter)) != std::string::npos) {
-	//	token = stringLine.substr(0, pos);
-	//	result.Add(std::stof(token));
-	//	stringLine.erase(0, pos + delimiter.length());
-	//}
-	//result.Add(std::stof(stringLine));
-	result.Add(100);
-	result.Add(100);
+	while ((pos = stringLine.find(delimiter)) != std::string::npos) {
+		token = stringLine.substr(0, pos);
+		result.Add(std::stof(token));
+		stringLine.erase(0, pos + delimiter.length());
+	}
+	result.Add(std::stof(stringLine));
+	//result.Add(100);
+	//result.Add(100);
 	return result;
 }
 
@@ -211,4 +225,8 @@ TArray<FString> Aicon::getTown() {
 
 FString Aicon::getModelPath() {
 	return modelPath;
+}
+
+FString Aicon::getFolderName() {
+	return folderName;
 }

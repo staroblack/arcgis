@@ -53,6 +53,7 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 {
 	int count = 0;
 
+	FString cubePath = FPaths::Combine(FPaths::ProjectDir(), "Content/Cube/cube.obj");
 	FString pakPath = FPaths::Combine(FPaths::ProjectDir(), "Content/testCase");
 	//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, pakPath);
 	UObjectLibrary* tempLibrary = UObjectLibrary::CreateLibrary(nullptr, false, GIsEditor);
@@ -75,14 +76,9 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 	for (int i = 0; i < Folders.Num(); i++)
 	{	
 		count++;
-		FString folderName;
 		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, Folders[i]);
 		FString file = absFolderPath + "/" + Folders[i];
-		FString folderName;
-		FString gamefile = "/Game/testCase/";
-		gamefile = gamefile + Folders[i];
-		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, gamefile);
-		LoadFolder(file, gamefile, 1, bOutSuccess, OutInfoMessage);
+		LoadFolder(file, Folders[i], 1, bOutSuccess, OutInfoMessage);
 		
 	}
 
@@ -277,6 +273,7 @@ FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString folderName, 
 		Aicon* tempActor = GetWorld()->SpawnActor<Aicon>(FVector(0, 0, 0), FRotator(0, 0, 0), spawnInfo);
 		tempActor->index = iconsCount;
 		icons.Add(tempActor);
+		tempActor->folderName = folderName;
 
 		//´M§äjsonÀÉ¨ÃÅª¨úÀÉ®×
 		bool check_json = false;
@@ -352,6 +349,10 @@ TArray<FString> ADLCLoader::getPaths() {
 	return paths;
 }
 
+FString ADLCLoader::getCubePath() {
+	FString cubePath = FPaths::Combine(FPaths::ProjectDir(), "Content/Cube/cube.obj");
+	return cubePath;
+}
 
 // helper class methods
 // model info
@@ -620,17 +621,17 @@ void ADLCLoader::WriteStringToFile(FString filepath, FString inputString, bool& 
 }
 
 void ADLCLoader::initIconsHitbox() {
-	printString("initIconsHitbox");
+	//printString("initIconsHitbox");
 	for (int i = 0; i < icons.Num(); i++) {
 		icons[i]->hitboxInit();
 	}
-	printString("OverIconsHitbox");
+	//printString("OverIconsHitbox");
 }
 
 void ADLCLoader::drawHitbox(TArray<FVector> points, FLinearColor color, float thickness) {
 	lineComponent = this->GetWorld()->PersistentLineBatcher;
 	float lifetime = 10000000;
-	printString("drawing");
+	//printString("drawing");
 	TArray<FBatchedLine> lines;
 	for (int i = 0; i < 4; i++) {
 		FBatchedLine line;
@@ -646,7 +647,7 @@ void ADLCLoader::drawHitbox(TArray<FVector> points, FLinearColor color, float th
 }
 
 TArray<FVector> ADLCLoader::getCorners(FVector center, FVector Extent) {
-	printString("getCorners");
+	//printString("getCorners");
 	TArray<FVector> corners;
 
 	corners.Add(center + FVector(Extent.X, Extent.Y, Extent.Z));
@@ -691,12 +692,11 @@ void ADLCLoader::flushline() {
 }
 
 void  ADLCLoader::printString(FString input) {
-	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Green, input);
+	GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, input);
 	return;
 }
 
 TArray<Aicon*> ADLCLoader::getIcons() {
-	printString("getIcons");
 	return icons;
 }
 
@@ -725,7 +725,6 @@ void ADLCLoader::setIconsHttp() {
 }
 
 void ADLCLoader::addFilteredIcon(Aicon* icon) {
-	printString("addFilteredIcon");
 	filteredIcons.Add(icon);
 }
 
@@ -786,4 +785,8 @@ void ADLCLoader::PopulateStaticMeshFromPMC(UProceduralMeshComponent* ProceduralM
 		UE_LOG(LogTemp, Warning, TEXT("RuntimeStaticMeshImporter -> CreateStaticMeshFromData -> Need valid static mesh reference!"));
 	}
 	return;
+}
+
+UStaticMeshComponent* ADLCLoader::getCube() {
+	return cube;
 }
