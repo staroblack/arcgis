@@ -126,6 +126,11 @@ UStaticMeshComponent* Aicon::createHitbox() {
 	return hitboxCube;
 }
 
+void  Aicon::setHitboxCollision() {
+	hitboxCube->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	hitboxCube->SetCollisionObjectType(ECC_GameTraceChannel12);
+}
+
 UStaticMeshComponent* Aicon::createMeshComponent() {
 	AActor* actor = Cast<AActor>(this);
 	meshComponent = NewObject<UStaticMeshComponent>(this);

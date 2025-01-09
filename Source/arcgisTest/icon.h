@@ -125,6 +125,9 @@ public:
 	UStaticMeshComponent* createHitbox();
 
 	UFUNCTION(BlueprintCallable, Category = "model loading")
+	void setHitboxCollision();
+
+	UFUNCTION(BlueprintCallable, Category = "model loading")
 	FString getModelPath();
 
 	UFUNCTION(BlueprintCallable, Category = "model loading")
