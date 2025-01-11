@@ -8,6 +8,7 @@
 #include "../../Engine/Source/Runtime/Engine/Classes/Engine/StreamableManager.h"
 #include "../../Engine/Source/Runtime/Engine/Classes/Engine/AssetManager.h"
 #include "Components/LineBatchComponent.h"
+#include "UObject/ConstructorHelpers.h"
 #include "Http.h"
 
 #include "icon.generated.h"

@@ -15,8 +15,25 @@
 Aicon::Aicon()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
+	AActor* actor = Cast<AActor>(this);
+	hitboxCube = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("InstancedMeshComponent"));
+	actor->AddInstanceComponent(hitboxCube);
+	//hitboxCube->OnComponentCreated();
+	//hitboxCube->RegisterComponent();
+	hitboxCube->SetWorldLocation(FVector(0, 0, 0));
+	hitboxCube->SetWorldScale3D(FVector(0.01, 0.01, 0.01));
+	hitboxCube->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshFinder(TEXT("/Engine/BasicShapes/Cube"));
+	if (CubeMeshFinder.Succeeded())
+	{
+		hitboxCube->SetStaticMesh(CubeMeshFinder.Object);
+		hitboxCube->SetWorldScale3D(FVector(1, 1, 1));
+		hitboxCube->SetVisibility(true, true);
+		hitboxCube->SetCollisionObjectType(ECC_GameTraceChannel12);
+	}
 }
 
 void Aicon::hitboxInit()
@@ -121,8 +138,17 @@ UStaticMeshComponent* Aicon::createHitbox() {
 	hitboxCube->SetWorldLocation(FVector(0, 0, 0));
 	hitboxCube->SetWorldScale3D(FVector(1, 1, 1));
 	hitboxCube->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	hitboxCube->SetCollisionObjectType(ECC_GameTraceChannel12);
 
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshFinder(TEXT("/Engine/BasicShapes/Cube"));
+	if (CubeMeshFinder.Succeeded())
+	{
+		hitboxCube->SetStaticMesh(CubeMeshFinder.Object);
+		hitboxCube->SetWorldScale3D(FVector(1, 1, 1));
+		hitboxCube->SetVisibility(true, true);
+		hitboxCube->SetCollisionObjectType(ECC_GameTraceChannel12);
+	}
+
+	
 	return hitboxCube;
 }
 
