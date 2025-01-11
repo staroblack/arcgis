@@ -327,7 +327,7 @@ public:
 
 	void CleanUpChunkStructure();
 	void TraceTree();
-	void SetupInfo(FString s, float scale = 1);
+	bool SetupInfo(FString s, float scale = 1);
 	void FillTreeStructureFromInfo();
 
 	float GetMaxXVel();

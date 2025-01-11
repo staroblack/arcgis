@@ -78,7 +78,10 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 		count++;
 		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, Folders[i]);
 		FString file = absFolderPath + "/" + Folders[i];
-		LoadFolder(file, Folders[i], 1, bOutSuccess, OutInfoMessage);
+		FString gamefile = "/Game/testCase/";
+		gamefile = gamefile + Folders[i];
+		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, gamefile);
+		LoadFolder(file, gamefile, 1, bOutSuccess, OutInfoMessage);
 		
 	}
 
@@ -275,7 +278,7 @@ FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString folderName, 
 		icons.Add(tempActor);
 		tempActor->folderName = folderName;
 
-		//´M§äjsonÀÉ¨ÃÅª¨úÀÉ®×
+		//ï¿½Mï¿½ï¿½jsonï¿½É¨ï¿½Åªï¿½ï¿½ï¿½É®ï¿½
 		bool check_json = false;
 		// scan filenames for descriptor
 		fileManager.FindFiles(jsonfiles, *folderFilePath, TEXT("json"));
@@ -309,7 +312,7 @@ FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString folderName, 
 			//this->m_status = m_E_STATUS::READY;
 		}
 
-		//´M§äobjÀÉ¨Ã°O¿ýÀÉ¦W
+		//ï¿½Mï¿½ï¿½objï¿½É¨Ã°Oï¿½ï¿½ï¿½É¦W
 		bool check_obj = false;
 		fileManager.FindFiles(objfiles, *folderFilePath, TEXT("obj"));
 		for (auto filename : objfiles) {
@@ -320,7 +323,7 @@ FinputStruct ADLCLoader::LoadFolder(FString folderFilePath, FString folderName, 
 			tempActor->modelPath = folderFilePath + "/" + filename;
 		}
 
-		//­Y¨ä¤¤¤@¶µ¨S¦³´N¥¢±Ñ
+		//ï¿½Yï¿½ä¤¤ï¿½@ï¿½ï¿½ï¿½Sï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½ï¿½
 		if (!check_obj || !check_json) {
 			if (!check_obj) {
 				UE_LOG(LogTemp, Warning, TEXT("no obj"));

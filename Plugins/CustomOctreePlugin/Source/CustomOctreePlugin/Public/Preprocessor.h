@@ -25,7 +25,7 @@ public:
 	UPreprocessor();
 
 	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
-	void StartProcessing();
+	FString StartProcessing();
 
 	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
 	void SetTotalLevel(FString TotalLevel);
@@ -69,8 +69,8 @@ private:
 	bool MainProcess();
 	void InitialOctree(string filename, string outputfilename, string streamDataFilename);
 	string simplifiedPath(string input);
-	bool VerifyInputValue_MainProcess();
-	bool ReadModel();
+	bool VerifyInputValue_MainProcess(FString& result);
+	bool ReadModel(FString& result);
 	void processNode(aiNode* node, const aiScene* scene);
 	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
 

@@ -1441,7 +1441,12 @@ void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScal
 	FString FilePath = FPaths::Combine(FPaths::ProjectDir(), "StreamDatas/", FileName + "_collection/gridinfo.bin");
 	wstring fileName = wstring((wchar_t*)TCHAR_TO_UTF16(*FileName));
 	this->dataFolder = wstring((wchar_t*)TCHAR_TO_UTF16(*FPaths::ProjectDir())) + L"StreamDatas/" + fileName + L"_collection/" + fileName;
-	_octree.SetupInfo(FilePath, 1);
+
+	if (!_octree.SetupInfo(FilePath, 1)) {
+		drawing = false;
+		return;
+	}
+	else drawing = true;
 
 	fileValueList.clear();
 	fileIndexList.clear();
@@ -1464,8 +1469,6 @@ void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScal
 	MyScale = InScale;
 
 	baseViewDistance = 2.5 * InScale * AreaSize;
-
-	drawing = true;
 }
 
 void ASceneManagerTest::ClearData() {

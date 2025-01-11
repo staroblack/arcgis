@@ -3061,7 +3061,7 @@ void CustomOctree::FillTreeStructureFromInfo_Recursive(CustomChunk* _Chunk, int 
 	}
 }
 
-void CustomOctree::SetupInfo(FString s, float scale) {
+bool CustomOctree::SetupInfo(FString s, float scale) {
 	wstring path = wstring((wchar_t*)TCHAR_TO_UTF16(*s));
 	fstream fs(path, std::ios_base::in);
 	
@@ -3069,6 +3069,8 @@ void CustomOctree::SetupInfo(FString s, float scale) {
 	if (!fs.is_open()) {
 		//file open fail
 		UE_LOG(LogTemp, Log, TEXT("file open fail: %s"), path.c_str());
+		preprocessed = false;
+		return false;
 	}
 	else {
 		//file open succeed
@@ -3078,7 +3080,7 @@ void CustomOctree::SetupInfo(FString s, float scale) {
 		fs >> str;
 		if (str != hdr.fileMagic) {
 			preprocessed = false;
-			return;
+			return false;
 		}
 
 		fs >> hdr.fileName;
@@ -3108,7 +3110,11 @@ void CustomOctree::SetupInfo(FString s, float scale) {
 			
 		preprocessed = true;	
 		this->FillTreeStructureFromInfo();
+
+		return true;
 	}
+
+	return false;
 }
 
 void CustomOctree::SetCompressionMethod(CompressionMethod newCompressionMethod)

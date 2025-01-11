@@ -1,4 +1,4 @@
-
+Ôªø
 #include "Preprocessor.h"
 
 #include "Misc/Paths.h"
@@ -14,7 +14,7 @@ UPreprocessor::UPreprocessor() {
 	flowfieldDatabaseFolderPath = std::string(TCHAR_TO_UTF8(*FullPath));
 
 	filePostfixInput = ".dat";
-	modelInputChoice = "-----";
+	modelInputChoice = "";
 	frameCountInput = "1";
 	organizedInput = false;
 	motionIndexOutput = false;
@@ -24,7 +24,7 @@ UPreprocessor::UPreprocessor() {
 	compressionMethodChoice = 1;
 }
 
-bool UPreprocessor::VerifyInputValue_MainProcess() {
+bool UPreprocessor::VerifyInputValue_MainProcess(FString& result) {
 	// change slashes
 	std::replace(inputFolderPath.begin(), inputFolderPath.end(), '/', '\\');
 	std::replace(flowfieldDatabaseFolderPath.begin(), flowfieldDatabaseFolderPath.end(), '/', '\\');
@@ -36,27 +36,30 @@ bool UPreprocessor::VerifyInputValue_MainProcess() {
 
 	string modelInput = modelInputChoice;
 	if (inputFolderPath == "") {
-		//fl_message("Ω–øÔæ‹¨y≥ı∏ÍÆ∆ß®!");
-		//cout << "Ω–øÔæ‹¨y≥ı∏ÍÆ∆ß®!" << endl;
+		//fl_message("Ë´ãÈÅ∏ÊìáÊµÅÂ†¥Ë≥áÊñôÂ§æ!");
+		//cout << "Ë´ãÈÅ∏ÊìáÊµÅÂ†¥Ë≥áÊñôÂ§æ!" << endl;
+		result = "inputFolderPath";
 		return false;
 	}
 	else if (_streamdataFilename.find(" ") != std::string::npos) {
-		//fl_message("¨y≥ı∏ÍÆ∆ß®¶W∫Ÿ•]ßt™≈ÆÊ!");
-		//cout << "¨y≥ı∏ÍÆ∆ß®¶W∫Ÿ•]ßt™≈ÆÊ!" << endl;
+		//fl_message("ÊµÅÂ†¥Ë≥áÊñôÂ§æÂêçÁ®±ÂåÖÂê´Á©∫Ê†º!");
+		//cout << "ÊµÅÂ†¥Ë≥áÊñôÂ§æÂêçÁ®±ÂåÖÂê´Á©∫Ê†º!" << endl;
+		result = "blank";
 		return false;
 	}
 	else if (frameCount < 1) {
-		//fl_message("¥Vº∆§£±o§p©Û1!");
-		//cout << "¥Vº∆§£±o§p©Û1!" << endl;
+		//fl_message("ÂπÄÊï∏‰∏çÂæóÂ∞èÊñº1!");
+		//cout << "ÂπÄÊï∏‰∏çÂæóÂ∞èÊñº1!" << endl;
+		result = "smaller";
 		return false;
 	}
-	else if (modelInput.find("-----") != std::string::npos) {
-		//fl_message("Ω–øÔæ‹¶≥Æƒº“´¨!");
-		//cout << "Ω–øÔæ‹¶≥Æƒº“´¨!" << endl;
+	else if (modelInput == "") {
+		//fl_message("Ë´ãÈÅ∏ÊìáÊúâÊïàÊ®°Âûã!");
+		//cout << "Ë´ãÈÅ∏ÊìáÊúâÊïàÊ®°Âûã!" << endl;
+		result = "model";
 		return false;
 	}
 	return true;
-
 }
 
 Mesh UPreprocessor::processMesh(aiMesh* mesh, const aiScene* scene)
@@ -109,7 +112,7 @@ void UPreprocessor::processNode(aiNode* node, const aiScene* scene)
 
 }
 
-bool UPreprocessor::ReadModel() {
+bool UPreprocessor::ReadModel(FString& result) {
 	string _modelName = modelInputChoice;
 	string objname;
 	bool momFound = false;
@@ -120,10 +123,10 @@ bool UPreprocessor::ReadModel() {
 	//		break;
 	//	}
 	//}
-	if (!momFound) {
-		//fl_message("•º™æø˘ª~°Aß‰§£®Ïº“´¨");
-		//return false;
-	}
+	/*if (!momFound) {
+		fl_message("Êú™Áü•ÈåØË™§ÔºåÊâæ‰∏çÂà∞Ê®°Âûã");
+		return false;
+	}*/
 
 	Assimp::Importer importer;
 
@@ -135,6 +138,7 @@ bool UPreprocessor::ReadModel() {
 	{
 		//fl_message((string("ERROR::ASSIMP:: ") + string(importer.GetErrorString())).c_str());
 		//cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << endl;
+		result = "modelInvalid";
 		return false;
 	}
 
@@ -144,11 +148,13 @@ bool UPreprocessor::ReadModel() {
 	return true;
 }
 
-void UPreprocessor::StartProcessing() {
+FString UPreprocessor::StartProcessing() {
+	FString result = "Init";
+
 	//cout << "Verifying Input..." << endl;
-	if (VerifyInputValue_MainProcess()) {
+	if (VerifyInputValue_MainProcess(result)) {
 		//cout << "Reading Model..." << endl;
-		if (ReadModel()) {
+		if (ReadModel(result)) {
 			//cout << "Processing Data..." << endl;
 
 			bool ok = true;
@@ -205,12 +211,14 @@ void UPreprocessor::StartProcessing() {
 			//quantizationThreshold->value(originalThreshold.c_str());
 			//motionIndexFrameNum->value(originalMotionIndexFrame.c_str());
 
-			//if (ok) {
-			//	fl_message("≥B≤zßπ¶®!");
-			//}
+			if (ok) {
+				//fl_message("ËôïÁêÜÂÆåÊàê!");
+				result = "ProcessDone";
+			}
 		}
 	}
-	UE_LOG(LogTemp, Log, TEXT("Preprocess done"));
+	UE_LOG(LogTemp, Log, TEXT("%s"), *result);
+	return result;
 }
 
 bool UPreprocessor::MainProcess() {
