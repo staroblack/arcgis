@@ -65,6 +65,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
 	void SetCmpressionMethodChoice(int choice);
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	FString createTestCaseFolder();
 private:
 	bool MainProcess();
 	void InitialOctree(string filename, string outputfilename, string streamDataFilename);

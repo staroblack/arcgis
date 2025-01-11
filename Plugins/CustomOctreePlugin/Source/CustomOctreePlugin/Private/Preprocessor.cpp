@@ -1,7 +1,8 @@
 ﻿
 #include "Preprocessor.h"
-
+//#include <windows.h>
 #include "Misc/Paths.h"
+#define _HAS_STD_BYTE = 0;
 
 UPreprocessor::UPreprocessor() {
 	totalLevel = "5";
@@ -336,6 +337,24 @@ bool UPreprocessor::MainProcess() {
 		fileModelStreamData << modelStreamData.first << " " << modelStreamData.second << endl;
 	//modelInputChoice->value(0);
 	return true;
+}
+
+FString UPreprocessor::createTestCaseFolder() {
+	string ifPath = inputFolderPath;
+	string streamdataFilename = ifPath.substr(ifPath.find_last_of('\\') + 1);
+	IFileManager& fileManager = IFileManager::Get();
+	FString testCasePath = FPaths::Combine(FPaths::ProjectDir(), "Content/testCase");
+	FString absFolderPath = fileManager.ConvertToAbsolutePathForExternalAppForRead(*testCasePath);
+	FString FolderPath = absFolderPath + "/";
+	FString streamString(streamdataFilename.c_str());
+	FolderPath = FolderPath + streamString;
+	if (!FPaths::DirectoryExists(FolderPath))
+		FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*FolderPath);
+	std::string folderString = std::string(TCHAR_TO_UTF8(*FolderPath));
+	std::string instruction = "COPY " + modelInputChoice + " " + folderString;
+	system(instruction.c_str());
+
+	return FolderPath;
 }
 
 string UPreprocessor::simplifiedPath(string input) {
