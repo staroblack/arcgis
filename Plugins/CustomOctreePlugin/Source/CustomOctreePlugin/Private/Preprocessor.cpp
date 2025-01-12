@@ -1,6 +1,6 @@
 ﻿
 #include "Preprocessor.h"
-//#include <windows.h>
+
 #include "Misc/Paths.h"
 #define _HAS_STD_BYTE = 0;
 
@@ -354,11 +354,24 @@ FString UPreprocessor::createTestCaseFolder() {
 	FolderPath = FolderPath + streamString;
 	if (!FPaths::DirectoryExists(FolderPath))
 		FPlatformFileManager::Get().GetPlatformFile().CreateDirectoryTree(*FolderPath);
+	
 	std::string folderString = std::string(TCHAR_TO_UTF8(*FolderPath));
-	std::string instruction = "COPY " + modelInputChoice + " " + folderString;
+	std::string instruction = "COPY \"" + modelInputChoice + "\" \"" + folderString + "\"";
+	instruction = "/c " + instruction;
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, instruction.c_str());
+	return FolderPath;
+}
+
+FString UPreprocessor::buildInstruction(FString FolderPath) {
+	std::string folderString = std::string(TCHAR_TO_UTF8(*FolderPath));
+	std::string instruction = "COPY \"" + modelInputChoice + "\" \"" + folderString + "\"";
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, instruction.c_str());
+	std::wstring widestr = std::wstring(instruction.begin(), instruction.end());
+	//const WCHAR* c = widestr.c_str();
+	//ShellExecute(NULL, _T("helper.exe"), c, NULL, NULL, 0);
 	system(instruction.c_str());
 
-	return FolderPath;
+	return instruction.c_str();
 }
 
 string UPreprocessor::simplifiedPath(string input) {

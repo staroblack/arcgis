@@ -230,6 +230,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "cube")
 	FString getCubePath();
 
+	UFUNCTION(BlueprintCallable, Category = "copying")
+	void copyOBJ(FString path);
+
 public:
 	static IPlatformFile* oldPlatform;
 

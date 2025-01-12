@@ -12,6 +12,7 @@
 #include "Engine/EngineTypes.h"
 #include "Misc/ScopeLock.h"
 #include "HAL/FileManager.h"
+#include <Windows.h> // 包含 Windows API 頭文件
 #include "Serialization/JsonSerializer.h"
 
 #include <string> 
@@ -47,6 +48,25 @@ void ADLCLoader::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ADLCLoader::copyOBJ(FString path) {
+	std::string instruction = std::string(TCHAR_TO_UTF8(*path));
+	// 要執行的命令
+	std::wstring widestr = std::wstring(instruction.begin(), instruction.end());
+	
+	//const WCHAR* c = widestr.c_str();
+	//ShellExecute(NULL, _T("helper.exe"), c, NULL, NULL, 0);
+
+	// 使用 ShellExecute 啟動命令
+	HINSTANCE result = ShellExecute(
+		NULL,             // 父視窗 (設為 NULL)
+		_T("runas"),          // 動作：以管理員身份執行
+		_T("cmd.exe"),        // 要執行的程序
+		widestr.c_str(), // 傳遞給 cmd.exe 的參數
+		NULL,             // 默認工作目錄
+		SW_SHOW           // 顯示窗口
+	);
 }
 
 TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FString& OutInfoMessage)
@@ -584,6 +604,7 @@ void ADLCLoader::WriteStructFromJsonFile(FString filepath, FinputStruct inputStr
 	if (JsonObject == nullptr)
 	{
 		bOutSuccess = false;
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "write failed");
 		OutInfoMessage = FString::Printf(TEXT("write failed"));
 		return;
 	}
@@ -596,6 +617,7 @@ void ADLCLoader::WriteJson(FString JsonFilePath, TSharedPtr<FJsonObject> JsonObj
 
 	if (!FJsonSerializer::Serialize(JsonObject.ToSharedRef(), TJsonWriterFactory<>::Create(&JsonString, 0))) {
 		bOutSuccess = false;
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "write failed1");
 		OutInfoMessage = FString::Printf(TEXT("write failed"));
 		return;
 	}
@@ -614,6 +636,8 @@ void ADLCLoader::WriteJson(FString JsonFilePath, TSharedPtr<FJsonObject> JsonObj
 void ADLCLoader::WriteStringToFile(FString filepath, FString inputString, bool& bOutSuccess, FString& OutInfoMessage) {
 	if (!FFileHelper::SaveStringToFile(inputString, *filepath))
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "write failed2");
+		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, filepath);
 		bOutSuccess = false;
 		return;
 	}

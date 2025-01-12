@@ -68,6 +68,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
 	FString createTestCaseFolder();
+
+	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
+	FString buildInstruction(FString FolderPath);
 private:
 	bool MainProcess();
 	void InitialOctree(string filename, string outputfilename, string streamDataFilename);
