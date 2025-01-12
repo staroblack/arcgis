@@ -340,6 +340,10 @@ bool UPreprocessor::MainProcess() {
 }
 
 FString UPreprocessor::createTestCaseFolder() {
+	std::replace(inputFolderPath.begin(), inputFolderPath.end(), '/', '\\');
+	std::replace(flowfieldDatabaseFolderPath.begin(), flowfieldDatabaseFolderPath.end(), '/', '\\');
+	std::replace(modelInputChoice.begin(), modelInputChoice.end(), '/', '\\');
+
 	string ifPath = inputFolderPath;
 	string streamdataFilename = ifPath.substr(ifPath.find_last_of('\\') + 1);
 	IFileManager& fileManager = IFileManager::Get();
