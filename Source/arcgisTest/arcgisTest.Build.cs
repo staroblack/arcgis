@@ -25,9 +25,7 @@ public class arcgisTest : ModuleRules
             "RenderCore",
 			"UMG",
             "StaticMeshDescription",
-            "MeshDescription",
-			//"AssetTools", 
-			//"UnrealEd"
+            "MeshDescription"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
