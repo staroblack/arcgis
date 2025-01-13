@@ -1484,6 +1484,12 @@ void ASceneManagerTest::ClearData() {
 	Center = FVector(0, 0, 0);
 	MyScale = 0.f;
 
+	planePMC->ClearAllMeshSections();
+	isosurfacePMC->ClearAllMeshSections();
+	isosurfacePMC2->ClearAllMeshSections();
+	isosurfacePMC3->ClearAllMeshSections();
+	lineComponent->Flush();
+
 	drawing = false;
 }
 
