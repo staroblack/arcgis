@@ -1383,47 +1383,85 @@ void CustomOctree::SequentialReadStructuredGridAndMergeToFile(string outFolder, 
 							[](auto a, auto b) -> auto {return abs(a - b); },
 							[](auto x)-> auto {return x.first->GetPressure(); }, preThreshold, indexes);
 
-						CompressToValueIndex<pair<CustomPointData*, uint64_t>, float>(sortList, tempValues, tempIndexes,
-							[](auto a, auto b) -> auto {return abs(a - b); },
-							[](auto x)-> auto {return x.first->GetTemperature(); }, tempThreshold, indexes);
+						// temp
+						if (hdr.temp != -1) {
+							CompressToValueIndex<pair<CustomPointData*, uint64_t>, float>(sortList, tempValues, tempIndexes,
+								[](auto a, auto b) -> auto {return abs(a - b); },
+								[](auto x)-> auto {return x.first->GetTemperature(); }, tempThreshold, indexes);
+						}
 
 
 #pragma omp ordered
 						{
-							size_t sizeVelValues = velValues.size();
-							totalVelCount += sizeVelValues;
-							size_t sizePreValues = preValues.size();
-							totalPreCount += sizePreValues;
-							size_t sizeTempValues = tempValues.size();
-							totalTempCount += sizeTempValues;
-							fileValue.write((char*)&sizeVelValues, sizeof(sizeVelValues));
-							fileValue.write((char*)&sizePreValues, sizeof(sizePreValues));
-							// temp
-							fileValue.write((char*)&sizeTempValues, sizeof(sizeTempValues));
-							fileValue.write((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
-							fileValue.write((char*)preValues.data(), sizeof(float) * sizePreValues);
-							// temp
-							fileValue.write((char*)tempValues.data(), sizeof(float) * sizeTempValues);
-							fileValue.write((char*)velIndexes.data(), sizeof(unsigned char) * velIndexes.size());
-							fileValue.write((char*)preIndexes.data(), sizeof(unsigned char) * preIndexes.size());
-							// temp
-							fileValue.write((char*)tempIndexes.data(), sizeof(unsigned char) * tempIndexes.size());
+							if (hdr.temp == -1) {
+								size_t sizeVelValues = velValues.size();
+								totalVelCount += sizeVelValues;
+								size_t sizePreValues = preValues.size();
+								totalPreCount += sizePreValues;
 
-							// temp
-							fileIndex.write((char*)&accumulatedSize, sizeof(accumulatedSize));
-							accumulatedSize += sizeof(sizeVelValues) + sizeof(sizePreValues) + sizeof(sizeTempValues) +
-								sizeof(glm::vec3) * sizeVelValues + sizeof(float) * sizePreValues + sizeof(float) * sizeTempValues +
-								sizeof(unsigned char) * velIndexes.size() + sizeof(unsigned char) * preIndexes.size() + sizeof(unsigned char) * tempIndexes.size();
+								fileValue.write((char*)&sizeVelValues, sizeof(sizeVelValues));
+								fileValue.write((char*)&sizePreValues, sizeof(sizePreValues));
 
-							++compressedChunkCount;
-							chunkQuantizedPointsSum += chunkQuantizedPoints;
-							++chunkCount;
-							if (chunkQuantizedPointsMax < chunkQuantizedPoints)
-								chunkQuantizedPointsMax = chunkQuantizedPoints;
-							double chunkErrorAvg = chunkErrorSum / sortList.size();
-							if (chunkErrorMax < chunkErrorAvg)
-								chunkErrorMax = chunkErrorAvg;
-							allChunkErrorSum += chunkErrorAvg;
+								fileValue.write((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
+								fileValue.write((char*)preValues.data(), sizeof(float) * sizePreValues);
+
+								fileValue.write((char*)velIndexes.data(), sizeof(uchar) * velIndexes.size());
+								fileValue.write((char*)preIndexes.data(), sizeof(uchar) * preIndexes.size());
+
+								fileIndex.write((char*)&accumulatedSize, sizeof(accumulatedSize));
+								accumulatedSize += sizeof(sizeVelValues) + sizeof(sizePreValues) +
+									sizeof(glm::vec3) * sizeVelValues + sizeof(float) * sizePreValues +
+									sizeof(uchar) * velIndexes.size() + sizeof(uchar) * preIndexes.size();
+
+								++compressedChunkCount;
+								chunkQuantizedPointsSum += chunkQuantizedPoints;
+								++chunkCount;
+								if (chunkQuantizedPointsMax < chunkQuantizedPoints)
+									chunkQuantizedPointsMax = chunkQuantizedPoints;
+								double chunkErrorAvg = chunkErrorSum / sortList.size();
+								if (chunkErrorMax < chunkErrorAvg)
+									chunkErrorMax = chunkErrorAvg;
+								allChunkErrorSum += chunkErrorAvg;
+							}
+							else {
+								size_t sizeVelValues = velValues.size();
+								totalVelCount += sizeVelValues;
+								size_t sizePreValues = preValues.size();
+								totalPreCount += sizePreValues;
+								size_t sizeTempValues = tempValues.size();
+								totalTempCount += sizeTempValues;
+
+								fileValue.write((char*)&sizeVelValues, sizeof(sizeVelValues));
+								fileValue.write((char*)&sizePreValues, sizeof(sizePreValues));
+								// temp
+								fileValue.write((char*)&sizeTempValues, sizeof(sizeTempValues));
+
+								fileValue.write((char*)velValues.data(), sizeof(glm::vec3) * sizeVelValues);
+								fileValue.write((char*)preValues.data(), sizeof(float) * sizePreValues);
+								// temp
+								fileValue.write((char*)tempValues.data(), sizeof(float) * sizeTempValues);
+
+								fileValue.write((char*)velIndexes.data(), sizeof(uchar) * velIndexes.size());
+								fileValue.write((char*)preIndexes.data(), sizeof(uchar) * preIndexes.size());
+								// temp
+								fileValue.write((char*)tempIndexes.data(), sizeof(uchar) * tempIndexes.size());
+
+								// temp
+								fileIndex.write((char*)&accumulatedSize, sizeof(accumulatedSize));
+								accumulatedSize += sizeof(sizeVelValues) + sizeof(sizePreValues) + sizeof(sizeTempValues) +
+									sizeof(glm::vec3) * sizeVelValues + sizeof(float) * sizePreValues + sizeof(float) * sizeTempValues +
+									sizeof(uchar) * velIndexes.size() + sizeof(uchar) * preIndexes.size() + sizeof(uchar) * tempIndexes.size();
+
+								++compressedChunkCount;
+								chunkQuantizedPointsSum += chunkQuantizedPoints;
+								++chunkCount;
+								if (chunkQuantizedPointsMax < chunkQuantizedPoints)
+									chunkQuantizedPointsMax = chunkQuantizedPoints;
+								double chunkErrorAvg = chunkErrorSum / sortList.size();
+								if (chunkErrorMax < chunkErrorAvg)
+									chunkErrorMax = chunkErrorAvg;
+								allChunkErrorSum += chunkErrorAvg;
+							}
 						}
 
 						// for laplacian
@@ -1431,7 +1469,8 @@ void CustomOctree::SequentialReadStructuredGridAndMergeToFile(string outFolder, 
 							pointCache[sl][sf][sp].first->SetXYZVel(velValues[velIndexes[sp]]);
 							pointCache[sl][sf][sp].first->SetPressure(preValues[preIndexes[sp]]);
 							// temp
-							pointCache[sl][sf][sp].first->SetTemperature(tempValues[tempIndexes[sp]]);
+							if (hdr.temp != -1)
+								pointCache[sl][sf][sp].first->SetTemperature(tempValues[tempIndexes[sp]]);
 						}
 					}
 					else if (isSimilar) {
