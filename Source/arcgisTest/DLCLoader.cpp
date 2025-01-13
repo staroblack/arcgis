@@ -96,11 +96,11 @@ TArray<FString> ADLCLoader::LoadAllPak(FString pakFolder, bool& bOutSuccess, FSt
 	for (int i = 0; i < Folders.Num(); i++)
 	{	
 		count++;
-		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, Folders[i]);
+		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Red, Folders[i]);
 		FString file = absFolderPath + "/" + Folders[i];
 		FString gamefile = "/Game/testCase/";
 		gamefile = gamefile + Folders[i];
-		GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, gamefile);
+		//GEngine->AddOnScreenDebugMessage(-1, 15000.0f, FColor::Blue, gamefile);
 		LoadFolder(file, Folders[i], 1, bOutSuccess, OutInfoMessage);
 		
 	}
