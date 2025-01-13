@@ -233,6 +233,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "copying")
 	void copyOBJ(FString path);
 
+	UFUNCTION(BlueprintCallable, Category = "jsonWriting")
+	bool checkJsonFormat(FinputStruct inputStruct, FString& path);
+
 public:
 	static IPlatformFile* oldPlatform;
 

@@ -149,13 +149,13 @@ bool UPreprocessor::ReadModel(FString& result) {
 	return true;
 }
 
-FString UPreprocessor::StartProcessing() {
-	FString result = "Init";
+bool UPreprocessor::StartProcessing(FString& info) {
+	info = "Init";
 
 	//cout << "Verifying Input..." << endl;
-	if (VerifyInputValue_MainProcess(result)) {
+	if (VerifyInputValue_MainProcess(info)) {
 		//cout << "Reading Model..." << endl;
-		if (ReadModel(result)) {
+		if (ReadModel(info)) {
 			//cout << "Processing Data..." << endl;
 
 			bool ok = true;
@@ -214,12 +214,14 @@ FString UPreprocessor::StartProcessing() {
 
 			if (ok) {
 				//fl_message("處理完成!");
-				result = "ProcessDone";
+				info = "ProcessDone";
 			}
 		}
 	}
-	UE_LOG(LogTemp, Log, TEXT("%s"), *result);
-	return result;
+	UE_LOG(LogTemp, Log, TEXT("%s"), *info);
+	if (info == "ProcessDone")
+		return true;
+	return false;
 }
 
 bool UPreprocessor::MainProcess() {

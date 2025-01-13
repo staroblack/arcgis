@@ -661,3 +661,18 @@ void ADLCLoader::PopulateStaticMeshFromPMC(UProceduralMeshComponent* ProceduralM
 UStaticMeshComponent* ADLCLoader::getCube() {
 	return cube;
 }
+
+bool ADLCLoader::checkJsonFormat(FinputStruct inputStruct, FString& info) {
+	info = "";
+	// Define the regex pattern for "numberxnumber"
+	const FRegexPattern Pattern(TEXT("^\\d+x\\d+$"));
+	FRegexMatcher Matcher(Pattern, inputStruct.simArea);
+
+	// Check if the pattern matches the FString
+	if (!Matcher.FindNext()) {
+		info = "simAreaFormatWrong";
+		return false;
+	}
+
+	return true;
+}

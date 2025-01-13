@@ -25,7 +25,7 @@ public:
 	UPreprocessor();
 
 	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
-	FString StartProcessing();
+	bool StartProcessing(FString& info);
 
 	UFUNCTION(BlueprintCallable, Category = "Preprocessor")
 	void SetTotalLevel(FString TotalLevel);

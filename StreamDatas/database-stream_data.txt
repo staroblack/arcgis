@@ -1,2 +1,2 @@
 //Model Name,StreamData Name
-D:\AR\ARFlow-NoCompressionReading\ARFlow-NoCompressionReading\Server\AssetsStorage\MODEL_Subsurfaced_level3.obj tpedome_1k_temperture_COT5_compressed_0.1
+D:\FTP\800x800x100\800x800x100\grid11\buildings.obj grid11_COT5_compressed_0.1
