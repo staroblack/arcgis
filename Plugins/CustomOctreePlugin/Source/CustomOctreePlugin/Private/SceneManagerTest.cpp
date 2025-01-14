@@ -653,210 +653,114 @@ void ASceneManagerTest::ReleaseChunkData() {
 }
 
 void ASceneManagerTest::CreateTextures() {
-	float IndexSizeSqrt = powf(index_tbo_data.size(), 0.5);
-	float StatusSizeSqrt = powf(status_tbo_data.size(), 0.5);
-	float VelSizeSqrt = powf(vel_tbo_data.size() / 3, 0.5);
-	float PreSizeSqrt = powf(pre_tbo_data.size(), 0.5);
-	float TempSizeSqrt = powf(temp_tbo_data.size(), 0.5);
+	CreateTextures(IndexTex, index_tbo_data);
+	CreateTextures(StatusTex, status_tbo_data);
+	CreateTextures(VelTex, vel_tbo_data, 3);
+	CreateTextures(PreTex, pre_tbo_data);
+	CreateTextures(TempTex, temp_tbo_data);
 
-	int IndexSize = ceil(IndexSizeSqrt);
-	int StatusSize = ceil(StatusSizeSqrt);
-	int VelSize = ceil(VelSizeSqrt);
-	int PreSize = ceil(PreSizeSqrt);
-	int TempSize = ceil(TempSizeSqrt);
-	IndexTex = UTexture2D::CreateTransient(IndexSize, IndexSize, PF_FloatRGBA); // PF_B8G8R8A8
-	StatusTex = UTexture2D::CreateTransient(StatusSize, StatusSize, PF_FloatRGBA); // PF_B8G8R8A8
-	VelTex = UTexture2D::CreateTransient(VelSize, VelSize, PF_FloatRGBA); // PF_B8G8R8A8
-	PreTex = UTexture2D::CreateTransient(PreSize, PreSize, PF_FloatRGBA); // PF_B8G8R8A8
-	TempTex = UTexture2D::CreateTransient(TempSize, TempSize, PF_FloatRGBA); // PF_B8G8R8A8
+	UpdateTextureData(IndexTex, index_tbo_data);
+	UpdateTextureData(StatusTex, status_tbo_data);
+	UpdateTextureData(VelTex, vel_tbo_data, 3); // Assuming 3 components for velocity
+	UpdateTextureData(PreTex, pre_tbo_data);
+	UpdateTextureData(TempTex, temp_tbo_data);
+}
 
-	// Editor Only
-	//TextureMipGenSettings IndexOldMipSetting, StatusOldMipSetting, VelOldMipSetting, PreOldMipSetting;
-	/*IndexOldMipSetting = IndexTex->MipGenSettings;
-	StatusOldMipSetting = StatusTex->MipGenSettings;
-	VelOldMipSetting = VelTex->MipGenSettings;
-	PreOldMipSetting = PreTex->MipGenSettings;
-	IndexTex->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
-	StatusTex->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
-	VelTex->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
-	PreTex->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
-
-	IndexTex->UpdateResource();
-	StatusTex->UpdateResource();
-	VelTex->UpdateResource();
-	PreTex->UpdateResource();*/
-
-	ETextureMipLoadOptions IndexOldMipLoadOptions, StatusOldMipLoadOptions, VelOldMipLoadOptions, PreOldMipLoadOptions, TempOldMipLoadOptions;
-	IndexOldMipLoadOptions = IndexTex->MipLoadOptions;
-	StatusOldMipLoadOptions = StatusTex->MipLoadOptions;
-	VelOldMipLoadOptions = VelTex->MipLoadOptions;
-	PreOldMipLoadOptions = PreTex->MipLoadOptions;
-	TempOldMipLoadOptions = TempTex->MipLoadOptions;
-	IndexTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
-	StatusTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
-	VelTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
-	PreTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
-	TempTex->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
-
-	IndexTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
-	StatusTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
-	VelTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
-	PreTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
-	TempTex->LODGroup = TextureGroup::TEXTUREGROUP_UI;
-
-	// IndexTex write data
-	FFloat16* Ptr0 = (FFloat16*)IndexTex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE); // this can do read and write
-
-	for (int i = 0; i < IndexTex->GetSizeY(); i++) {
-		for (int j = 0; j < IndexTex->GetSizeX(); j++) {
-			int32 index = j + i * IndexTex->GetSizeX();
-			int32 Idx = 4 * index;
-			int16 val;
-			if (index < index_tbo_data.size()) {
-				val = FFloat16(index_tbo_data[index]);
-				Ptr0[Idx + 0] = val; // real R
-				Ptr0[Idx + 1] = 0; // real G
-				Ptr0[Idx + 2] = 0; // real B
-				Ptr0[Idx + 3] = 1; // A
-			}
-			else {
-				Ptr0[Idx + 0] = 0; // real R
-				Ptr0[Idx + 1] = 0; // real G
-				Ptr0[Idx + 2] = 0; // real B
-				Ptr0[Idx + 3] = 0; // A
-			}
-		}
+void ASceneManagerTest::CreateTextures(UTexture2D*& Texture, const std::vector<float>& Data, int ComponentCount)
+{
+	int32 Size = ceil(sqrtf(Data.size() / ComponentCount));
+	if (Texture == nullptr || Texture->GetSizeX() != Size || Texture->GetSizeY() != Size)
+	{
+		// 重新創建紋理
+		Texture = UTexture2D::CreateTransient(Size, Size, PF_FloatRGBA);
+		ConfigureTexture(Texture);
 	}
 
-	IndexTex->GetPlatformData()->Mips[0].BulkData.Unlock();
+	// 更新紋理資料
+	//UpdateTextureData(Texture, Data);
+}
 
-	// StatusTex write data
-	FFloat16* Ptr1 = (FFloat16*)StatusTex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE); // this can do read and write
-
-	// run through every pixel
-	for (int i = 0; i < StatusTex->GetSizeY(); i++) {
-		for (int j = 0; j < StatusTex->GetSizeX(); j++) {
-			int32 index = j + i * StatusTex->GetSizeX();
-			int32 Idx = 4 * index;
-			FFloat16 val;
-			if (index < status_tbo_data.size()) {
-				val = FFloat16(status_tbo_data[index]);
-				Ptr1[Idx + 0] = val; // real R
-				Ptr1[Idx + 1] = 0; // real G
-				Ptr1[Idx + 2] = 0; // real B
-				Ptr1[Idx + 3] = 1; // A
-			}
-			else {
-				Ptr1[Idx + 0] = 0; // real R
-				Ptr1[Idx + 1] = 0; // real G
-				Ptr1[Idx + 2] = 0; // real B
-				Ptr1[Idx + 3] = 0; // A
-			}
-		}
+void ASceneManagerTest::CreateTextures(UTexture2D*& Texture, const std::vector<int>& Data)
+{
+	int32 Size = ceil(sqrtf(Data.size()));
+	if (Texture == nullptr || Texture->GetSizeX() != Size || Texture->GetSizeY() != Size)
+	{
+		// 重新創建紋理
+		Texture = UTexture2D::CreateTransient(Size, Size, PF_FloatRGBA);
+		ConfigureTexture(Texture);
 	}
 
-	StatusTex->GetPlatformData()->Mips[0].BulkData.Unlock();
+	// 更新紋理資料
+	//UpdateTextureData(Texture, Data);
+}
 
-	// VelTex write data
-	FFloat16* Ptr2 = (FFloat16*)VelTex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE); // this can do read and write
+void ASceneManagerTest::ConfigureTexture(UTexture2D* Texture)
+{
+	Texture->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
+	Texture->LODGroup = TextureGroup::TEXTUREGROUP_UI;
+	//Texture->UpdateResource();
+}
 
-	// run through every pixel
-	for (int i = 0; i < VelTex->GetSizeY(); i++) {
-		for (int j = 0; j < VelTex->GetSizeX(); j++) {
-			int32 index = j + i * VelTex->GetSizeX();
-			int32 Idx = 4 * index;
-			FFloat16 val;
-			if (index < vel_tbo_data.size()) {
-				for (int k = 0; k < 3; k++) {
-					val = vel_tbo_data[index * 3 + k];
-					Ptr2[Idx + k] = val; // real R
+void ASceneManagerTest::UpdateTextureData(UTexture2D* Texture, const std::vector<float>& Data, int ComponentCount)
+{
+	FFloat16* Ptr = (FFloat16*)Texture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+
+	for (int i = 0; i < Texture->GetSizeY(); i++)
+	{
+		for (int j = 0; j < Texture->GetSizeX(); j++)
+		{
+			int32 Index = j + i * Texture->GetSizeX();
+			int32 Idx = 4 * Index; // Assuming 4 components (RGBA)
+			if (Index < Data.size() / ComponentCount)
+			{
+				for (int k = 0; k < ComponentCount; k++)
+				{
+					Ptr[Idx + k] = FFloat16(Data[Index * ComponentCount + k]);
 				}
-				Ptr2[Idx + 3] = 1; // A
+				Ptr[Idx + 3] = 1; // Alpha
 			}
-			else {
-				Ptr2[Idx + 0] = 0; // real R
-				Ptr2[Idx + 1] = 0; // real G
-				Ptr2[Idx + 2] = 0; // real B
-				Ptr2[Idx + 3] = 0; // A
+			else
+			{
+				Ptr[Idx + 0] = 0; // R
+				Ptr[Idx + 1] = 0; // G
+				Ptr[Idx + 2] = 0; // B
+				Ptr[Idx + 3] = 0; // A
 			}
 		}
 	}
 
-	VelTex->GetPlatformData()->Mips[0].BulkData.Unlock();
+	Texture->GetPlatformData()->Mips[0].BulkData.Unlock();
+	Texture->UpdateResource();
+}
 
-	// PreTex write data
-	FFloat16* Ptr3 = (FFloat16*)PreTex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE); // this can do read and write
+void ASceneManagerTest::UpdateTextureData(UTexture2D* Texture, const std::vector<int>& Data)
+{
+	FFloat16* Ptr = (FFloat16*)Texture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE); // this can do read and write
 
-	// run through every pixel
-	for (int i = 0; i < PreTex->GetSizeY(); i++) {
-		for (int j = 0; j < PreTex->GetSizeX(); j++) {
-			int32 index = j + i * PreTex->GetSizeX();
+	for (int i = 0; i < Texture->GetSizeY(); i++) {
+		for (int j = 0; j < Texture->GetSizeX(); j++) {
+			int32 index = j + i * Texture->GetSizeX();
 			int32 Idx = 4 * index;
 			FFloat16 val;
-			if (index < pre_tbo_data.size()) {
-				val = FFloat16(pre_tbo_data[index]);
-				Ptr3[Idx + 0] = val; // real R
-				Ptr3[Idx + 1] = 0; // real G
-				Ptr3[Idx + 2] = 0; // real B
-				Ptr3[Idx + 3] = 1; // A
+			if (index < Data.size()) {
+				// 轉換 int 資料為 FFloat16
+				val = FFloat16((float)Data[index]);
+				Ptr[Idx + 0] = val; // real R
+				Ptr[Idx + 1] = 0; // real G
+				Ptr[Idx + 2] = 0; // real B
+				Ptr[Idx + 3] = 1; // A
 			}
 			else {
-				Ptr3[Idx + 0] = 0; // real R
-				Ptr3[Idx + 1] = 0; // real G
-				Ptr3[Idx + 2] = 0; // real B
-				Ptr3[Idx + 3] = 0; // A
+				Ptr[Idx + 0] = 0; // real R
+				Ptr[Idx + 1] = 0; // real G
+				Ptr[Idx + 2] = 0; // real B
+				Ptr[Idx + 3] = 0; // A
 			}
 		}
 	}
 
-	PreTex->GetPlatformData()->Mips[0].BulkData.Unlock();
-
-	// TempTex write data
-	FFloat16* Ptr4 = (FFloat16*)TempTex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE); // this can do read and write
-
-	// run through every pixel
-	for (int i = 0; i < TempTex->GetSizeY(); i++) {
-		for (int j = 0; j < TempTex->GetSizeX(); j++) {
-			int32 index = j + i * TempTex->GetSizeX();
-			int32 Idx = 4 * index;
-			FFloat16 val;
-			if (index < temp_tbo_data.size()) {
-				val = FFloat16(temp_tbo_data[index]);
-				Ptr4[Idx + 0] = val; // real R
-				Ptr4[Idx + 1] = 0; // real G
-				Ptr4[Idx + 2] = 0; // real B
-				Ptr4[Idx + 3] = 1; // A
-			}
-			else {
-				Ptr4[Idx + 0] = 0; // real R
-				Ptr4[Idx + 1] = 0; // real G
-				Ptr4[Idx + 2] = 0; // real B
-				Ptr4[Idx + 3] = 0; // A
-			}
-		}
-	}
-
-	TempTex->GetPlatformData()->Mips[0].BulkData.Unlock();
-
-	//Editor Only
-	/*IndexTex->MipGenSettings = IndexOldMipSetting;
-	StatusTex->MipGenSettings = StatusOldMipSetting;
-	VelTex->MipGenSettings = VelOldMipSetting;
-	PreTex->MipGenSettings = PreOldMipSetting;
-	IndexTex->UpdateResource();
-	StatusTex->UpdateResource();
-	VelTex->UpdateResource();
-	PreTex->UpdateResource();*/
-	IndexTex->MipLoadOptions = IndexOldMipLoadOptions;
-	StatusTex->MipLoadOptions = StatusOldMipLoadOptions;
-	VelTex->MipLoadOptions = VelOldMipLoadOptions;
-	PreTex->MipLoadOptions = PreOldMipLoadOptions;
-	TempTex->MipLoadOptions = TempOldMipLoadOptions;
-	IndexTex->UpdateResource();
-	StatusTex->UpdateResource();
-	VelTex->UpdateResource();
-	PreTex->UpdateResource();
-	TempTex->UpdateResource();
+	Texture->GetPlatformData()->Mips[0].BulkData.Unlock();
+	Texture->UpdateResource();
 }
 #pragma endregion
 
@@ -926,6 +830,7 @@ void ASceneManagerTest::UpdatePlane() {
 	//planePMC->ClearAllCachedCookedPlatformData();
 	planePMC->ClearAllMeshSections();
 	planePMC->CreateMeshSection_LinearColor(0, points, indexs, Normals, UV0, Colors, Tangents, false);
+	//planePMC->UpdateMeshSection(0, indexs, Normals, UV0, Colors, Tangents, false)
 
 	UV0.Empty();
 	Colors.Empty();
@@ -1468,7 +1373,7 @@ void ASceneManagerTest::SetData(FString FileName, FVector InCenter, float InScal
 	Center = InCenter;
 	MyScale = InScale;
 
-	baseViewDistance = 2.5 * InScale * AreaSize;
+	baseViewDistance = InScale * AreaSize;
 }
 
 void ASceneManagerTest::ClearData() {

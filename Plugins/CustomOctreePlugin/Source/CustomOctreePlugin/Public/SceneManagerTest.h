@@ -116,6 +116,7 @@ public:
 	vector<ifstream*> baseFileValueList;
 	vector<ifstream*> baseFileIndexList;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float baseViewDistance = 10.0f;
 
 	int loadChunkCount = 0;
@@ -142,7 +143,7 @@ public:
 	UProceduralMeshComponent* isosurfacePMC2 = NULL;
 	UProceduralMeshComponent* isosurfacePMC3 = NULL;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UPreprocessor* Preprocessor;
 
 protected:
@@ -188,6 +189,11 @@ public:
 	void UpdateTexBuffer();
 	void FillIndexTex_Recursive(CustomChunk* _Chunk, Frame& fc, int tbo_index);
 	void CreateTextures();
+	void CreateTextures(UTexture2D*& Texture, const std::vector<float>& Data, int ComponentCount = 1);
+	void CreateTextures(UTexture2D*& Texture, const std::vector<int>& Data);
+	void ConfigureTexture(UTexture2D* Texture);
+	void UpdateTextureData(UTexture2D* Texture, const std::vector<float>& Data, int ComponentCount = 1);
+	void UpdateTextureData(UTexture2D* Texture, const std::vector<int>& Data);
 	void ReleaseChunkData();
 
 	FMatrix GetCameraViewProj();
