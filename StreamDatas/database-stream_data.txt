@@ -1,2 +1,0 @@
-//Model Name,StreamData Name
-D:\FTP\800x800x100\800x800x100\grid11\buildings.obj grid11_COT5_compressed_0.1
