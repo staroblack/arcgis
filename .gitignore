@@ -15,20 +15,18 @@ Saved/
 .DS_Store
 
 #package
-ThirdParty/*
 Build/*
 
+#plugins
 Plugins/ArcGISMapsSDK/*
 Plugins/CustomOctreePlugin/Binaries/*
 Plugins/CustomOctreePlugin/Intermediate/*
 Plugins/TemaranShaderTutorial/Binaries/*
 Plugins/TemaranShaderTutorial/Intermediate/*
-Plugins/PakLoader/Binaries/*
-Plugins/PakLoader/Intermediate/*
-Plugins/CityGISUtil/*
-Plugins/UE_CaptureSubsystem-master/*
-Plugins/RuntimeMeshLoader-main/*
-ThirdParty/*
+Plugins/UE_CaptureSubsystem/Binaries/*
+Plugins/UE_CaptureSubsystem/Intermediate/*
+Plugins/RuntimeMeshLoader-main/Binaries/*
+Plugins/RuntimeMeshLoader-main/Intermediate/*
 StreamDatas/*
 Content/testCase/*
 
