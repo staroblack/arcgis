@@ -15,7 +15,7 @@ Saved/
 .DS_Store
 
 #package
-Build/*
+Build/
 
 #plugins
 Plugins/ArcGISMapsSDK/*
