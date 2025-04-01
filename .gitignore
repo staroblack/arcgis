@@ -1,10 +1,22 @@
+# Unreal Engine build folders
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Visual Studio files
 .vs/*
 .vsconfig
+*.sln
+*.VC.db
+*.VC.opendb
 
-Saved/*
-Intermediate/*
-Binaries/*
+# Mac OS
+.DS_Store
+
+#package
 ThirdParty/*
+Build/*
 
 Plugins/ArcGISMapsSDK/*
 Plugins/CustomOctreePlugin/Binaries/*
@@ -17,21 +29,18 @@ Plugins/CityGISUtil/*
 Plugins/UE_CaptureSubsystem-master/*
 Plugins/RuntimeMeshLoader-main/*
 ThirdParty/*
-unrealPak/*
-StreamDatas/grid11_collection/*
-StreamDatas/grid12_collection/*
-StreamDatas/grid18_collection/*
-StreamDatas/grid19_collection/*
-StreamDatas/grid21_collection/*
-StreamDatas/grid24_collection/*
-StreamDatas/grid25_collection/*
-StreamDatas/grid26_collection/*
-StreamDatas/grid30_collection/*
-StreamDatas/grid31_collection/*
-StreamDatas/grid32_collection/*
-StreamDatas/grid34_collection/*
-StreamDatas/grid38_collection/*
-StreamDatas/grid41_collection/*
-StreamDatas/grid45_collection/*
 StreamDatas/*
 Content/testCase/*
+
+# Other
+*.log
+*.tmp
+*.user
+*.suo
+*.opensdf
+*.sdf
+
+# Git LFS
+# Note: If you're using Git LFS, you may also want:
+# *.uasset
+# *.umap
